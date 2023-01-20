@@ -6,6 +6,7 @@ import {Dayjs} from "dayjs";
 import {createTheme, CssBaseline, Divider, ThemeProvider, Typography} from "@mui/material";
 import {ArrowDownward} from "@mui/icons-material";
 import "../extensions/ExtensionsImpl"
+import styled from "@emotion/styled";
 
 export function AppWrapper() {
     const darkTheme = createTheme({
@@ -74,6 +75,9 @@ function LogEventUi({log}: { log: LogEvent }) {
     </Row>
 }
 
+const TableRow = styled.td`
+border-bottom: 1px solid #6d6c6c;
+`
 
 function KeyValueTable({details}: { details: StringMap }) {
     return <Column style = {{marginTop: 5}}>
@@ -82,33 +86,38 @@ function KeyValueTable({details}: { details: StringMap }) {
             {recordToArray(details, (name, detail, index) => {
                 // Mods are displayed separately
                 // if (name !== "Mod List" && name !== "Fabric Mods") {
-                    return <Column key={index}>
-                        <Row key={name}>
-                            <span style = {{fontWeight: "bold", padding: 5, width: "30%"}}>
-                                {name}
-                            </span>
-                            <Divider style = {{backgroundColor: primaryColor, height: "auto", width: 1}}/>
-                            <span style={{lineBreak: "anywhere", paddingLeft: 10, paddingRight: 10, paddingTop:5, paddingBottom: 5}}>
-                                {String(detail)}
-                            </span>
-                        </Row>
-                        <Divider style = {{backgroundColor:index % 2 === 1 ? "#6d6c6c" : undefined }}/>
-                    </Column>
-                }
-            <tr>
-                <td style = {{border: "1px solid #dddddd", textAlign: "left", padding: "8px"}}>Alfreds Futterkiste</td>
-                <td>Maria Anders</td>
-                <td>Germany</td>
-            </tr>
-            <tr>
-                <td>Centro comercial Moctezuma</td>
-                <td>Francisco Chang</td>
-                <td>Mexico</td>
-            </tr>
+                    return <tr style = {{borderBottom: "1px dashed red"}}>
+                        <TableRow style = {{fontWeight: "bold", padding: 5, width: "30%"}}>{name}</TableRow>
+                        <TableRow style={{lineBreak: "anywhere", paddingLeft: 10, paddingRight: 10, paddingTop:5, paddingBottom: 5}}>{String(detail)}</TableRow>
+                    </tr>
+
+                // <Column key={index}>
+                //         <Row key={name}>
+                //             <span style = {{fontWeight: "bold", padding: 5, width: "30%"}}>
+                //                 {name}
+                //             </span>
+                //             <Divider style = {{backgroundColor: primaryColor, height: "auto", width: 1}}/>
+                //             <span style={{lineBreak: "anywhere", paddingLeft: 10, paddingRight: 10, paddingTop:5, paddingBottom: 5}}>
+                //                 {String(detail)}
+                //             </span>
+                //         </Row>
+                //         <Divider style = {{backgroundColor:index % 2 === 1 ? "#6d6c6c" : undefined }}/>
+                //     </Column>
+                })}
+        {/*//     <tr>*/}
+        {/*//         <td style = {{border: "1px solid #dddddd", textAlign: "left", padding: "8px"}}>Alfreds Futterkiste</td>*/}
+        {/*//         <td>Maria Anders</td>*/}
+        {/*//         <td>Germany</td>*/}
+        {/*//     </tr>*/}
+        {/*//     <tr>*/}
+        {/*//         <td>Centro comercial Moctezuma</td>*/}
+        {/*//         <td>Francisco Chang</td>*/}
+        {/*//         <td>Mexico</td>*/}
+        {/*//     </tr>*/}
         </table>
 
 
-        {/*})}*/}
+
 
     </Column>
 }
