@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {Fragment} from 'react'
 import '../App.css'
 import {DetailLog, isDetailLog, isMessageLog, LogEvent, LogLine, MessageLog, parseLogEvents} from "../core/Logs";
 import {Column, recordToArray, Row, StringMap} from "./Utils";
@@ -15,12 +15,10 @@ export function AppWrapper() {
         },
     });
 
-    return <Typography>
-        <ThemeProvider theme={darkTheme}>
+    return <ThemeProvider theme={darkTheme}>
             <CssBaseline/>
             <App/>
         </ThemeProvider>
-    </Typography>
 }
 
 function App() {
@@ -47,6 +45,29 @@ function App() {
 
 }
 
+function LogTimeUi(log: LogEvent) {
+    return <>
+        <Divider orientation={"vertical"} flexItem style={{paddingLeft: 10, marginRight: 10}}/>
+        <Typography variant={"h6"} style={{alignSelf: "center"}}>
+            <Row>
+                <Column>
+                <span>
+                    {timeToString(log.startTime)}
+                </span>
+                    <ArrowDownward style={{alignSelf: "center"}}/>
+                    <span>
+                    {timeToString(log.endTime)}
+                </span>
+                </Column>
+                <Typography style={{alignSelf: "center", paddingLeft: 4}}>
+                    ({log.endTime.millisecond() - log.startTime.millisecond()}ms total)
+                </Typography>
+            </Row>
+
+        </Typography>
+    </>;
+}
+
 function LogEventUi({log}: { log: LogEvent }) {
     return <Row style={{padding: 30, paddingTop: 0}}>
 
@@ -54,56 +75,69 @@ function LogEventUi({log}: { log: LogEvent }) {
         {/*End: {dateToString(log.endTime)}<br/>*/}
         <LogLinesUi logs={log.logs}/>
 
-        <Divider orientation={"vertical"} flexItem style = {{paddingLeft: 10, marginRight: 10}}/>
-        <Typography variant={"h6"} style = {{alignSelf: "center"}}>
-            <Row >
-                <Column >
-                <span>
-                    {timeToString(log.startTime)}
-                </span>
-                    <ArrowDownward style = {{alignSelf: "center"}}/>
-                    <span>
-                    {timeToString(log.endTime)}
-                </span>
-                </Column>
-                <Typography style = {{alignSelf: "center", paddingLeft: 4}}>
-                    ({log.endTime.millisecond() - log.startTime.millisecond()}ms total)
-                </Typography>
-            </Row>
-
-        </Typography>
+        {LogTimeUi(log)}
     </Row>
 }
 
-const TableRow = styled.td`
+const TableCell = styled.td`
 border-bottom: 1px solid #6d6c6c;
 `
 
+function TableDivider() {
+    return <tr>
+        <td colSpan = {2}>
+            <Divider style = {{backgroundColor: "#6d6c6c"}}/>
+        </td>
+    </tr>
+}
+
 function KeyValueTable({details}: { details: StringMap }) {
     return <Column style = {{marginTop: 5}}>
-        <Divider style = {{backgroundColor: "#6d6c6c"}}/>
         <table>
+            <tbody>
             {recordToArray(details, (name, detail, index) => {
                 // Mods are displayed separately
                 // if (name !== "Mod List" && name !== "Fabric Mods") {
-                    return <tr style = {{borderBottom: "1px dashed red"}}>
-                        <TableRow style = {{fontWeight: "bold", padding: 5, width: "30%"}}>{name}</TableRow>
-                        <TableRow style={{lineBreak: "anywhere", paddingLeft: 10, paddingRight: 10, paddingTop:5, paddingBottom: 5}}>{String(detail)}</TableRow>
+                return <Fragment key = {name}>
+                    {index === 0 &&  <TableDivider/>}
+                    <tr>
+                        <td style={{fontWeight: "bold", padding: 5, width: "30%", borderRight: "1px solid red"}}>{name}</td>
+                        <td style={{
+                            lineBreak: "anywhere",
+                            paddingLeft: 10,
+                            paddingRight: 10,
+                            paddingTop: 5,
+                            paddingBottom: 5
+                        }}>{String(detail)}</td>
                     </tr>
+                    <TableDivider/>
+                </Fragment>
+            })}
+            </tbody>
+            {/*{recordToArray(details, (name, detail, index) => {*/}
+            {/*    // Mods are displayed separately*/}
+            {/*    // if (name !== "Mod List" && name !== "Fabric Mods") {*/}
+            {/*        return <tr key = {name} style = {{borderBottom: "1px dashed red"}}>*/}
+            {/*            <TableCell style = {{fontWeight: "bold", padding: 5, width: "30%"}}>{name}</TableCell>*/}
+            {/*            <td>*/}
+            {/*                <Divider style = {{backgroundColor: primaryColor, height: "auto", width: 1}} orientation={"vertical"} flexItem/>*/}
+            {/*            </td>*/}
+            {/*            <TableCell style={{lineBreak: "anywhere", paddingLeft: 10, paddingRight: 10, paddingTop:5, paddingBottom: 5}}>{String(detail)}</TableCell>*/}
+            {/*        </tr>*/}
 
-                // <Column key={index}>
-                //         <Row key={name}>
-                //             <span style = {{fontWeight: "bold", padding: 5, width: "30%"}}>
-                //                 {name}
-                //             </span>
-                //             <Divider style = {{backgroundColor: primaryColor, height: "auto", width: 1}}/>
-                //             <span style={{lineBreak: "anywhere", paddingLeft: 10, paddingRight: 10, paddingTop:5, paddingBottom: 5}}>
-                //                 {String(detail)}
-                //             </span>
-                //         </Row>
-                //         <Divider style = {{backgroundColor:index % 2 === 1 ? "#6d6c6c" : undefined }}/>
-                //     </Column>
-                })}
+            {/*    // <Column key={index}>*/}
+            {/*    //         <Row key={name}>*/}
+            {/*    //             <span style = {{fontWeight: "bold", padding: 5, width: "30%"}}>*/}
+            {/*    //                 {name}*/}
+            {/*    //             </span>*/}
+            {/*    //             <Divider style = {{backgroundColor: primaryColor, height: "auto", width: 1}}/>*/}
+            {/*    //             <span style={{lineBreak: "anywhere", paddingLeft: 10, paddingRight: 10, paddingTop:5, paddingBottom: 5}}>*/}
+            {/*    //                 {String(detail)}*/}
+            {/*    //             </span>*/}
+            {/*    //         </Row>*/}
+            {/*    //         <Divider style = {{backgroundColor:index % 2 === 1 ? "#6d6c6c" : undefined }}/>*/}
+            {/*    //     </Column>*/}
+            {/*    })}*/}
         {/*//     <tr>*/}
         {/*//         <td style = {{border: "1px solid #dddddd", textAlign: "left", padding: "8px"}}>Alfreds Futterkiste</td>*/}
         {/*//         <td>Maria Anders</td>*/}
@@ -133,7 +167,7 @@ function LogLinesUi({logs}: { logs: LogLine[] }) {
         {/*    {details.map(d => <DetailLogUi detail={d}/>)}*/}
         {/*</Column>*/}
         <Column>
-            {messages.map(m => <MessageLogUi message={m}/>)}
+            {/*{messages.map(m => <MessageLogUi message={m}/>)}*/}
         </Column>
     </Column>
 }

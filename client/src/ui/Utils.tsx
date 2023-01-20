@@ -1,13 +1,23 @@
 import React from "react";
+import styled from "@emotion/styled";
 
-export function Row(props: React.HTMLProps<HTMLDivElement>){
-    const {style,...otherProps} = props;
-    return <div style = {{display: "flex", flexDirection: "row", ...style}}  {...otherProps}  />
-}
-export function Column(props: React.HTMLProps<HTMLDivElement>){
-    const {style,...otherProps} = props;
-    return <div style = {{display: "flex", flexDirection: "column", ...style}}  {...otherProps}  />
-}
+export const Row = styled.div`
+    display: flex;
+  flex-direction: row;
+`
+export const Column = styled.div`
+    display: flex;
+  flex-direction: column;
+`
+
+// export function Row(props: React.HTMLProps<HTMLDivElement>){
+//     const {style,...otherProps} = props;
+//     return <div style = {{display: "flex", flexDirection: "row", ...style}}  {...otherProps}  />
+// }
+// export function Column(props: React.HTMLProps<HTMLDivElement>){
+//     const {style,...otherProps} = props;
+//     return <div style = {{display: "flex", flexDirection: "column", ...style}}  {...otherProps}  />
+// }
 
 export type StringMap = Record<string, string>
 
