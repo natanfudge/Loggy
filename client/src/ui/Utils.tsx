@@ -1,8 +1,22 @@
 import React from "react";
 
 export function Row(props: React.HTMLProps<HTMLDivElement>){
-    return <div style = {{display: "flex", flexDirection: "row"}} {...props}  />
+    const {style,...otherProps} = props;
+    return <div style = {{display: "flex", flexDirection: "row", ...style}}  {...otherProps}  />
 }
 export function Column(props: React.HTMLProps<HTMLDivElement>){
-    return <div style = {{display: "flex", flexDirection: "column"}} {...props}  />
+    const {style,...otherProps} = props;
+    return <div style = {{display: "flex", flexDirection: "column", ...style}}  {...otherProps}  />
 }
+
+export type StringMap = Record<string, string>
+
+export  function recordToArray<V,Rec extends Record<keyof Rec, V>,K extends keyof Rec, R>(record: Record<K,V>, mapFn: (key: K, value: V, index: number) => R): R[] {
+    return typedKeys(record).map((key, index) => mapFn(key, record[key], index));
+}
+
+export function typedKeys<K extends TsKey, V>(object: Record<K, V>): K[] {
+    return Object.keys(object) as K[];
+}
+
+export type TsKey = string | number | symbol
