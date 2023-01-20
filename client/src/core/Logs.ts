@@ -1,10 +1,9 @@
 import dayjs, {Dayjs} from "dayjs";
 
 
-
-function parseLogEvents(json: string): LogEvent[] {
+export function parseLogEvents(json: string): LogEvent[] {
     return JSON.parse(json, (k, v) => {
-        if(typeof v === "number" && k.toLowerCase().endsWith("time")){
+        if (typeof v === "number" && k.toLowerCase().endsWith("time")) {
             return dayjs(v)
         } else {
             return v
@@ -19,7 +18,19 @@ export interface LogEvent {
     logs: LogLine[]
 }
 
-type LogLine = MessageLog | DetailLog | ErrorLog
+export type LogLine = MessageLog | DetailLog | ErrorLog
+
+export function isMessageLog(logLine: LogLine): logLine is MessageLog {
+    return "message" in logLine
+}
+
+export function isErrorLog(logLine: LogLine): logLine is ErrorLog {
+    return isMessageLog(logLine) && logLine.severity != "Error"
+}
+
+export function isDetailLog(logLine: LogLine): logLine is DetailLog {
+    return "key" in logLine
+}
 
 
 export interface MessageLog {
@@ -35,6 +46,13 @@ export interface DetailLog {
 
 export interface ErrorLog extends MessageLog {
     severity: "Error"
+    exception: Exception
+}
+
+interface Exception {
+    className: string
+    message: string
+    stacktrace: string
 }
 
 type Severity = "Info" | "Warn" | "Error"
