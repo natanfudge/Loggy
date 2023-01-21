@@ -1,12 +1,34 @@
 import React, {Fragment} from 'react'
 import '../App.css'
-import {DetailLog, isDetailLog, isMessageLog, LogEvent, LogLine, MessageLog, parseLogEvents} from "../core/Logs";
+import {
+    DetailLog, ErrorLog,
+    isDetailLog,
+    isErrorLog,
+    isMessageLog,
+    LogEvent,
+    LogLine,
+    MessageLog,
+    parseLogEvents
+} from "../core/Logs";
 import {Column, recordToArray, Row, StringMap} from "./Utils";
 import {Dayjs} from "dayjs";
-import {createTheme, CssBaseline, Divider, ThemeProvider, Typography} from "@mui/material";
-import {ArrowDownward} from "@mui/icons-material";
+import {
+    Accordion, AccordionDetails,
+    AccordionSummary,
+    createTheme,
+    CssBaseline,
+    Divider, Paper, Table, TableBody,
+    TableCell,
+    tableCellClasses, TableContainer,
+    TableRow,
+    ThemeProvider,
+    Typography
+} from "@mui/material";
+import {ArrowDownward, ExpandMore} from "@mui/icons-material";
 import "../extensions/ExtensionsImpl"
 import styled from "@emotion/styled";
+import {Colors} from "./Colors";
+import textColor = Colors.textColor;
 
 export function AppWrapper() {
     const darkTheme = createTheme({
@@ -16,9 +38,21 @@ export function AppWrapper() {
     });
 
     return <ThemeProvider theme={darkTheme}>
-            <CssBaseline/>
-            <App/>
-        </ThemeProvider>
+        <CssBaseline/>
+        <App/>
+    </ThemeProvider>
+}
+
+function LogsTitle(endpoint: string, day: string) {
+    return <Row style={{padding: 10, paddingLeft: 50}}>
+        <Typography style={{textDecoration: "underline"}} variant={"h5"}>
+            Logs for {endpoint}<br/>
+        </Typography>
+        <div style={{flexGrow: 1}}/>
+        <Typography variant={"h6"} style={{paddingRight: 20}}>
+            {day}
+        </Typography>
+    </Row>;
 }
 
 function App() {
@@ -28,21 +62,30 @@ function App() {
 
 
     return <div>
-        <Row style={{padding: 10, paddingLeft: 50}}>
-            <Typography style={{textDecoration: "underline"}} variant={"h5"}>
-                Logs for {endpoint}<br/>
-            </Typography>
-            <div style={{flexGrow: 1}}/>
-            <Typography variant={"h6"}>
-                {day}
-            </Typography>
-        </Row>
+        {LogsTitle(endpoint, day)}
+
+        <LogEventAccordion log={logs[0]}/>
 
 
-        <LogEventUi log={logs[0]}/>
     </div>
 
+}
 
+function LogEventAccordion({log} : {log: LogEvent}) {
+    const errored = log.logs.some(l => isErrorLog(l))
+    const erroredSuffix = errored ? " (ERROR)" : ""
+    return <Accordion style = {{width: "fit-content"}}>
+        <AccordionSummary
+            expandIcon={<ExpandMore />}
+            aria-controls="panel1a-content"
+            id="panel1a-header"
+        >
+            <Typography style = {{color: errored? "red" : undefined}}>Call at {simpleTimeToString(log.startTime) + erroredSuffix}</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+            <LogEventContent log={log}/>
+        </AccordionDetails>
+    </Accordion>
 }
 
 function LogTimeUi(log: LogEvent) {
@@ -68,122 +111,142 @@ function LogTimeUi(log: LogEvent) {
     </>;
 }
 
-function LogEventUi({log}: { log: LogEvent }) {
+function LogEventContent({log}: { log: LogEvent }) {
     return <Row style={{padding: 30, paddingTop: 0}}>
 
-        {/*Start: {}<br/>*/}
-        {/*End: {dateToString(log.endTime)}<br/>*/}
-        <LogLinesUi logs={log.logs}/>
+        <Column>
+            <LogLinesUi logs={log.logs}/>
+            <LogErrorUi log={log}/>
+        </Column>
+
 
         {LogTimeUi(log)}
     </Row>
 }
 
-const TableCell = styled.td`
-border-bottom: 1px solid #6d6c6c;
-`
+function LogErrorUi({log}: {log: LogEvent}) {
+    const errors = log.logs.filter(l => isErrorLog(l)) as ErrorLog[]
 
-function TableDivider() {
-    return <tr>
-        <td colSpan = {2}>
-            <Divider style = {{backgroundColor: "#6d6c6c"}}/>
-        </td>
-    </tr>
+    return <Column>
+
+    </Column>
 }
 
+
 function KeyValueTable({details}: { details: StringMap }) {
-    return <Column style = {{marginTop: 5}}>
-        <table>
+    return <TableContainer component = {Paper} style = {{height: "fit-content", width: "unset"}}>
+        <Table>
+            <TableBody>
+            {recordToArray(details, (name, detail, index) => {
+                const dividerColor = index % 2 == 1 ? Colors.grayDivider : Colors.grayDividerContrast
+                const bottomDividerBorder = `1px solid ${dividerColor}`
+                const topDividerBorder = index === 0 ? `1px solid ${Colors.grayDivider}` : undefined
+                return <StyledTableRow key={name}>
+                    <StyledTableCell style = {{borderRight: `1px solid ${primaryColor}`}}>{name}</StyledTableCell>
+                    <StyledTableCell >{String(detail)}</StyledTableCell>
+
+                    {/*<tr>*/}
+                    {/*    <td style={{*/}
+                    {/*        fontWeight: "bold", padding: 7, borderRight: `1px solid ${primaryColor}`,*/}
+                    {/*        borderBottom: bottomDividerBorder, borderTop: topDividerBorder,*/}
+                    {/*        borderLeft: `1px solid ${Colors.grayDivider}`*/}
+                    {/*    }}>{name}</td>*/}
+                    {/*    <td style={{*/}
+                    {/*        padding: 7,*/}
+                    {/*        borderBottom: bottomDividerBorder,*/}
+                    {/*        borderTop: topDividerBorder,*/}
+                    {/*        borderRight: `1px solid ${Colors.grayDivider}`*/}
+                    {/*    }}>{String(detail)}</td>*/}
+                    {/*</tr>*/}
+                </StyledTableRow>
+            })}
+            </TableBody>
+        </Table>
+
+
+    </TableContainer>
+}
+
+function KeyValueTableOld({details}: { details: StringMap }) {
+    return <Column style={{marginTop: 5}}>
+        <table style={{borderSpacing: 0}}>
             <tbody>
             {recordToArray(details, (name, detail, index) => {
-                // Mods are displayed separately
-                // if (name !== "Mod List" && name !== "Fabric Mods") {
-                return <Fragment key = {name}>
-                    {index === 0 &&  <TableDivider/>}
+                const dividerColor = index % 2 == 1 ? Colors.grayDivider : Colors.grayDividerContrast
+                const bottomDividerBorder = `1px solid ${dividerColor}`
+                const topDividerBorder = index === 0 ? `1px solid ${Colors.grayDivider}` : undefined
+                return <Fragment key={name}>
                     <tr>
-                        <td style={{fontWeight: "bold", padding: 5, width: "30%", borderRight: "1px solid red"}}>{name}</td>
                         <td style={{
-                            lineBreak: "anywhere",
-                            paddingLeft: 10,
-                            paddingRight: 10,
-                            paddingTop: 5,
-                            paddingBottom: 5
+                            fontWeight: "bold", padding: 7, borderRight: `1px solid ${primaryColor}`,
+                            borderBottom: bottomDividerBorder, borderTop: topDividerBorder,
+                            borderLeft: `1px solid ${Colors.grayDivider}`
+                        }}>{name}</td>
+                        <td style={{
+                            padding: 7,
+                            borderBottom: bottomDividerBorder,
+                            borderTop: topDividerBorder,
+                            borderRight: `1px solid ${Colors.grayDivider}`
                         }}>{String(detail)}</td>
                     </tr>
-                    <TableDivider/>
                 </Fragment>
             })}
             </tbody>
-            {/*{recordToArray(details, (name, detail, index) => {*/}
-            {/*    // Mods are displayed separately*/}
-            {/*    // if (name !== "Mod List" && name !== "Fabric Mods") {*/}
-            {/*        return <tr key = {name} style = {{borderBottom: "1px dashed red"}}>*/}
-            {/*            <TableCell style = {{fontWeight: "bold", padding: 5, width: "30%"}}>{name}</TableCell>*/}
-            {/*            <td>*/}
-            {/*                <Divider style = {{backgroundColor: primaryColor, height: "auto", width: 1}} orientation={"vertical"} flexItem/>*/}
-            {/*            </td>*/}
-            {/*            <TableCell style={{lineBreak: "anywhere", paddingLeft: 10, paddingRight: 10, paddingTop:5, paddingBottom: 5}}>{String(detail)}</TableCell>*/}
-            {/*        </tr>*/}
-
-            {/*    // <Column key={index}>*/}
-            {/*    //         <Row key={name}>*/}
-            {/*    //             <span style = {{fontWeight: "bold", padding: 5, width: "30%"}}>*/}
-            {/*    //                 {name}*/}
-            {/*    //             </span>*/}
-            {/*    //             <Divider style = {{backgroundColor: primaryColor, height: "auto", width: 1}}/>*/}
-            {/*    //             <span style={{lineBreak: "anywhere", paddingLeft: 10, paddingRight: 10, paddingTop:5, paddingBottom: 5}}>*/}
-            {/*    //                 {String(detail)}*/}
-            {/*    //             </span>*/}
-            {/*    //         </Row>*/}
-            {/*    //         <Divider style = {{backgroundColor:index % 2 === 1 ? "#6d6c6c" : undefined }}/>*/}
-            {/*    //     </Column>*/}
-            {/*    })}*/}
-        {/*//     <tr>*/}
-        {/*//         <td style = {{border: "1px solid #dddddd", textAlign: "left", padding: "8px"}}>Alfreds Futterkiste</td>*/}
-        {/*//         <td>Maria Anders</td>*/}
-        {/*//         <td>Germany</td>*/}
-        {/*//     </tr>*/}
-        {/*//     <tr>*/}
-        {/*//         <td>Centro comercial Moctezuma</td>*/}
-        {/*//         <td>Francisco Chang</td>*/}
-        {/*//         <td>Mexico</td>*/}
-        {/*//     </tr>*/}
         </table>
-
-
 
 
     </Column>
 }
+
+
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+    [`&.${tableCellClasses.head}`]: {
+        // @ts-ignore
+        backgroundColor: theme.palette.common.black,
+        // @ts-ignore
+        color: theme.palette.common.white,
+    },
+    [`&.${tableCellClasses.body}`]: {
+        fontSize: 14,
+    },
+
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+    '&:nth-of-type(odd)': {
+        // @ts-ignore
+        backgroundColor: theme.palette.action.hover,
+    },
+    // hide last border
+    '&:last-child td, &:last-child th': {
+        border: 0,
+    },
+}));
+
 
 
 function LogLinesUi({logs}: { logs: LogLine[] }) {
     const details = logs.filter(l => isDetailLog(l)) as DetailLog[]
     const messages = logs.filter(l => isMessageLog(l)) as MessageLog[]
 
-    return <Column style = {{width: "50%"}}>
-        <KeyValueTable details={details.toRecord(l => [l.key,l.value])}/>
-        {/*<Column>*/}
-        {/*    {details.map(d => <DetailLogUi detail={d}/>)}*/}
-        {/*</Column>*/}
-        <Column>
-            {/*{messages.map(m => <MessageLogUi message={m}/>)}*/}
+    return <Row>
+        <KeyValueTable details={details.toRecord(l => [l.key, l.value])}/>
+        <Column style = {{padding: 20}}>
+            {messages.map(m => <MessageLogUi message={m}/>)}
         </Column>
-    </Column>
+    </Row>
 }
 
-function DetailLogUi({detail}: { detail: DetailLog }) {
-    return <span>
-        {detail.key}: {detail.value}
-    </span>
-}
 
 function MessageLogUi({message}: { message: MessageLog }) {
+    const color = message.severity === "Error" ? "red"  : message.severity === "Warn" ? "yellow" : textColor
     return <Row>
-        <Typography variant={"subtitle"}>
-            {dayToString(message.time)}
+        <Typography variant = {"subtitle2"} style = {{paddingRight: 5, color: Colors.grayedOutText, alignSelf: "center"}}>
+            {timeToString(message.time) + " "}
         </Typography>
-         {message.severity}: {message.message}
+        <span style = {{color: color}}>
+            {message.message}
+        </span>
     </Row>
 }
 
@@ -196,7 +259,10 @@ function dayToString(date: Dayjs): string {
 }
 
 function timeToString(date: Dayjs): string {
-    return `${twoChars(date.hour())}:${twoChars(date.minute())}:${threeChars(date.millisecond())}`
+    return `${simpleTimeToString(date)}:${threeChars(date.millisecond())}`
+}
+function simpleTimeToString(date: Dayjs): string {
+    return `${twoChars(date.hour())}:${twoChars(date.minute())}`
 }
 
 function twoChars(number: number): string {
@@ -204,12 +270,14 @@ function twoChars(number: number): string {
     if (str.length == 1) return `0${str}`
     else return str.substring(str.length - 2, str.length)
 }
+
 function threeChars(number: number): string {
     const str = String(number)
     if (str.length == 1) return `00${str}`
     if (str.length == 2) return `0${str}`
     else return str
 }
+
 export const primaryColor = "#90caf9"
 
 export default App
@@ -244,6 +312,7 @@ const json = `[{
             "type": "ErrorLog",
             "message": "Halo Error",
             "time": 1674225696144,
+            "severity": "Error",
             "exception": {
                 "className": "java.lang.NullPointerException",
                 "message": "",
@@ -254,6 +323,7 @@ const json = `[{
             "type": "ErrorLog",
             "message": "Unexpected error handling 'scheduleTasks'",
             "time": 1674225696145,
+            "severity": "Error",
             "exception": {
                 "className": "java.lang.IllegalArgumentException",
                 "message": "Fuck jhew",
