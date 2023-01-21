@@ -25,7 +25,7 @@ export function isMessageLog(logLine: LogLine): logLine is MessageLog {
 }
 
 export function isErrorLog(logLine: LogLine): logLine is ErrorLog {
-    return isMessageLog(logLine) && logLine.severity != "Error"
+    return isMessageLog(logLine) && logLine.severity == "Error"
 }
 
 export function isDetailLog(logLine: LogLine): logLine is DetailLog {

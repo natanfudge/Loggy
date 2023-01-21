@@ -1,7 +1,8 @@
 import React, {Fragment} from 'react'
 import '../App.css'
 import {
-    DetailLog, ErrorLog,
+    DetailLog,
+    ErrorLog,
     isDetailLog,
     isErrorLog,
     isMessageLog,
@@ -13,18 +14,23 @@ import {
 import {Column, recordToArray, Row, StringMap} from "./Utils";
 import {Dayjs} from "dayjs";
 import {
-    Accordion, AccordionDetails,
+    Accordion,
+    AccordionDetails,
     AccordionSummary,
     createTheme,
     CssBaseline,
-    Divider, Paper, Table, TableBody,
+    Divider,
+    Paper,
+    Table,
+    TableBody,
     TableCell,
-    tableCellClasses, TableContainer,
+    tableCellClasses,
+    TableContainer,
     TableRow,
     ThemeProvider,
     Typography
 } from "@mui/material";
-import {ArrowDownward, ExpandMore} from "@mui/icons-material";
+import {ArrowDownward, ArrowForward, ArrowRightSharp, ExpandMore} from "@mui/icons-material";
 import "../extensions/ExtensionsImpl"
 import styled from "@emotion/styled";
 import {Colors} from "./Colors";
@@ -64,23 +70,35 @@ function App() {
     return <div>
         {LogsTitle(endpoint, day)}
 
-        <LogEventAccordion log={logs[0]}/>
-
-
+        <Column style = {{width: "fit-content"}}>
+            {logs.map((l, i) => <LogEventAccordion key = {i} log={l}/>)}
+        </Column>
     </div>
 
 }
 
-function LogEventAccordion({log} : {log: LogEvent}) {
+function LogEventAccordion({log}: { log: LogEvent }) {
     const errored = log.logs.some(l => isErrorLog(l))
-    const erroredSuffix = errored ? " (ERROR)" : ""
-    return <Accordion style = {{width: "fit-content"}}>
+    const erroredSuffix = errored ? " - ERROR" : ""
+    const textColor =  errored ? "red" : undefined
+    return <Accordion style={{width: "100%"}} defaultExpanded={false}>
         <AccordionSummary
-            expandIcon={<ExpandMore />}
+            expandIcon={<ExpandMore/>}
             aria-controls="panel1a-content"
             id="panel1a-header"
         >
-            <Typography style = {{color: errored? "red" : undefined}}>Call at {simpleTimeToString(log.startTime) + erroredSuffix}</Typography>
+            <Row style={{width: "100%"}}>
+                <Row style = {{paddingRight: 10}}>
+                <Typography style = {{color: textColor}}>
+                    {timeToString(log.startTime)}
+                </Typography >
+                    <ArrowForward style={{alignSelf: "center", marginLeft: 4, marginRight: 2, color: textColor}}/>
+                    <Typography style = {{color: textColor}}>
+                    {timeToString(log.endTime) + ` (${log.endTime.millisecond() - log.startTime.millisecond()}ms total)` + erroredSuffix}
+                </Typography>
+                </Row>
+            </Row>
+
         </AccordionSummary>
         <AccordionDetails>
             <LogEventContent log={log}/>
@@ -120,46 +138,64 @@ function LogEventContent({log}: { log: LogEvent }) {
         </Column>
 
 
-        {LogTimeUi(log)}
+        {/*{LogTimeUi(log)}*/}
     </Row>
 }
 
-function LogErrorUi({log}: {log: LogEvent}) {
+function LogErrorUi({log}: { log: LogEvent }) {
     const errors = log.logs.filter(l => isErrorLog(l)) as ErrorLog[]
+    if(errors.isEmpty()) return <Fragment/>
 
-    return <Column>
+    return <Column style = {{paddingTop: 10}}>
+        <Typography variant="h5" style={{color: "red", textDecoration: "underline"}}>
+            Errors
+        </Typography>
+        <span style={{paddingLeft: 20}}>
+            {errors.map(error =>
+                <span style={{color: "red"}}>
+                    <span style={{textDecoration: "underline"}}>{error.message}</span><br/>
+                    <Column style={{paddingLeft: 20}}>
+                        {error.exception.stacktrace.split("\n").map((line, i) => <span
+                            style={{paddingLeft: i == 0 ? 0 : 20}}>
+                            {line}
+                        </span>)}
+                    </Column>
+
+            </span>)
+            }
+        </span>
 
     </Column>
 }
 
 
 function KeyValueTable({details}: { details: StringMap }) {
-    return <TableContainer component = {Paper} style = {{height: "fit-content", width: "unset"}}>
+    return <TableContainer component={Paper} style={{height: "fit-content", width: "unset"}}>
         <Table>
             <TableBody>
-            {recordToArray(details, (name, detail, index) => {
-                const dividerColor = index % 2 == 1 ? Colors.grayDivider : Colors.grayDividerContrast
-                const bottomDividerBorder = `1px solid ${dividerColor}`
-                const topDividerBorder = index === 0 ? `1px solid ${Colors.grayDivider}` : undefined
-                return <StyledTableRow key={name}>
-                    <StyledTableCell style = {{borderRight: `1px solid ${primaryColor}`}}>{name}</StyledTableCell>
-                    <StyledTableCell >{String(detail)}</StyledTableCell>
+                {recordToArray(details, (name, detail, index) => {
+                    const dividerColor = index % 2 == 1 ? Colors.grayDivider : Colors.grayDividerContrast
+                    const bottomDividerBorder = `1px solid ${dividerColor}`
+                    const topDividerBorder = index === 0 ? `1px solid ${Colors.grayDivider}` : undefined
+                    return <StyledTableRow key={name}>
+                        <StyledTableCell style={{borderRight: `1px solid ${primaryColor}`}}>{name}</StyledTableCell>
+                        <StyledTableCell>{String(detail)}</StyledTableCell>
 
-                    {/*<tr>*/}
-                    {/*    <td style={{*/}
-                    {/*        fontWeight: "bold", padding: 7, borderRight: `1px solid ${primaryColor}`,*/}
-                    {/*        borderBottom: bottomDividerBorder, borderTop: topDividerBorder,*/}
-                    {/*        borderLeft: `1px solid ${Colors.grayDivider}`*/}
-                    {/*    }}>{name}</td>*/}
-                    {/*    <td style={{*/}
-                    {/*        padding: 7,*/}
-                    {/*        borderBottom: bottomDividerBorder,*/}
-                    {/*        borderTop: topDividerBorder,*/}
-                    {/*        borderRight: `1px solid ${Colors.grayDivider}`*/}
-                    {/*    }}>{String(detail)}</td>*/}
-                    {/*</tr>*/}
-                </StyledTableRow>
-            })}
+                        {/*<tr>*/}
+                        {/*    <td style={{*/}
+                        {/*        fontWeight: "bold", padding: 7, borderRight: `1px solid ${primaryColor}`,*/}
+                        {/*        borderBottom: bottomDividerBorder, borderTop: topDividerBorder,*/}
+                        {/*        borderLeft: `1px solid ${Colors.grayDivider}`*/}
+                        {/*    }}>{name}</td>*/}
+                        {/*    <td style={{*/}
+                        {/*        padding: 7,*/}
+                        {/*        borderBottom: bottomDividerBorder,*/}
+                        {/*        borderTop: topDividerBorder,*/}
+                        {/*        borderRight: `1px solid ${Colors.grayDivider}`*/}
+                        {/*    }}>{String(detail)}</td>*/}
+                        {/*</tr>*/}
+                    </StyledTableRow>
+                })}
             </TableBody>
         </Table>
 
@@ -199,7 +235,7 @@ function KeyValueTableOld({details}: { details: StringMap }) {
 }
 
 
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
+const StyledTableCell = styled(TableCell)(({theme}) => ({
     [`&.${tableCellClasses.head}`]: {
         // @ts-ignore
         backgroundColor: theme.palette.common.black,
@@ -212,7 +248,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 
 }));
 
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
+const StyledTableRow = styled(TableRow)(({theme}) => ({
     '&:nth-of-type(odd)': {
         // @ts-ignore
         backgroundColor: theme.palette.action.hover,
@@ -224,14 +260,13 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
 }));
 
 
-
 function LogLinesUi({logs}: { logs: LogLine[] }) {
     const details = logs.filter(l => isDetailLog(l)) as DetailLog[]
     const messages = logs.filter(l => isMessageLog(l)) as MessageLog[]
 
     return <Row>
         <KeyValueTable details={details.toRecord(l => [l.key, l.value])}/>
-        <Column style = {{padding: 20}}>
+        <Column style={{paddingLeft: 20, paddingTop: 10}}>
             {messages.map(m => <MessageLogUi message={m}/>)}
         </Column>
     </Row>
@@ -239,12 +274,12 @@ function LogLinesUi({logs}: { logs: LogLine[] }) {
 
 
 function MessageLogUi({message}: { message: MessageLog }) {
-    const color = message.severity === "Error" ? "red"  : message.severity === "Warn" ? "yellow" : textColor
+    const color = message.severity === "Error" ? "red" : message.severity === "Warn" ? "yellow" : textColor
     return <Row>
-        <Typography variant = {"subtitle2"} style = {{paddingRight: 5, color: Colors.grayedOutText, alignSelf: "center"}}>
+        <Typography variant={"subtitle2"} style={{paddingRight: 5, color: Colors.grayedOutText, alignSelf: "center"}}>
             {timeToString(message.time) + " "}
         </Typography>
-        <span style = {{color: color}}>
+        <span style={{color: color}}>
             {message.message}
         </span>
     </Row>
@@ -261,6 +296,7 @@ function dayToString(date: Dayjs): string {
 function timeToString(date: Dayjs): string {
     return `${simpleTimeToString(date)}:${threeChars(date.millisecond())}`
 }
+
 function simpleTimeToString(date: Dayjs): string {
     return `${twoChars(date.hour())}:${twoChars(date.minute())}`
 }
