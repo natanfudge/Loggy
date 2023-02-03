@@ -10,15 +10,6 @@ export const Column = styled.div`
   flex-direction: column;
 `
 
-// export function Row(props: React.HTMLProps<HTMLDivElement>){
-//     const {style,...otherProps} = props;
-//     return <div style = {{display: "flex", flexDirection: "row", ...style}}  {...otherProps}  />
-// }
-// export function Column(props: React.HTMLProps<HTMLDivElement>){
-//     const {style,...otherProps} = props;
-//     return <div style = {{display: "flex", flexDirection: "column", ...style}}  {...otherProps}  />
-// }
-
 export type StringMap = Record<string, string>
 
 export  function recordToArray<V,Rec extends Record<keyof Rec, V>,K extends keyof Rec, R>(record: Record<K,V>, mapFn: (key: K, value: V, index: number) => R): R[] {

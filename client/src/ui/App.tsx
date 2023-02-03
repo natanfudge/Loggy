@@ -1,4 +1,4 @@
-import React, {Fragment} from 'react'
+import React, {Fragment, useEffect, useRef, useState} from 'react'
 import '../App.css'
 import {
     DetailLog,
@@ -30,7 +30,7 @@ import {
     ThemeProvider,
     Typography
 } from "@mui/material";
-import {ArrowDownward, ArrowForward, ArrowRightSharp, ExpandMore} from "@mui/icons-material";
+import {ArrowDownward, ArrowForward, ExpandMore} from "@mui/icons-material";
 import "../extensions/ExtensionsImpl"
 import styled from "@emotion/styled";
 import {Colors} from "./Colors";
@@ -61,6 +61,9 @@ function LogsTitle(endpoint: string, day: string) {
     </Row>;
 }
 
+
+
+
 function App() {
     const logs = parseLogEvents(json)
     const endpoint = logs[0].name
@@ -70,8 +73,8 @@ function App() {
     return <div>
         {LogsTitle(endpoint, day)}
 
-        <Column style = {{width: "fit-content"}}>
-            {logs.map((l, i) => <LogEventAccordion key = {i} log={l}/>)}
+        <Column style={{width: "fit-content"}}>
+            {logs.map((l, i) => <LogEventAccordion key={i} log={l}/>)}
         </Column>
     </div>
 
@@ -80,7 +83,7 @@ function App() {
 function LogEventAccordion({log}: { log: LogEvent }) {
     const errored = log.logs.some(l => isErrorLog(l))
     const erroredSuffix = errored ? " - ERROR" : ""
-    const textColor =  errored ? "red" : undefined
+    const textColor = errored ? "red" : undefined
     return <Accordion style={{width: "100%"}} defaultExpanded={false}>
         <AccordionSummary
             expandIcon={<ExpandMore/>}
@@ -88,14 +91,15 @@ function LogEventAccordion({log}: { log: LogEvent }) {
             id="panel1a-header"
         >
             <Row style={{width: "100%"}}>
-                <Row style = {{paddingRight: 10}}>
-                <Typography style = {{color: textColor}}>
-                    {timeToString(log.startTime)}
-                </Typography >
+                <Row style={{paddingRight: 10}}>
+                    <Typography style={{color: textColor}}>
+                        {timeToString(log.startTime)}
+                    </Typography>
+                    {"  ------"}
                     <ArrowForward style={{alignSelf: "center", marginLeft: 4, marginRight: 2, color: textColor}}/>
-                    <Typography style = {{color: textColor}}>
-                    {timeToString(log.endTime) + ` (${log.endTime.millisecond() - log.startTime.millisecond()}ms total)` + erroredSuffix}
-                </Typography>
+                    <Typography style={{color: textColor}}>
+                        {timeToString(log.endTime) + ` (${log.endTime.millisecond() - log.startTime.millisecond()}ms total)` + erroredSuffix}
+                    </Typography>
                 </Row>
             </Row>
 
@@ -106,28 +110,7 @@ function LogEventAccordion({log}: { log: LogEvent }) {
     </Accordion>
 }
 
-function LogTimeUi(log: LogEvent) {
-    return <>
-        <Divider orientation={"vertical"} flexItem style={{paddingLeft: 10, marginRight: 10}}/>
-        <Typography variant={"h6"} style={{alignSelf: "center"}}>
-            <Row>
-                <Column>
-                <span>
-                    {timeToString(log.startTime)}
-                </span>
-                    <ArrowDownward style={{alignSelf: "center"}}/>
-                    <span>
-                    {timeToString(log.endTime)}
-                </span>
-                </Column>
-                <Typography style={{alignSelf: "center", paddingLeft: 4}}>
-                    ({log.endTime.millisecond() - log.startTime.millisecond()}ms total)
-                </Typography>
-            </Row>
 
-        </Typography>
-    </>;
-}
 
 function LogEventContent({log}: { log: LogEvent }) {
     return <Row style={{padding: 30, paddingTop: 0}}>
@@ -138,15 +121,14 @@ function LogEventContent({log}: { log: LogEvent }) {
         </Column>
 
 
-        {/*{LogTimeUi(log)}*/}
     </Row>
 }
 
 function LogErrorUi({log}: { log: LogEvent }) {
     const errors = log.logs.filter(l => isErrorLog(l)) as ErrorLog[]
-    if(errors.isEmpty()) return <Fragment/>
+    if (errors.isEmpty()) return <Fragment/>
 
-    return <Column style = {{paddingTop: 10}}>
+    return <Column style={{paddingTop: 10}}>
         <Typography variant="h5" style={{color: "red", textDecoration: "underline"}}>
             Errors
         </Typography>
