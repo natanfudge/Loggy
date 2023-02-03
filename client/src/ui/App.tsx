@@ -1,4 +1,4 @@
-import React, {Fragment, useEffect, useRef, useState} from 'react'
+import React, {Fragment, useState} from 'react'
 import '../App.css'
 import {
     DetailLog,
@@ -11,79 +11,92 @@ import {
     MessageLog,
     parseLogEvents
 } from "../core/Logs";
-import {Column, recordToArray, Row, StringMap} from "./Utils";
-import {Dayjs} from "dayjs";
+import {addAlphaToColor, Column, dayToString, Row, timeToString} from "./Utils";
 import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
     createTheme,
-    CssBaseline,
-    Divider,
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    tableCellClasses,
-    TableContainer,
-    TableRow,
+    CssBaseline, Switch,
+    Theme as MaterialUiTheme,
     ThemeProvider,
-    Typography
+    Typography,
+    useTheme
 } from "@mui/material";
-import {ArrowDownward, ArrowForward, ExpandMore} from "@mui/icons-material";
+import {ArrowForward, ExpandMore} from "@mui/icons-material";
 import "../extensions/ExtensionsImpl"
 import styled from "@emotion/styled";
-import {Colors} from "./Colors";
-import textColor = Colors.textColor;
+import {KeyValueTable} from "./KeyValueTable";
+import {LongRightArrow} from "./LongRightArrow";
+
 
 export function AppWrapper() {
+    const [isDark,setIsDark] = useState<boolean>(true)
     const darkTheme = createTheme({
         palette: {
-            mode: 'dark',
+            mode: isDark? 'dark' : "light",
         },
     });
 
     return <ThemeProvider theme={darkTheme}>
         <CssBaseline/>
-        <App/>
+        <App setThemeDark={setIsDark} isDark={isDark}/>
     </ThemeProvider>
 }
 
-function LogsTitle(endpoint: string, day: string) {
+function LogsTitle(props: {endpoint: string, day: string, isDark: boolean, setThemeDark: (isDark: boolean) => void}) {
     return <Row style={{padding: 10, paddingLeft: 50}}>
         <Typography style={{textDecoration: "underline"}} variant={"h5"}>
-            Logs for {endpoint}<br/>
+            Logs for {props.endpoint}<br/>
         </Typography>
         <div style={{flexGrow: 1}}/>
-        <Typography variant={"h6"} style={{paddingRight: 20}}>
-            {day}
+
+        <ThemeSwitch isDark={props.isDark} setThemeDark={props.setThemeDark}/>
+        <Typography variant={"h6"} style={{paddingRight: 20, alignSelf: "center"}}>
+            {props.day}
         </Typography>
     </Row>;
 }
 
 
-
-
-function App() {
+function App(props: {isDark: boolean, setThemeDark: (isDark: boolean) => void}) {
     const logs = parseLogEvents(json)
     const endpoint = logs[0].name
     const day = dayToString(logs[0].startTime)
 
-
     return <div>
-        {LogsTitle(endpoint, day)}
+        <LogsTitle endpoint={endpoint} day={day} isDark={props.isDark} setThemeDark={props.setThemeDark}/>
 
         <Column style={{width: "fit-content"}}>
             {logs.map((l, i) => <LogEventAccordion key={i} log={l}/>)}
         </Column>
     </div>
-
 }
 
+function ThemeSwitch(props: {isDark: boolean, setThemeDark: (isDark: boolean) => void}) {
+    return <ThemeBorder>
+        <Typography style = {{alignSelf: "center"}}>
+            {props.isDark? "Dark" : "Light"}
+        </Typography>
+        <Switch checked = {!props.isDark} onChange = {(event, checked) => {
+            props.setThemeDark(!checked)
+        }}/>
+    </ThemeBorder>
+}
+
+const ThemeBorder = styled(Row)(({theme}) => ({
+    border: `1px solid ${addAlphaToColor(theme.palette.primary.dark, 0.2)}`,
+   paddingLeft: "10px",
+    marginRight: "5px",
+    borderRadius: "10px"
+}));
+
+
 function LogEventAccordion({log}: { log: LogEvent }) {
+    const theme = useTheme();
     const errored = log.logs.some(l => isErrorLog(l))
     const erroredSuffix = errored ? " - ERROR" : ""
-    const textColor = errored ? "red" : undefined
+    const textColor = errored ? theme.palette.error.main : theme.palette.text.primary
     return <Accordion style={{width: "100%"}} defaultExpanded={false}>
         <AccordionSummary
             expandIcon={<ExpandMore/>}
@@ -95,8 +108,7 @@ function LogEventAccordion({log}: { log: LogEvent }) {
                     <Typography style={{color: textColor}}>
                         {timeToString(log.startTime)}
                     </Typography>
-                    {"  ------"}
-                    <ArrowForward style={{alignSelf: "center", marginLeft: 4, marginRight: 2, color: textColor}}/>
+                    <LongRightArrow style = {{height: "20px", width: "46px", marginLeft: 4, marginRight: 2, alignSelf: "center"}} color={textColor}/>
                     <Typography style={{color: textColor}}>
                         {timeToString(log.endTime) + ` (${log.endTime.millisecond() - log.startTime.millisecond()}ms total)` + erroredSuffix}
                     </Typography>
@@ -109,7 +121,6 @@ function LogEventAccordion({log}: { log: LogEvent }) {
         </AccordionDetails>
     </Accordion>
 }
-
 
 
 function LogEventContent({log}: { log: LogEvent }) {
@@ -129,21 +140,21 @@ function LogErrorUi({log}: { log: LogEvent }) {
     if (errors.isEmpty()) return <Fragment/>
 
     return <Column style={{paddingTop: 10}}>
-        <Typography variant="h5" style={{color: "red", textDecoration: "underline"}}>
+        <ErrorTitle variant="h5">
             Errors
-        </Typography>
+        </ErrorTitle>
         <span style={{paddingLeft: 20}}>
-            {errors.map(error =>
-                <span style={{color: "red"}}>
+            {errors.map((error, i) =>
+                <ErrorContent key={i}>
                     <span style={{textDecoration: "underline"}}>{error.message}</span><br/>
                     <Column style={{paddingLeft: 20}}>
                         {error.exception.stacktrace.split("\n").map((line, i) => <span
-                            style={{paddingLeft: i == 0 ? 0 : 20}}>
+                            style={{paddingLeft: i == 0 ? 0 : 20}} key = {i}>
                             {line}
                         </span>)}
                     </Column>
 
-            </span>)
+                </ErrorContent>)
             }
         </span>
 
@@ -151,94 +162,13 @@ function LogErrorUi({log}: { log: LogEvent }) {
 }
 
 
-function KeyValueTable({details}: { details: StringMap }) {
-    return <TableContainer component={Paper} style={{height: "fit-content", width: "unset"}}>
-        <Table>
-            <TableBody>
-                {recordToArray(details, (name, detail, index) => {
-                    const dividerColor = index % 2 == 1 ? Colors.grayDivider : Colors.grayDividerContrast
-                    const bottomDividerBorder = `1px solid ${dividerColor}`
-                    const topDividerBorder = index === 0 ? `1px solid ${Colors.grayDivider}` : undefined
-                    return <StyledTableRow key={name}>
-                        <StyledTableCell style={{borderRight: `1px solid ${primaryColor}`}}>{name}</StyledTableCell>
-                        <StyledTableCell>{String(detail)}</StyledTableCell>
-
-                        {/*<tr>*/}
-                        {/*    <td style={{*/}
-                        {/*        fontWeight: "bold", padding: 7, borderRight: `1px solid ${primaryColor}`,*/}
-                        {/*        borderBottom: bottomDividerBorder, borderTop: topDividerBorder,*/}
-                        {/*        borderLeft: `1px solid ${Colors.grayDivider}`*/}
-                        {/*    }}>{name}</td>*/}
-                        {/*    <td style={{*/}
-                        {/*        padding: 7,*/}
-                        {/*        borderBottom: bottomDividerBorder,*/}
-                        {/*        borderTop: topDividerBorder,*/}
-                        {/*        borderRight: `1px solid ${Colors.grayDivider}`*/}
-                        {/*    }}>{String(detail)}</td>*/}
-                        {/*</tr>*/}
-                    </StyledTableRow>
-                })}
-            </TableBody>
-        </Table>
-
-
-    </TableContainer>
-}
-
-function KeyValueTableOld({details}: { details: StringMap }) {
-    return <Column style={{marginTop: 5}}>
-        <table style={{borderSpacing: 0}}>
-            <tbody>
-            {recordToArray(details, (name, detail, index) => {
-                const dividerColor = index % 2 == 1 ? Colors.grayDivider : Colors.grayDividerContrast
-                const bottomDividerBorder = `1px solid ${dividerColor}`
-                const topDividerBorder = index === 0 ? `1px solid ${Colors.grayDivider}` : undefined
-                return <Fragment key={name}>
-                    <tr>
-                        <td style={{
-                            fontWeight: "bold", padding: 7, borderRight: `1px solid ${primaryColor}`,
-                            borderBottom: bottomDividerBorder, borderTop: topDividerBorder,
-                            borderLeft: `1px solid ${Colors.grayDivider}`
-                        }}>{name}</td>
-                        <td style={{
-                            padding: 7,
-                            borderBottom: bottomDividerBorder,
-                            borderTop: topDividerBorder,
-                            borderRight: `1px solid ${Colors.grayDivider}`
-                        }}>{String(detail)}</td>
-                    </tr>
-                </Fragment>
-            })}
-            </tbody>
-        </table>
-
-
-    </Column>
-}
-
-
-const StyledTableCell = styled(TableCell)(({theme}) => ({
-    [`&.${tableCellClasses.head}`]: {
-        // @ts-ignore
-        backgroundColor: theme.palette.common.black,
-        // @ts-ignore
-        color: theme.palette.common.white,
-    },
-    [`&.${tableCellClasses.body}`]: {
-        fontSize: 14,
-    },
-
+const ErrorTitle = styled(Typography)(({theme}) => ({
+    color: theme.palette.error.main,
+    textDecoration: "underline"
 }));
 
-const StyledTableRow = styled(TableRow)(({theme}) => ({
-    '&:nth-of-type(odd)': {
-        // @ts-ignore
-        backgroundColor: theme.palette.action.hover,
-    },
-    // hide last border
-    '&:last-child td, &:last-child th': {
-        border: 0,
-    },
+const ErrorContent = styled("span")(({theme}) => ({
+    color: theme.palette.error.main,
 }));
 
 
@@ -249,55 +179,36 @@ function LogLinesUi({logs}: { logs: LogLine[] }) {
     return <Row>
         <KeyValueTable details={details.toRecord(l => [l.key, l.value])}/>
         <Column style={{paddingLeft: 20, paddingTop: 10}}>
-            {messages.map(m => <MessageLogUi message={m}/>)}
+            {messages.map((m, i) => <MessageLogUi key = {i} message={m}/>)}
         </Column>
     </Row>
 }
 
+const SubtitleText = styled(Typography)(({theme}) => ({
+    color: theme.palette.text.disabled,
+    paddingRight: 5,
+    alignSelf: "center"
+}));
 
 function MessageLogUi({message}: { message: MessageLog }) {
-    const color = message.severity === "Error" ? "red" : message.severity === "Warn" ? "yellow" : textColor
+    const theme = useTheme()
+    const color = message.severity === "Error" ? theme.palette.error.main
+        : message.severity === "Warn" ? theme.palette.warning.main : theme.palette.text.primary
     return <Row>
-        <Typography variant={"subtitle2"} style={{paddingRight: 5, color: Colors.grayedOutText, alignSelf: "center"}}>
+        <SubtitleText variant={"subtitle2"}>
             {timeToString(message.time) + " "}
-        </Typography>
+        </SubtitleText>
         <span style={{color: color}}>
             {message.message}
         </span>
     </Row>
 }
 
-function dateToString(date: Dayjs): string {
-    return `${dayToString(date)} ${timeToString(date)}`
+declare module '@emotion/react' {
+    export interface Theme extends MaterialUiTheme {
+
+    }
 }
-
-function dayToString(date: Dayjs): string {
-    return `${twoChars(date.day())}/${twoChars(date.month() + 1)}/${twoChars(date.year())}`
-}
-
-function timeToString(date: Dayjs): string {
-    return `${simpleTimeToString(date)}:${threeChars(date.millisecond())}`
-}
-
-function simpleTimeToString(date: Dayjs): string {
-    return `${twoChars(date.hour())}:${twoChars(date.minute())}`
-}
-
-function twoChars(number: number): string {
-    const str = String(number)
-    if (str.length == 1) return `0${str}`
-    else return str.substring(str.length - 2, str.length)
-}
-
-function threeChars(number: number): string {
-    const str = String(number)
-    if (str.length == 1) return `00${str}`
-    if (str.length == 2) return `0${str}`
-    else return str
-}
-
-export const primaryColor = "#90caf9"
-
 export default App
 const json = `[{
     "name": "scheduleTasks",
