@@ -1,4 +1,4 @@
-import {recordToArray, StringMap} from "./Utils";
+import {recordToArray, StringMap} from "../utils/Utils";
 import {Paper, styled, Table, TableBody, TableCell, tableCellClasses, TableContainer, TableRow} from "@mui/material";
 import React from "react";
 

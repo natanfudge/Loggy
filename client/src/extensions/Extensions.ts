@@ -1,4 +1,4 @@
-import {TsKey} from "../ui/Utils";
+import {TsKey} from "../utils/Utils";
 
 export {}
 declare global {

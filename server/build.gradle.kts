@@ -10,7 +10,6 @@ buildscript {
     val objectboxVersion = "3.5.1"
     repositories {
         mavenCentral()
-        // Note: 2.9.0 and older are available on jcenter()
     }
     val brotliVersion = "1.9.0"
     dependencies {
@@ -99,7 +98,7 @@ tasks {
         doFirst {
             val source = clientBuildDir.toPath()
             Files.walk(source).forEach { path ->
-                if (!Files.isDirectory(path) && !path.startsWith(clientCompressedDir)) {
+                if (!Files.isDirectory(path) && !path.startsWith(clientCompressedDir) && !path.fileName.toString().endsWith(".map")) {
                     val relativePath = source.relativize(path)
                     val destPath = clientCompressedDir.resolve("$relativePath.br")
                     val compressed = compressFile(Files.readAllBytes(path))
@@ -110,22 +109,13 @@ tasks {
         }
     }
 
-    val runClientDev by registering {
-        group = "logviewer setup"
+    val syncClient by registering(Sync::class) {
+        dependsOn(compressClient)
+        val group = "logviewer setup"
+        from(clientCompressedDir)
+        into(sourceSets.main.get().output.resourcesDir!!.resolve("static"))
     }
 
-    val testAsdf by registering {
-        doLast {
-            println("halo")
-        }
-    }
-
-    val runDev by registering {
-        group = "run"
-        doFirst {
-
-        }
-    }
 }
 
 

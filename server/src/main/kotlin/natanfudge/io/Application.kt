@@ -6,7 +6,6 @@ import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.objectbox.BoxStore
 import io.objectbox.annotation.Entity
 import io.objectbox.annotation.Id
 
@@ -14,6 +13,7 @@ fun main() {
     val boxStore = MyObjectBox.builder()
         .name("log_viewer")
         .build()
+
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module, watchPaths = listOf("classes"))
         .start(wait = true)
 }

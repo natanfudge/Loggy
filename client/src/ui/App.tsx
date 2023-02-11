@@ -1,35 +1,13 @@
-import React, {Fragment, useState} from 'react'
+import React, {useState} from 'react'
 import '../App.css'
-import {
-    DetailLog,
-    ErrorLog,
-    isDetailLog,
-    isErrorLog,
-    isMessageLog,
-    LogEvent,
-    LogLine,
-    MessageLog,
-    parseLogEvents
-} from "../core/Logs";
-import {addAlphaToColor, Column, dayToString, Row, timeToString} from "./Utils";
-import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    createTheme,
-    CssBaseline,
-    Switch,
-    Theme as MaterialUiTheme,
-    ThemeProvider,
-    Typography,
-    useTheme
-} from "@mui/material";
-import {ExpandMore} from "@mui/icons-material";
+import {CircularProgress, createTheme, CssBaseline, Theme as MaterialUiTheme, ThemeProvider} from "@mui/material";
 import "../extensions/ExtensionsImpl"
-import styled from "@emotion/styled";
-import {KeyValueTable} from "./KeyValueTable";
-import {LongRightArrow} from "./LongRightArrow";
-import {Endpoint} from "./Endpoint";
+import {DaySelection, Endpoint, LogsTitle} from "./Endpoint";
+import {Column, usePromise} from "../utils/Utils";
+import {LoggingServer} from "../server/LoggingServer";
+import dayjs from "dayjs";
+import {LocalizationProvider} from "@mui/x-date-pickers";
+import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 
 
 export function AppWrapper() {
@@ -41,8 +19,10 @@ export function AppWrapper() {
     });
 
     return <ThemeProvider theme={darkTheme}>
-        <CssBaseline/>
-        <App theme={{setThemeDark: setIsDark, isDark}}/>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <CssBaseline/>
+            <App theme={{setThemeDark: setIsDark, isDark}}/>
+        </LocalizationProvider>
     </ThemeProvider>
 }
 
@@ -53,7 +33,25 @@ export interface ThemeState {
 }
 
 function App(props: { theme: ThemeState }) {
-    return <Endpoint theme={props.theme} endpoint={"getCrash"}/>
+    // const [day, setDay] = useState(dayjs())
+    // return <DaySelection day={{value: day, onChange: setDay}}/>
+    const endpoints = usePromise(LoggingServer.getEndpoints(), [])
+    if (endpoints === undefined) {
+        return <CircularProgress/>
+    } else {
+        return <AppWithEndpoints endpoints={endpoints} theme={props.theme}/>
+    }
+}
+
+function AppWithEndpoints(props: { theme: ThemeState, endpoints: string[] }) {
+    const [endpoint, setEndpoint] = useState("getCrash")
+    const [day, setDay] = useState(dayjs())
+    return <Column>
+        <LogsTitle endpoints={props.endpoints} endpoint={{value: endpoint, onChange: setEndpoint}}
+                   day={{value: day, onChange: setDay}} theme={props.theme}/>
+
+        <Endpoint theme={props.theme} endpoint={endpoint}/>
+    </Column>
 }
 
 export default App

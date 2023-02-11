@@ -3,7 +3,6 @@ import {CSSProperties} from "react";
 export function LongRightArrow(props: {color?: string, style?: CSSProperties}) {
     const color = props.color ?? "#000000"
     const style = props.style ?? {}
-    console.log("Color: " + color)
     return <svg style = {style} version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg"
                 x="0px" y="0px"
                 viewBox="0 0 201.8 85.2"  xmlSpace="preserve">
