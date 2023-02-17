@@ -3,10 +3,12 @@ import {Dayjs} from "dayjs";
 
 export namespace LoggingServer {
     export async function getEndpoints(): Promise<string[]>{
+        await new Promise(resolve => setTimeout(resolve, 2000))
         return ["getCrash","uploadCrash","scheduleTasks"]
     }
 
     export async function getLogs(endpoint: string, day: Day): Promise<LogEvent[]> {
+        await new Promise(resolve => setTimeout(resolve, 2000))
         const string = getLogsImpl(endpoint, day)
         return parseLogEvents(string)
     }

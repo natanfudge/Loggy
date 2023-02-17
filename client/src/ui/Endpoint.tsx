@@ -21,14 +21,15 @@ import {DesktopDatePicker} from "@mui/x-date-pickers";
 import {Dayjs} from "dayjs";
 import {Dropdown} from "./UiUtils";
 import {Day, LoggingServer} from "../server/LoggingServer";
-//TODO: day selection
-//TODO: endpoint selection
 
-export function Endpoint(props: { theme: ThemeState, endpoint: string, day: Day }) {
-    const logs = usePromise(LoggingServer.getLogs(props.endpoint, props.day), [props.endpoint, props.day])
+
+
+export function Endpoint(props: { theme: ThemeState, endpoint: string | undefined, day: Day }) {
+    const logs = props.endpoint === undefined ? undefined :
+        usePromise(LoggingServer.getLogs(props.endpoint, props.day), [props.endpoint, props.day])
     if (logs === undefined) {
         return <Typography>
-            TODO
+            <CircularProgress/>
         </Typography>
     } else {
         return <div>
@@ -46,7 +47,7 @@ const NoticableDivider = styled(Divider)(({theme}) => ({
 
 export function LogsTitle(props: {
     endpoints: string[] | undefined,
-    endpoint: State<string>,
+    endpoint: State<string | undefined>,
     day: State<Dayjs>,
     theme: ThemeState
 }) {
@@ -57,8 +58,9 @@ export function LogsTitle(props: {
                 <Typography style={{marginRight: 10, marginBottom: 4, alignSelf: "end"}}>
                     Logs for
                 </Typography>
+                {/*When props.endpoints is defined, props.endpoint.value must also be defined*/}
                 {props.endpoints === undefined ? <CircularProgress/> :
-                    <Dropdown options={props.endpoints} value={props.endpoint.value}
+                    <Dropdown options={props.endpoints} value={props.endpoint.value!!}
                               onValueChanged={props.endpoint.onChange}
                               style={{width: "max-content"}}/>}
 

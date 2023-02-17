@@ -66,9 +66,8 @@ function RoutedEndpointApp(props: {theme: ThemeState}) {
 
 function App(props: { theme: ThemeState, endpoint: string | undefined }) {
     const endpoints = usePromise(LoggingServer.getEndpoints(), [])
-    // const [endpoint, setEndpoint] = useState(props.endpoint ?? "getCrash")
     const [day, setDay] = useState(dayjs())
-    const endpoint = props.endpoint ?? "getCrash"
+    const endpoint = props.endpoint ?? (endpoints !== undefined? endpoints[0] : undefined)
     const navigate = useNavigate()
     return <Column>
         <LogsTitle endpoints={endpoints} endpoint={{value: endpoint, onChange: (endpoint) => navigate("/" + endpoint)}}
