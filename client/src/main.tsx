@@ -1,10 +1,17 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import App, {AppWrapper} from './ui/App'
-import './index.css'
+import {AppWrapper} from './ui/App'
+import {createBrowserRouter} from "react-router-dom";
+
+// const router = createBrowserRouter([
+//     {
+//         path: "/",
+//         element: A
+//     }
+// ])
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <AppWrapper />
-  </React.StrictMode>,
+    <React.StrictMode>
+        <AppWrapper/>
+    </React.StrictMode>,
 )

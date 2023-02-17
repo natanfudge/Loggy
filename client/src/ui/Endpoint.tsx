@@ -1,51 +1,37 @@
-import {addAlphaToColor, Column, dayToString, Row, State, timeToString, usePromise} from "../utils/Utils";
+import {addAlphaToColor, Column, Row, State, timeToString, usePromise} from "../utils/Utils";
 import {
     Accordion,
     AccordionDetails,
-    AccordionSummary, Divider,
+    AccordionSummary,
+    CircularProgress,
+    Divider,
     styled,
-    Switch, TableCell, tableCellClasses,
+    Switch,
     TextField,
     Typography,
     useTheme
 } from "@mui/material";
-import {
-    DetailLog,
-    ErrorLog,
-    isDetailLog,
-    isErrorLog,
-    isMessageLog,
-    LogEvent,
-    LogLine,
-    MessageLog,
-    parseLogEvents
-} from "../core/Logs";
+import {DetailLog, ErrorLog, isDetailLog, isErrorLog, isMessageLog, LogEvent, LogLine, MessageLog} from "../core/Logs";
 import {ExpandMore} from "@mui/icons-material";
 import {LongRightArrow} from "./LongRightArrow";
 import React, {Fragment} from "react";
 import {KeyValueTable} from "./KeyValueTable";
 import {ThemeState} from "./App";
 import {DesktopDatePicker} from "@mui/x-date-pickers";
-import dayjs, {Dayjs} from "dayjs";
+import {Dayjs} from "dayjs";
 import {Dropdown} from "./UiUtils";
-import {LoggingServer} from "../server/LoggingServer";
+import {Day, LoggingServer} from "../server/LoggingServer";
 //TODO: day selection
 //TODO: endpoint selection
 
-export function Endpoint(props: { theme: ThemeState, endpoint: string }) {
-    const logsJson = usePromise(LoggingServer.getLogs(props.endpoint),[props.endpoint])
-    if(logsJson === undefined){
-       return <Typography>
+export function Endpoint(props: { theme: ThemeState, endpoint: string, day: Day }) {
+    const logs = usePromise(LoggingServer.getLogs(props.endpoint, props.day), [props.endpoint, props.day])
+    if (logs === undefined) {
+        return <Typography>
             TODO
         </Typography>
-    } else{
-        const logs = parseLogEvents(logsJson)
-        // const endpoint = logs[0].name
-        // const day = dayToString(logs[0].startTime)
-
+    } else {
         return <div>
-            {/*<LogsTitle endpoint={endpoint} day={day} theme={props.theme}/>*/}
-
             <Column style={{width: "fit-content"}}>
                 {logs.map((l, i) => <LogEventAccordion key={i} log={l}/>)}
             </Column>
@@ -58,20 +44,27 @@ const NoticableDivider = styled(Divider)(({theme}) => ({
     backgroundColor: theme.palette.text.primary
 }));
 
-export function LogsTitle(props: {endpoints: string[], endpoint: State<string>, day: State<Dayjs>, theme: ThemeState }) {
+export function LogsTitle(props: {
+    endpoints: string[] | undefined,
+    endpoint: State<string>,
+    day: State<Dayjs>,
+    theme: ThemeState
+}) {
     return <Row style={{padding: 10, paddingLeft: 30}}>
 
         <Column>
-            <Row style = {{alignItems: "center"}}>
-                <Typography style = {{marginRight: 10, marginBottom: 4, alignSelf: "end"}}>
+            <Row style={{alignItems: "center"}}>
+                <Typography style={{marginRight: 10, marginBottom: 4, alignSelf: "end"}}>
                     Logs for
                 </Typography>
-                <Dropdown options={props.endpoints} value={props.endpoint.value} onValueChanged={props.endpoint.onChange}
-                          style={{width: "max-content"}}/>
-            </Row>
-            <NoticableDivider style = {{marginTop: -1}}/>
-        </Column>
+                {props.endpoints === undefined ? <CircularProgress/> :
+                    <Dropdown options={props.endpoints} value={props.endpoint.value}
+                              onValueChanged={props.endpoint.onChange}
+                              style={{width: "max-content"}}/>}
 
+            </Row>
+            <NoticableDivider style={{marginTop: -1}}/>
+        </Column>
 
 
         <div style={{flexGrow: 1}}/>
@@ -90,9 +83,8 @@ export function DaySelection(props: { day: State<Dayjs> }) {
                                   if (value !== null) props.day.onChange(value)
                               })}
                               value={props.day.value}
-                              renderInput={(params) => <TextField {...params}  style = {{width: "8rem"}}/>}/>
+                              renderInput={(params) => <TextField {...params} style={{width: "8rem"}}/>}/>
 }
-
 
 
 function ThemeSwitch({theme}: { theme: ThemeState }) {
@@ -100,7 +92,7 @@ function ThemeSwitch({theme}: { theme: ThemeState }) {
         <Typography style={{alignSelf: "center"}}>
             {theme.isDark ? "Dark" : "Light"}
         </Typography>
-        <Switch sx = {{alignSelf: "center"}} checked={!theme.isDark} onChange={(event, checked) => {
+        <Switch sx={{alignSelf: "center"}} checked={!theme.isDark} onChange={(event, checked) => {
             theme.setThemeDark(!checked)
         }}/>
     </ThemeBorder>

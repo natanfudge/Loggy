@@ -1,13 +1,13 @@
 import React, {useState} from 'react'
-import '../App.css'
 import {CircularProgress, createTheme, CssBaseline, Theme as MaterialUiTheme, ThemeProvider} from "@mui/material";
 import "../extensions/ExtensionsImpl"
-import {DaySelection, Endpoint, LogsTitle} from "./Endpoint";
+import {Endpoint, LogsTitle} from "./Endpoint";
 import {Column, usePromise} from "../utils/Utils";
-import {LoggingServer} from "../server/LoggingServer";
+import {dayJsToDay, LoggingServer} from "../server/LoggingServer";
 import dayjs from "dayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
+import {BrowserRouter, Route, Routes, useNavigate, useParams} from "react-router-dom";
 
 
 export function AppWrapper() {
@@ -21,7 +21,9 @@ export function AppWrapper() {
     return <ThemeProvider theme={darkTheme}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <CssBaseline/>
-            <App theme={{setThemeDark: setIsDark, isDark}}/>
+            <BrowserRouter>
+                <RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>
+            </BrowserRouter>
         </LocalizationProvider>
     </ThemeProvider>
 }
@@ -32,25 +34,47 @@ export interface ThemeState {
     setThemeDark: (isDark: boolean) => void
 }
 
-function App(props: { theme: ThemeState }) {
-    // const [day, setDay] = useState(dayjs())
-    // return <DaySelection day={{value: day, onChange: setDay}}/>
-    const endpoints = usePromise(LoggingServer.getEndpoints(), [])
-    if (endpoints === undefined) {
-        return <CircularProgress/>
-    } else {
-        return <AppWithEndpoints endpoints={endpoints} theme={props.theme}/>
-    }
+
+function RoutedApp(props: { theme: ThemeState }) {
+    return <Routes>
+        <Route path = "/" element={<App theme={props.theme} endpoint={undefined}/>}/>
+        <Route path = "/:endpoint" element={<RoutedEndpointApp theme={props.theme}/>}/>
+        <Route path = "*" element = {"Nothing Here"}/>
+    </Routes>
+    // const endpoints = usePromise(LoggingServer.getEndpoints(), [])
+    // if (endpoints === undefined) {
+    //     return <CircularProgress/>
+    // } else {
+    //     return <AppWithEndpoints endpoints={endpoints} theme={props.theme}/>
+    // }
 }
 
-function AppWithEndpoints(props: { theme: ThemeState, endpoints: string[] }) {
-    const [endpoint, setEndpoint] = useState("getCrash")
+function RoutedEndpointApp(props: {theme: ThemeState}) {
+    const {endpoint} = useParams<"endpoint">()
+    return <App theme = {props.theme} endpoint={endpoint}/>
+}
+
+
+// function App(props: { theme: ThemeState }) {
+//     const endpoints = usePromise(LoggingServer.getEndpoints(), [])
+//     if (endpoints === undefined) {
+//         return <CircularProgress/>
+//     } else {
+//         return <AppWithEndpoints endpoints={endpoints} theme={props.theme}/>
+//     }
+// }
+
+function App(props: { theme: ThemeState, endpoint: string | undefined }) {
+    const endpoints = usePromise(LoggingServer.getEndpoints(), [])
+    // const [endpoint, setEndpoint] = useState(props.endpoint ?? "getCrash")
     const [day, setDay] = useState(dayjs())
+    const endpoint = props.endpoint ?? "getCrash"
+    const navigate = useNavigate()
     return <Column>
-        <LogsTitle endpoints={props.endpoints} endpoint={{value: endpoint, onChange: setEndpoint}}
+        <LogsTitle endpoints={endpoints} endpoint={{value: endpoint, onChange: (endpoint) => navigate("/" + endpoint)}}
                    day={{value: day, onChange: setDay}} theme={props.theme}/>
 
-        <Endpoint theme={props.theme} endpoint={endpoint}/>
+        <Endpoint day={dayJsToDay(day)} theme={props.theme} endpoint={endpoint}/>
     </Column>
 }
 
