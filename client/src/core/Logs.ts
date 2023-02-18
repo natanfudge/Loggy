@@ -1,15 +1,6 @@
 import dayjs, {Dayjs} from "dayjs";
 
 
-export function parseLogEvents(json: string): LogEvent[] {
-    return JSON.parse(json, (k, v) => {
-        if (typeof v === "number" && k.toLowerCase().endsWith("time")) {
-            return dayjs(v)
-        } else {
-            return v
-        }
-    })
-}
 
 export interface LogEvent {
     name: string

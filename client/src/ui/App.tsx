@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {Fragment, useState} from 'react'
 import {createTheme, CssBaseline, Theme as MaterialUiTheme, ThemeProvider} from "@mui/material";
 import "../extensions/ExtensionsImpl"
 import {Endpoint, LogsTitle, ThemeSwitch} from "./Endpoint";
@@ -42,12 +42,6 @@ function RoutedApp(props: { theme: ThemeState }) {
         <Route path="/:endpoint" element={<RoutedEndpointApp theme={props.theme}/>}/>
         <Route path="*" element={"Nothing Here"}/>
     </Routes>
-    // const endpoints = usePromise(LoggingServer.getEndpoints(), [])
-    // if (endpoints === undefined) {
-    //     return <CircularProgress/>
-    // } else {
-    //     return <AppWithEndpoints endpoints={endpoints} theme={props.theme}/>
-    // }
 }
 
 function RoutedEndpointApp(props: { theme: ThemeState }) {
@@ -55,25 +49,15 @@ function RoutedEndpointApp(props: { theme: ThemeState }) {
     return <App theme={props.theme} endpoint={endpoint}/>
 }
 
-
-// function App(props: { theme: ThemeState }) {
-//     const endpoints = usePromise(LoggingServer.getEndpoints(), [])
-//     if (endpoints === undefined) {
-//         return <CircularProgress/>
-//     } else {
-//         return <AppWithEndpoints endpoints={endpoints} theme={props.theme}/>
-//     }
-// }
-
 function App(props: { theme: ThemeState, endpoint: string | undefined }) {
     // Changed when a refresh is requested, to rerun getEndpoints()
-    const [refreshMarker,setRefreshMarker] = useState(false)
+    const [refreshMarker, setRefreshMarker] = useState(false)
     const endpoints = usePromise(LoggingServer.getEndpoints(), [])
     const [day, setDay] = useState(dayjs())
     const endpoint = props.endpoint ?? (endpoints !== undefined ? endpoints[0] : undefined)
     const navigate = useNavigate()
     const screen = useScreenSize()
-    return <Column style={{height: "100%"}}>
+    return <Column style={{height: "100%"}} className="material-text">
         <LogsTitle endpoints={endpoints} endpoint={{value: endpoint, onChange: (endpoint) => navigate("/" + endpoint)}}
                    day={{value: day, onChange: setDay}} theme={props.theme}
                    onRefresh={() => {
@@ -82,9 +66,13 @@ function App(props: { theme: ThemeState, endpoint: string | undefined }) {
         />
 
         <Endpoint day={dayJsToDay(day)} theme={props.theme} endpoint={endpoint} refreshMarker={refreshMarker}/>
-        <div style = {{flexGrow: 1}}/>
-        {screen.isPhone && <ThemeSwitch theme={props.theme}/>}
-        <div style = {{height: 10}}/>
+
+        {screen.isPhone && <Fragment>
+            <div style={{flexGrow: 1, height: 10}}/>
+            <ThemeSwitch theme={props.theme}/>
+            <div style={{height: 10}}/>
+        </Fragment>}
+
     </Column>
 }
 

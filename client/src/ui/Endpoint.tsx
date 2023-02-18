@@ -4,7 +4,10 @@ import {
     AccordionDetails,
     AccordionSummary,
     CircularProgress,
-    Divider, IconButton,
+    Divider,
+    IconButton,
+    List,
+    Pagination,
     styled,
     Switch,
     TextField,
@@ -14,7 +17,7 @@ import {
 import {DetailLog, ErrorLog, isDetailLog, isErrorLog, isMessageLog, LogEvent, LogLine, MessageLog} from "../core/Logs";
 import {ExpandMore, Refresh} from "@mui/icons-material";
 import {LongRightArrow} from "./LongRightArrow";
-import React, {Fragment} from "react";
+import React, {Fragment, useState} from "react";
 import {KeyValueTable} from "./KeyValueTable";
 import {ThemeState} from "./App";
 import {DesktopDatePicker} from "@mui/x-date-pickers";
@@ -24,22 +27,45 @@ import {Day, LoggingServer} from "../server/LoggingServer";
 import {useScreenSize} from "../utils/ScreenSize";
 
 
-
 export function Endpoint(props: { theme: ThemeState, endpoint: string | undefined, day: Day, refreshMarker: boolean }) {
-    const logs = props.endpoint === undefined ? undefined :
-        usePromise(LoggingServer.getLogs(props.endpoint, props.day), [props.endpoint, props.day, props.refreshMarker])
-    if (logs === undefined) {
+    const [page, setPage] = useState(0)
+    const response = props.endpoint === undefined ? undefined :
+        usePromise(LoggingServer.getLogs(props.endpoint, props.day, page), [props.endpoint, props.day, props.refreshMarker, page])
+    if (response === undefined) {
         return <Typography>
             <CircularProgress/>
         </Typography>
     } else {
-        //TODO: scrolling when there are many logs
-        return <Column style={{width: "fit-content"}}>
-                {logs.map((l, i) => <LogEventAccordion key={i} log={l}/>)}
-            </Column>
+        return <Fragment>
+            <List style={{maxHeight: "100%", overflow: "auto"}}>
+                {response.logs.map((l, i) => <LogEventAccordion key={i} log={l}/>)}
+            </List>
+            {response.pageCount > 1 &&
+                // Pages in Pagination are 0-indexed
+                <Pagination count={response.pageCount} page={page + 1}
+                            onChange={(_, p) => setPage(p - 1)}
+                            style = {{alignSelf: "center"}}
+                />}
+        </Fragment>
     }
-
 }
+
+// const Row = ({ index, style }: {index: number, style: CSSProperties}) => (
+//     <div style={style}>Row {index}</div>
+// );
+//
+// const Example = () => (
+//     <FixedSizeList
+//         height={150}
+//         itemCount={1000}
+//         itemSize={35}
+//         width={300}
+//     >
+//         {({index, style}: { index: number, style: CSSProperties }) => (
+//             <div style={style}>Row {index}</div>
+//         )}
+//     </FixedSizeList>
+// );
 
 const NoticableDivider = styled(Divider)(({theme}) => ({
     backgroundColor: theme.palette.text.primary
@@ -53,11 +79,11 @@ export function LogsTitle(props: {
     theme: ThemeState
 }) {
     const screen = useScreenSize()
-    return <Row style={{padding: 10, paddingLeft: screen.isPhone? undefined : 30}}>
+    return <Row style={{padding: 10, paddingLeft: screen.isPhone ? undefined : 30}}>
 
-        <Column style = {{paddingLeft: screen.isPhone? 10: undefined}}>
+        <Column style={{paddingLeft: screen.isPhone ? 10 : undefined}}>
             <Row style={{alignItems: "center"}}>
-                { !screen.isPhone && <Typography style={{marginRight: 10, marginBottom: 4, alignSelf: "end"}}>
+                {!screen.isPhone && <Typography style={{marginRight: 10, marginBottom: 4, alignSelf: "end"}}>
                     Logs for
                 </Typography>}
                 {/*When props.endpoints is defined, props.endpoint.value must also be defined*/}
@@ -67,11 +93,10 @@ export function LogsTitle(props: {
                               style={{width: "max-content"}}/>}
 
 
-
             </Row>
             <NoticableDivider style={{marginTop: -1}}/>
         </Column>
-        <IconButton style = {{height: "fit-content", alignSelf: "center"}} onClick={props.onRefresh}>
+        <IconButton style={{height: "fit-content", alignSelf: "center"}} onClick={props.onRefresh}>
             <Refresh/>
         </IconButton>
 
@@ -106,6 +131,7 @@ export function ThemeSwitch({theme}: { theme: ThemeState }) {
 const ThemeBorder = styled(Row)(({theme}) => ({
     border: `1px solid ${addAlphaToColor(theme.palette.primary.dark, 0.2)}`,
     paddingLeft: "10px",
+    // marginTop: "5px",
     marginRight: "5px",
     borderRadius: "10px",
     width: "fit-content",
@@ -118,40 +144,35 @@ function LogEventAccordion({log}: { log: LogEvent }) {
     const errored = log.logs.some(l => isErrorLog(l))
     const erroredSuffix = errored ? " - ERROR" : ""
     const textColor = errored ? theme.palette.error.main : theme.palette.text.primary
-    return <Accordion style={{width: "100%"}} defaultExpanded={false}>
-        <AccordionSummary
-            expandIcon={<ExpandMore/>}
-            aria-controls="panel1a-content"
-            id="panel1a-header"
-        >
-            <Row style={{width: "100%"}}>
-                <Row style={{paddingRight: 10}}>
-                    <Typography style={{color: textColor}}>
-                        {timeToString(log.startTime)}
-                    </Typography>
-                    <LongRightArrow
-                        style={{height: "20px", width: "46px", marginLeft: 4, marginRight: 2, alignSelf: "center"}}
-                        color={textColor}/>
-                    <Typography style={{color: textColor}}>
-                        {timeToString(log.endTime) + ` (${log.endTime.millisecond() - log.startTime.millisecond()}ms total)` + erroredSuffix}
-                    </Typography>
-                </Row>
-            </Row>
-
-        </AccordionSummary>
+    return <Accordion style={{width: "fit-content"}} defaultExpanded={false}>
+        <LogEventSummary expandIcon={<ExpandMore/>}>
+            {timeToString(log.startTime)}
+            {/*Style must be passed explicitly to work properly with the svg*/}
+            <LongRightArrow style={durationArrowStyle} color={textColor}/>
+            <span style={{color: textColor}}>
+                {timeToString(log.endTime) + ` (${log.endTime.millisecond() - log.startTime.millisecond()}ms total)` + erroredSuffix}
+            </span>
+        </LogEventSummary>
         <AccordionDetails>
             <LogEventContent log={log}/>
         </AccordionDetails>
     </Accordion>
 }
 
+const LogEventSummary = styled(AccordionSummary)`
+  display: flex;
+  flex-direction: row;
+  padding-right: 10px;
+  width: 100%;
+`
+const durationArrowStyle = {height: "20px", width: "46px", marginLeft: 4, marginRight: 2, alignSelf: "center"}
 
 function LogEventContent({log}: { log: LogEvent }) {
     const screen = useScreenSize()
-    return <Column  style={{padding: screen.isPhone ? 0 : 30, paddingTop: 0}}>
-            <LogLinesUi logs={log.logs}/>
-            <LogErrorUi log={log}/>
-        </Column>
+    return <Column style={{padding: screen.isPhone ? 0 : 30, paddingTop: 0}}>
+        <LogLinesUi logs={log.logs}/>
+        <LogErrorUi log={log}/>
+    </Column>
 }
 
 function LogErrorUi({log}: { log: LogEvent }) {
@@ -197,9 +218,9 @@ function LogLinesUi({logs}: { logs: LogLine[] }) {
 
     const screen = useScreenSize()
 
-    return <div style = {{display: "flex", flexDirection: screen.isPhone? "column" : "row"}}>
+    return <div style={{display: "flex", flexDirection: screen.isPhone ? "column" : "row"}}>
         <KeyValueTable details={details.toRecord(l => [l.key, l.value])}/>
-        <Column style={{paddingLeft: screen.isPhone? 0: 20, paddingTop: 10}}>
+        <Column style={{paddingLeft: screen.isPhone ? 0 : 20, paddingTop: 10}}>
             {messages.map((m, i) => <MessageLogUi key={i} message={m}/>)}
         </Column>
     </div>

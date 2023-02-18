@@ -9,13 +9,11 @@ export function KeyValueTable({details}: { details: StringMap }) {
                 {recordToArray(details, (name, detail) => {
                     return <StyledTableRow key={name}>
                         <LeftmostStyledTableCell>{name}</LeftmostStyledTableCell>
-                        <StyledTableCell>{String(detail)}</StyledTableCell>
+                        <RightmostStyledTableCell>{String(detail)}</RightmostStyledTableCell>
                     </StyledTableRow>
                 })}
             </TableBody>
         </Table>
-
-
     </TableContainer>
 }
 
@@ -27,11 +25,15 @@ export const StyledTableCell = styled(TableCell)(({theme}) => ({
     [`&.${tableCellClasses.body}`]: {
         fontSize: 14,
     },
-
 }));
 export const LeftmostStyledTableCell = styled(StyledTableCell)(({theme}) => ({
-    borderRight: `1px solid ${theme.palette.primary.main}`
+    borderRight: `1px solid ${theme.palette.primary.main}`,
+    whiteSpace: "nowrap",
 }));
+
+export const RightmostStyledTableCell = styled(StyledTableCell)`
+    line-break: anywhere
+`
 
 export const StyledTableRow = styled(TableRow)(({theme}) => ({
     '&:nth-of-type(odd)': {
@@ -40,5 +42,6 @@ export const StyledTableRow = styled(TableRow)(({theme}) => ({
     // hide last border
     '&:last-child td, &:last-child th': {
         borderBottom: 0,
+
     },
 }));

@@ -1,9 +1,9 @@
-import {LogEvent, parseLogEvents} from "../core/Logs";
-import {Dayjs} from "dayjs";
+import {LogEvent} from "../core/Logs";
+import dayjs, {Dayjs} from "dayjs";
 
 export namespace LoggingServer {
-     async function getEndpointsImpl(): Promise<string[]> {
-        await new Promise(resolve => setTimeout(resolve, 2000))
+    async function getEndpointsImpl(): Promise<string[]> {
+        // await new Promise(resolve => setTimeout(resolve, 2000))
         return ["getCrash", "uploadCrash", "scheduleTasks"]
     }
 
@@ -16,17 +16,29 @@ export namespace LoggingServer {
         return endpoints!!
     }
 
-    export async function getLogs(endpoint: string, day: Day): Promise<LogEvent[]> {
-        await new Promise(resolve => setTimeout(resolve, 2000))
-        const string = getLogsImpl(endpoint, day)
-        return parseLogEvents(string)
+    export const PageSize = 18;
+
+    export async function getLogs(endpoint: string, day: Day, page: number): Promise<LogResponse> {
+        return getLogsImpl(endpoint, day, page)
     }
 
-    function getLogsImpl(endpoint: string, day: Day): string {
+    function getLogsImpl(endpoint: string, day: Day, page: number): LogResponse {
+        const string = getLogsTestData(endpoint, day)
+        const parsed = parseLogEvents(string)
+        const pages = Math.ceil(parsed.length / PageSize)
+        const filtered: LogResponse = {
+            pageCount: pages,
+            // Get only events in the relevant page, 20 items per page
+            logs: parsed.filter((_, i) => i >= page * PageSize && i < ((page + 1) * PageSize))
+        }
+        return filtered
+    }
+
+    function getLogsTestData(endpoint: string, day: Day): string {
         switch (endpoint) {
             case "getCrash" :
-                if (day.day === 17) return getCrash1
-                else return getCrash2
+                if (day.day === 17) return getCrash2
+                else return getCrash1
             case "uploadCrash" :
                 return uploadCrash
             case  "scheduleTasks" :
@@ -35,6 +47,32 @@ export namespace LoggingServer {
                 return uploadCrash
         }
     }
+}
+
+function parseLogResponse(json: string): LogResponse {
+    return JSON.parse(json, (k, v) => {
+        if (typeof v === "number" && k.toLowerCase().endsWith("time")) {
+            return dayjs(v)
+        } else {
+            return v
+        }
+    })
+}
+
+function parseLogEvents(json: string): LogEvent[] {
+    return JSON.parse(json, (k, v) => {
+        if (typeof v === "number" && k.toLowerCase().endsWith("time")) {
+            return dayjs(v)
+        } else {
+            return v
+        }
+    })
+}
+
+
+export interface LogResponse {
+    pageCount: number,
+    logs: LogEvent[]
 }
 
 export function dayJsToDay(dayjs: Dayjs): Day {
@@ -65,7 +103,111 @@ const uploadCrash = `[
 //TODO: 2 crashes on each, getCrash have a speperate one for each day
 const getCrash1 = `[
 {"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
-{"name":"/{id}/raw.txt","startTime":1676561299944,"endTime":1676561299966,"logs":[{"type":"DetailLog","key":"ID","value":"c36ff738-63ec-43a4-b28a-7712ebf2f3da"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]}
+{"name":"/{id}/raw.txt","startTime":1676561299944,"endTime":1676561299966,"logs":[{"type":"DetailLog","key":"ID","value":"c36ff738-63ec-43a4-b28a-7712ebf2f3da"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676561299944,"endTime":1676561299966,"logs":[{"type":"DetailLog","key":"ID","value":"c36ff738-63ec-43a4-b28a-7712ebf2f3da"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676561299944,"endTime":1676561299966,"logs":[{"type":"DetailLog","key":"ID","value":"c36ff738-63ec-43a4-b28a-7712ebf2f3da"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]},
+{"name":"/{id}/raw.txt","startTime":1676558596314,"endTime":1676558596340,"logs":[{"type":"DetailLog","key":"ID","value":"df0864af-32f8-4910-9666-a1639b43942d"},{"type":"DetailLog","key":"Response","value":"class io.github.crashy.crashlogs.api.GetCrashResponse$Success"}]}
+
 ]`
 
 const getCrash2 = `[
