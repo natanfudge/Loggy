@@ -4,23 +4,14 @@ import org.fusesource.jansi.Ansi
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
-import kotlin.io.path.appendText
-import kotlin.io.path.createFile
-import kotlin.io.path.exists
-
-interface LogRenderer {
-    fun render(log: LogEvent)
-}
 
 
-object ConsoleLogRenderer : LogRenderer {
-    override fun render(log: LogEvent) {
+@PublishedApi internal object ConsoleLogRenderer {
+    fun render(log: LogEvent) {
         val rendered = log.renderToString(colored = true)
         if (rendered != "") println(rendered)
     }
 }
-
-
 
 private fun LogEvent.renderToString(colored: Boolean): String {
     if (logs.isEmpty()) return ""
@@ -73,7 +64,10 @@ private fun LogEvent.renderToString(colored: Boolean): String {
             append("\t${"Exceptions".bold()} {\n")
             for (message in exceptions) {
                 append("\t\t")
-                append((message.exception.stackTraceToString().replace("\n", "\n\t\t") + "\n").colored(Ansi.Color.RED))
+                for(element in message.exception){
+                    append((element.stacktrace.replace("\n", "\n\t\t") + "\n").colored(Ansi.Color.RED))
+                }
+
             }
             append("\t}\n")
         }
@@ -95,6 +89,6 @@ private val Int.threeCharacters
     }
 
 private fun Instant.systemTimeOfDay(): String = timeInSystem().timeOfDay()
-fun Instant.systemDate(): String = with(timeInSystem()) {
+internal fun Instant.systemDate(): String = with(timeInSystem()) {
     "${dayOfMonth.twoCharacters}/${monthValue.twoCharacters}/$year"
 }

@@ -15,7 +15,9 @@ export function usePromise<T>(promise: Promise<NonNullable<T>> | T, deps: unknow
     const [result, setResult] = useState<T | undefined>(undefined)
     useEffect(() => {
         setResult(undefined);
-        void Promise.resolve(promise).then(setResult)
+        void Promise.resolve(promise).then((value => {
+            setResult(value)
+        }))
     }, deps)
     return result
 }

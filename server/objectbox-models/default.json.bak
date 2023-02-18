@@ -4,34 +4,63 @@
   "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
   "entities": [
     {
-      "id": "1:8839141575972601853",
-      "lastPropertyId": "2:1376947530726005155",
-      "name": "User",
+      "id": "2:8427937818337454191",
+      "lastPropertyId": "5:5247588455056183688",
+      "name": "ObjectBoxLogEvent",
       "properties": [
         {
-          "id": "1:7258443613834632284",
+          "id": "1:2450308111518365238",
           "name": "id",
           "type": 6,
           "flags": 1
         },
         {
-          "id": "2:1376947530726005155",
+          "id": "2:5908930620054630975",
           "name": "name",
-          "type": 9
+          "indexId": "2:5263248159754848762",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "3:6367796519333607472",
+          "name": "startTime",
+          "indexId": "3:4371604358165673140",
+          "type": 10,
+          "flags": 8
+        },
+        {
+          "id": "4:5070282660290826394",
+          "name": "endTime",
+          "type": 6
+        },
+        {
+          "id": "5:5247588455056183688",
+          "name": "logsProtobuf",
+          "type": 23
         }
       ],
       "relations": []
     }
   ],
-  "lastEntityId": "1:8839141575972601853",
-  "lastIndexId": "0:0",
+  "lastEntityId": "3:1522998319132771084",
+  "lastIndexId": "3:4371604358165673140",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",
   "modelVersion": 5,
   "modelVersionParserMinimum": 5,
-  "retiredEntityUids": [],
-  "retiredIndexUids": [],
-  "retiredPropertyUids": [],
+  "retiredEntityUids": [
+    8839141575972601853,
+    1522998319132771084
+  ],
+  "retiredIndexUids": [
+    2047598390472299194
+  ],
+  "retiredPropertyUids": [
+    7258443613834632284,
+    1376947530726005155,
+    1697155542038444141,
+    5124275569861807893
+  ],
   "retiredRelationUids": [],
   "version": 1
 }

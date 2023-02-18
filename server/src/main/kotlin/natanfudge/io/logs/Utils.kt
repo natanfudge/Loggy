@@ -7,10 +7,9 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.time.Instant
-import java.util.*
 
 
-object InstantSerializer : KSerializer<Instant> {
+internal object InstantSerializer : KSerializer<Instant> {
     override val descriptor: SerialDescriptor = Long.serializer().descriptor
 
     override fun deserialize(decoder: Decoder): Instant = Instant.ofEpochMilli(decoder.decodeLong())
@@ -18,25 +17,53 @@ object InstantSerializer : KSerializer<Instant> {
     override fun serialize(encoder: Encoder, value: Instant) = encoder.encodeLong(value.toEpochMilli())
 }
 
+//data class (
+//    val causeChain: List<>
+//)
 
-@Suppress("unused")
+internal typealias SerializableThrowable = List<SerializableThrowableElement>
+
 @Serializable
-class ThrowableJsonRepresentation(val className: String, val message: String, val stacktrace: String)
+internal data class SerializableThrowableElement(val className: String, val message: String, val stacktrace: String)
 
-object OneWayThrowableSerializer : KSerializer<Throwable> {
-    private val serializer = ThrowableJsonRepresentation.serializer()
-    override val descriptor: SerialDescriptor = serializer.descriptor
-
-    override fun deserialize(decoder: Decoder): Throwable {
-        throw UnsupportedOperationException("OneWayThrowableSerializer only serializes")
+@PublishedApi internal fun Throwable.toSerializable(): SerializableThrowable {
+    val elements = mutableListOf<SerializableThrowableElement>()
+    var current: Throwable? = this
+    while (current != null) {
+        elements.add(current.selfToSerializable())
+        current = current.cause
     }
-
-    override fun serialize(encoder: Encoder, value: Throwable) {
-        serializer.serialize(
-            encoder,
-            ThrowableJsonRepresentation(value::class.qualifiedName!!, value.message ?: "", value.stackTraceToString())
-        )
-    }
-
+    return elements
 }
+
+private fun Throwable.selfToSerializable() : SerializableThrowableElement {
+    return SerializableThrowableElement(this::class.qualifiedName!!, message ?: "", stackTraceToString())
+}
+
+//@Suppress("unused")
+//@Serializable
+//internal class ThrowableJsonRepresentation()
+//
+//internal object OneWayThrowableSerializer : KSerializer<Throwable> {
+//    private val serializer = ListSerializer(ThrowableJsonRepresentation.serializer())
+//    override val descriptor: SerialDescriptor = serializer.descriptor
+//
+//    override fun deserialize(decoder: Decoder): Throwable {
+//        throw UnsupportedOperationException("OneWayThrowableSerializer only serializes")
+//    }
+//
+//    override fun serialize(encoder: Encoder, value: Throwable) {
+//        val exceptions = mutableListOf<Throwable>()
+//        var current: Throwable? = value
+//        while (current != null) {
+//            exceptions.add(current)
+//            current = current.cause
+//        }
+//        serializer.serialize(
+//            encoder,
+//            ThrowableJsonRepresentation(value::class.qualifiedName!!, value.message ?: "", value.stackTraceToString())
+//        )
+//    }
+//
+//}
 

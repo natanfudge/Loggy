@@ -1,7 +1,6 @@
 import com.aayushatharva.brotli4j.Brotli4jLoader
 import com.aayushatharva.brotli4j.encoder.Encoder
 import com.github.gradle.node.npm.task.NpmTask
-import java.nio.file.Files
 
 
 buildscript {
@@ -18,7 +17,7 @@ plugins {
     alias(libs.plugins.ktor)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.gradle.node)
-    id ("maven-publish")
+    id("maven-publish")
 }
 
 apply(plugin = "io.objectbox") // Apply last.
@@ -31,6 +30,13 @@ application {
 
 kotlin {
     jvmToolchain(17)
+    explicitApi()
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        freeCompilerArgs += "-Xcontext-receivers"
+    }
 }
 
 repositories {
@@ -47,10 +53,18 @@ node {
     nodeProjectDir.set(clientDir)
 }
 
+val testApp = sourceSets.create("testApp") {
+    kotlin.srcDir("src/testApp/kotlin")
+    val main = sourceSets.main.get()
+    val mainOutput = sourceSets.main.get().output
+    compileClasspath += main.compileClasspath + mainOutput
+    runtimeClasspath += main.runtimeClasspath + mainOutput
+}
+
+
 tasks {
 
     val clientBuildDir = clientDir.resolve("dist")
-    val clientCompressedDir = Files.createDirectories(clientBuildDir.resolve("compressed").toPath())
 
     /**
      * Name: Build Client
@@ -66,6 +80,7 @@ tasks {
         inputs.dir("../client/public")
         inputs.file("../client/package.json")
         inputs.file("../client/tsconfig.json")
+        inputs.file("../client/vite.config.ts")
 
         outputs.dir(clientBuildDir)
 
@@ -77,7 +92,7 @@ tasks {
         dependsOn(buildClient)
         group = "logviewer setup"
         from(clientBuildDir)
-        into(sourceSets.main.get().output.resourcesDir!!.resolve("static"))
+        into(sourceSets.main.get().output.resourcesDir!!.resolve("__log_viewer__/static"))
     }
 
     publish.get().dependsOn(syncClient)

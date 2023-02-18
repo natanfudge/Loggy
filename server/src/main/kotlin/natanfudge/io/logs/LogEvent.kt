@@ -1,4 +1,4 @@
-@file:UseSerializers(InstantSerializer::class, OneWayThrowableSerializer::class)
+@file:UseSerializers(InstantSerializer::class)
 
 package natanfudge.io.logs
 
@@ -13,10 +13,10 @@ import java.time.Instant
 
 
 @Serializable
-data class LogEvent(val name: String, val startTime: Instant, val endTime: Instant, val logs: List<LogLine>)
+internal data class LogEvent(val name: String, val startTime: Instant, val endTime: Instant, val logs: List<LogLine>)
 
 @Serializable
-sealed interface LogLine {
+@PublishedApi internal sealed interface LogLine {
     @Serializable
     sealed interface Message : LogLine {
         val message: String
@@ -33,7 +33,7 @@ sealed interface LogLine {
 
         @Serializable
         @SerialName("ErrorLog")
-        data class Error(override val message: String, override val time: Instant, val exception: Throwable) :
+        data class Error(override val message: String, override val time: Instant, val exception: SerializableThrowable) :
             Message {
             override val severity: Severity = Severity.Error
         }

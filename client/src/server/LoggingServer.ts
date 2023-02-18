@@ -1,52 +1,73 @@
 import {LogEvent} from "../core/Logs";
 import dayjs, {Dayjs} from "dayjs";
+import {SimplePromiseMemoryCache} from "../ui/SimplePromiseMemoryCache";
+import {PromiseMemoryCache} from "../ui/PromiseMemoryCache";
+import utc from 'dayjs/plugin/utc'
+
+dayjs.extend(utc)
 
 export namespace LoggingServer {
-    async function getEndpointsImpl(): Promise<string[]> {
-        // await new Promise(resolve => setTimeout(resolve, 2000))
-        return ["getCrash", "uploadCrash", "scheduleTasks"]
-    }
+    const origin = window.location.origin.startsWith("http://localhost")
+    || window.location.origin.startsWith("http://127.0.0.1") ? "http://localhost:80" : window.location.origin;
 
-    let endpoints: string[] | undefined = undefined
+
+    async function fetchEndpoints(): Promise<string[]> {
+        const response = await fetch(`${origin}/__log_viewer__/endpoints`)
+        const text = await response.text()
+        return JSON.parse(text)
+    }
 
     export async function getEndpoints(): Promise<string[]> {
-        if (endpoints === undefined) {
-            endpoints = await getEndpointsImpl();
-        }
-        return endpoints!!
+        const value = endpointCache.get(() => fetchEndpoints())
+        return value
     }
 
-    export const PageSize = 18;
+    const endpointCache = new SimplePromiseMemoryCache<string[]>()
+
+    // export const PageSize = 18;
 
     export async function getLogs(endpoint: string, day: Day, page: number): Promise<LogResponse> {
-        return getLogsImpl(endpoint, day, page)
+        return logsCache.get(`${endpoint}${JSON.stringify(day)}${page}`, () => getLogsImpl(endpoint, day, page))
     }
 
-    function getLogsImpl(endpoint: string, day: Day, page: number): LogResponse {
-        const string = getLogsTestData(endpoint, day)
-        const parsed = parseLogEvents(string)
-        const pages = Math.ceil(parsed.length / PageSize)
-        const filtered: LogResponse = {
-            pageCount: pages,
-            // Get only events in the relevant page, 20 items per page
-            logs: parsed.filter((_, i) => i >= page * PageSize && i < ((page + 1) * PageSize))
-        }
-        return filtered
+    export function refreshLog() {
+        logsCache.dumpAll()
     }
 
-    function getLogsTestData(endpoint: string, day: Day): string {
-        switch (endpoint) {
-            case "getCrash" :
-                if (day.day === 17) return getCrash2
-                else return getCrash1
-            case "uploadCrash" :
-                return uploadCrash
-            case  "scheduleTasks" :
-                return scheduleTasks
-            default:
-                return uploadCrash
-        }
+    const logsCache = new PromiseMemoryCache<LogResponse>()
+
+    async function getLogsImpl(endpoint: string, day: Day, page: number): Promise<LogResponse> {
+        const args = `?endpoint=${endpoint}&day=${JSON.stringify(day)}&page=${page}`
+        const response = await fetch(`${origin}/__log_viewer__/logs${args}`)
+        const text = await response.text()
+        return parseLogResponse(text)
     }
+
+    // function getLogsImpl(endpoint: string, day: Day, page: number): LogResponse {
+    //     const string = getLogsTestData(endpoint, day)
+    //     const parsed = parseLogEvents(string)
+    //     const pages = Math.ceil(parsed.length / PageSize)
+    //     const filtered: LogResponse = {
+    //         pageCount: pages,
+    //         // Get only events in the relevant page, 20 items per page
+    //         logs: parsed.filter((_, i) => i >= page * PageSize && i < ((page + 1) * PageSize))
+    //     }
+    //     return filtered
+    // }
+
+    // function getLogsTestData(endpoint: string, day: Day): string {
+    //     switch (endpoint) {
+    //         case "getCrash" :
+    //             if (day.day === 17) return getCrash2
+    //             else return getCrash1
+    //         case "uploadCrash" :
+    //             return uploadCrash
+    //         case  "scheduleTasks" :
+    //             return scheduleTasks
+    //         default:
+    //             return uploadCrash
+    //     }
+    // }
 }
 
 function parseLogResponse(json: string): LogResponse {
@@ -59,15 +80,15 @@ function parseLogResponse(json: string): LogResponse {
     })
 }
 
-function parseLogEvents(json: string): LogEvent[] {
-    return JSON.parse(json, (k, v) => {
-        if (typeof v === "number" && k.toLowerCase().endsWith("time")) {
-            return dayjs(v)
-        } else {
-            return v
-        }
-    })
-}
+// function parseLogEvents(json: string): LogEvent[] {
+//     return JSON.parse(json, (k, v) => {
+//         if (typeof v === "number" && k.toLowerCase().endsWith("time")) {
+//             return dayjs(v)
+//         } else {
+//             return v
+//         }
+//     })
+// }
 
 
 export interface LogResponse {
@@ -76,10 +97,11 @@ export interface LogResponse {
 }
 
 export function dayJsToDay(dayjs: Dayjs): Day {
+    const utc = dayjs.utc()
     return {
-        day: dayjs.date(),
-        month: dayjs.month() + 1,
-        year: dayjs.year()
+        day: utc.date(),
+        month: utc.month() + 1,
+        year: utc.year()
     }
 }
 

@@ -40,7 +40,9 @@ export interface ErrorLog extends MessageLog {
     exception: Exception
 }
 
-interface Exception {
+type Exception = ExceptionElement[]
+
+interface ExceptionElement {
     className: string
     message: string
     stacktrace: string

@@ -1,15 +1,34 @@
 package natanfudge.io.logs
 
+import io.ktor.server.http.content.*
+import io.ktor.server.routing.*
+import io.objectbox.Box
+import io.objectbox.kotlin.boxFor
+import java.nio.file.Path
 import java.time.Instant
+import kotlin.io.path.createDirectories
 
-class FancyLogger(val logToConsole: Boolean) {
-    inline fun <T> startCall(name: String, call: LogContext.() -> T): T {
+//TODO automatic eviction
+
+public class FancyLogger(public val logToConsole: Boolean, logsDir: Path) {
+    private val boxStore = MyObjectBox.builder()
+        .directory(logsDir.toFile())
+        .build()
+
+    @PublishedApi
+    internal val logsBox: Box<ObjectBoxLogEvent> = boxStore.boxFor<ObjectBoxLogEvent>()
+
+    init {
+        logsDir.createDirectories()
+    }
+
+    public inline fun <T> startCall(name: String, call: LogContext.() -> T): T {
         return startCallWithContextAsParam(name, call)
     }
 
-    // Context receivers are bugging out so we pass LogContext as a parameter for some use cases
+    // Context receivers are bugging out, so we pass LogContext as a parameter for some use cases
     // (try removing this with K2)
-    inline fun <T> startCallWithContextAsParam(name: String, call: (LogContext) -> T): T {
+    public inline fun <T> startCallWithContextAsParam(name: String, call: (LogContext) -> T): T {
         val context = LogContext(name, Instant.now())
         val value = try {
             call(context)
@@ -17,34 +36,55 @@ class FancyLogger(val logToConsole: Boolean) {
             context.logError(e) { "Unexpected error handling '$name'" }
             throw e
         } finally {
-            val log = context.buildLog()
-            if (logToConsole) ConsoleLogRenderer.render(log)
+            storeLog(context)
         }
         return value
+    }
+
+    @PublishedApi
+    internal fun storeLog(context: LogContext) {
+        val log = context.buildLog()
+        if (log.logs.isNotEmpty()) {
+            logsBox.put(log.toObjectBox())
+            if (logToConsole) ConsoleLogRenderer.render(log)
+        }
+    }
+
+
+    context(Routing)
+    public fun route() {
+        logViewerApi(logsBox)
+        static("/logs") {
+            staticBasePackage = "__log_viewer__/static"
+            resources(".")
+            defaultResource("index.html")
+        }
     }
 }
 
 
-class LogContext(private val name: String, private val startTime: Instant) {
-    @Suppress("PropertyName")
-    val ___logDetails = mutableListOf<LogLine>()
+public class LogContext(private val name: String, private val startTime: Instant) {
+    @PublishedApi
+    internal val logDetails: MutableList<LogLine> = mutableListOf()
 
-
-    inline fun logInfo(message: () -> String) {
-        ___logDetails.add(LogLine.Message.Normal(message(), Instant.now(), LogLine.Severity.Info))
+    public inline fun logInfo(message: () -> String) {
+        logDetails.add(LogLine.Message.Normal(message(), Instant.now(), LogLine.Severity.Info))
     }
 
-    inline fun logWarn(message: () -> String) {
-        ___logDetails.add(LogLine.Message.Normal(message(), Instant.now(), LogLine.Severity.Warn))
+    public inline fun logWarn(message: () -> String) {
+        logDetails.add(LogLine.Message.Normal(message(), Instant.now(), LogLine.Severity.Warn))
     }
 
-    inline fun logError(exception: Throwable, message: () -> String) {
-        ___logDetails.add(LogLine.Message.Error(message(), Instant.now(), exception))
+    public inline fun logError(exception: Throwable, message: () -> String) {
+        logDetails.add(LogLine.Message.Error(message(), Instant.now(), exception.toSerializable()))
     }
 
-    inline fun logData(key: String, value: () -> Any) {
-        ___logDetails.add(LogLine.Detail(key, value().toString()))
+    public inline fun logData(key: String, value: () -> Any) {
+        logDetails.add(LogLine.Detail(key, value().toString()))
     }
 
-    fun buildLog(): LogEvent = LogEvent(name, startTime = startTime, endTime = Instant.now(), ___logDetails)
+    @PublishedApi
+    internal fun buildLog(): LogEvent = LogEvent(
+        name, startTime = startTime, endTime = Instant.now(), logDetails
+    )
 }

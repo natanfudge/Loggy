@@ -27,10 +27,11 @@ import {Day, LoggingServer} from "../server/LoggingServer";
 import {useScreenSize} from "../utils/ScreenSize";
 
 
-export function Endpoint(props: { theme: ThemeState, endpoint: string | undefined, day: Day, refreshMarker: boolean }) {
+export function Endpoint(props: { theme: ThemeState, endpoint: string, day: Day, refreshMarker: boolean }) {
     const [page, setPage] = useState(0)
-    const response = props.endpoint === undefined ? undefined :
-        usePromise(LoggingServer.getLogs(props.endpoint, props.day, page), [props.endpoint, props.day, props.refreshMarker, page])
+    const response = usePromise(
+        LoggingServer.getLogs(props.endpoint, props.day, page), [props.endpoint, props.day, props.refreshMarker, page]
+    )
     if (response === undefined) {
         return <Typography>
             <CircularProgress/>
@@ -38,34 +39,19 @@ export function Endpoint(props: { theme: ThemeState, endpoint: string | undefine
     } else {
         return <Fragment>
             <List style={{maxHeight: "100%", overflow: "auto"}}>
-                {response.logs.map((l, i) => <LogEventAccordion key={i} log={l}/>)}
+                <div style={{width: "fit-content"}}>
+                    {response.logs.map((l, i) => <LogEventAccordion key={i} log={l}/>)}
+                </div>
             </List>
             {response.pageCount > 1 &&
                 // Pages in Pagination are 0-indexed
                 <Pagination count={response.pageCount} page={page + 1}
                             onChange={(_, p) => setPage(p - 1)}
-                            style = {{alignSelf: "center"}}
+                            style={{alignSelf: "center"}}
                 />}
         </Fragment>
     }
 }
-
-// const Row = ({ index, style }: {index: number, style: CSSProperties}) => (
-//     <div style={style}>Row {index}</div>
-// );
-//
-// const Example = () => (
-//     <FixedSizeList
-//         height={150}
-//         itemCount={1000}
-//         itemSize={35}
-//         width={300}
-//     >
-//         {({index, style}: { index: number, style: CSSProperties }) => (
-//             <div style={style}>Row {index}</div>
-//         )}
-//     </FixedSizeList>
-// );
 
 const NoticableDivider = styled(Divider)(({theme}) => ({
     backgroundColor: theme.palette.text.primary
@@ -144,14 +130,12 @@ function LogEventAccordion({log}: { log: LogEvent }) {
     const errored = log.logs.some(l => isErrorLog(l))
     const erroredSuffix = errored ? " - ERROR" : ""
     const textColor = errored ? theme.palette.error.main : theme.palette.text.primary
-    return <Accordion style={{width: "fit-content"}} defaultExpanded={false}>
-        <LogEventSummary expandIcon={<ExpandMore/>}>
+    return <Accordion defaultExpanded={false}>
+        <LogEventSummary expandIcon={<ExpandMore/>} style={{color: textColor}}>
             {timeToString(log.startTime)}
             {/*Style must be passed explicitly to work properly with the svg*/}
             <LongRightArrow style={durationArrowStyle} color={textColor}/>
-            <span style={{color: textColor}}>
-                {timeToString(log.endTime) + ` (${log.endTime.millisecond() - log.startTime.millisecond()}ms total)` + erroredSuffix}
-            </span>
+            {timeToString(log.endTime) + ` (${log.endTime.millisecond() - log.startTime.millisecond()}ms total)` + erroredSuffix}
         </LogEventSummary>
         <AccordionDetails>
             <LogEventContent log={log}/>
@@ -188,10 +172,17 @@ function LogErrorUi({log}: { log: LogEvent }) {
                 <ErrorContent key={i}>
                     <span style={{textDecoration: "underline"}}>{error.message}</span><br/>
                     <Column style={{paddingLeft: 20}}>
-                        {error.exception.stacktrace.split("\n").map((line, i) => <span
-                            style={{paddingLeft: i == 0 ? 0 : 20}} key={i}>
+                        {/*TODO: optimize error view in mobile*/}
+                        {error.exception.flatMap(element => {
+                            return element.stacktrace.split("\n").map((line, i) => <span
+                                style={{paddingLeft: i == 0 ? 0 : 20}} key={i}>
                             {line}
-                        </span>)}
+                        </span>)
+                        })}
+                        {/*{error.exception.flatMap(element => element.stacktrace).split("\n").map((line, i) => <span*/}
+                        {/*    style={{paddingLeft: i == 0 ? 0 : 20}} key={i}>*/}
+                        {/*    {line}*/}
+                        {/*</span>)}*/}
                     </Column>
 
                 </ErrorContent>)
