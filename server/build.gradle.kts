@@ -1,36 +1,26 @@
 import com.aayushatharva.brotli4j.Brotli4jLoader
 import com.aayushatharva.brotli4j.encoder.Encoder
 import com.github.gradle.node.npm.task.NpmTask
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.nio.file.Files
 
 
 buildscript {
-    val objectboxVersion = "3.5.1"
     repositories {
         mavenCentral()
     }
-    val brotliVersion = "1.9.0"
     dependencies {
-        classpath("io.objectbox:objectbox-gradle-plugin:$objectboxVersion")
-        classpath("com.aayushatharva.brotli4j:native-windows-x86_64:$brotliVersion")
-        classpath(group = "com.aayushatharva.brotli4j", name = "brotli4j", version = brotliVersion)
-        classpath(gradleTestKit())
+        classpath(libs.bundles.build)
     }
 }
-//TODO: in crashy, make sure to use the correct linux objectbox binaries in prod
-val ktor_version: String by project
-val kotlin_version: String by project
-val logback_version: String by project
 
 plugins {
-    kotlin("jvm") version "1.8.10"
-    id("io.ktor.plugin") version "2.2.3"
-    id("org.jetbrains.kotlin.plugin.serialization") version "1.8.10"
-    id("com.github.node-gradle.node") version "3.5.1"
-//    id("io.objectbox") // Apply last.
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.ktor)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.gradle.node)
+    id ("maven-publish")
 }
+
 apply(plugin = "io.objectbox") // Apply last.
 group = "natanfudge.io"
 version = "0.0.1"
@@ -48,15 +38,8 @@ repositories {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-server-core-jvm:$ktor_version")
-    implementation("io.ktor:ktor-server-host-common-jvm:$ktor_version")
-    implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktor_version")
-    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktor_version")
-    implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
-    implementation("ch.qos.logback:logback-classic:$logback_version")
-    testImplementation("io.ktor:ktor-server-tests-jvm:$ktor_version")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
-    implementation("org.fusesource.jansi:jansi:2.4.0")
+    implementation(libs.bundles.main)
+    testImplementation(libs.bundles.test)
 }
 val clientDir = projectDir.parentFile.resolve("client")
 
@@ -89,40 +72,24 @@ tasks {
         args.set(listOf("run", "build"))
     }
 
-    val compressClient by registering {
-        dependsOn(buildClient)
-        group = "logviewer setup"
-        inputs.dir(clientBuildDir)
-        outputs.dir(clientCompressedDir)
-
-        doFirst {
-            val source = clientBuildDir.toPath()
-            Files.walk(source).forEach { path ->
-                if (!Files.isDirectory(path) && !path.startsWith(clientCompressedDir) && !path.fileName.toString().endsWith(".map")) {
-                    val relativePath = source.relativize(path)
-                    val destPath = clientCompressedDir.resolve("$relativePath.br")
-                    val compressed = compressFile(Files.readAllBytes(path))
-                    Files.createDirectories(destPath.parent)
-                    Files.write(destPath, compressed)
-                }
-            }
-        }
-    }
 
     val syncClient by registering(Sync::class) {
-        dependsOn(compressClient)
-        val group = "logviewer setup"
-        from(clientCompressedDir)
+        dependsOn(buildClient)
+        group = "logviewer setup"
+        from(clientBuildDir)
         into(sourceSets.main.get().output.resourcesDir!!.resolve("static"))
     }
 
+    publish.get().dependsOn(syncClient)
+
 }
 
-
-
-fun compressFile(content: ByteArray): ByteArray {
-    if (!Brotli4jLoader.isAvailable()) {
-        Brotli4jLoader.ensureAvailability()
+object Utils {
+    fun compressFile(content: ByteArray): ByteArray {
+        if (!Brotli4jLoader.isAvailable()) {
+            Brotli4jLoader.ensureAvailability()
+        }
+        return Encoder.compress(content)
     }
-    return Encoder.compress(content)
 }
+

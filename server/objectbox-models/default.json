@@ -21,9 +21,43 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "2:8427937818337454191",
+      "lastPropertyId": "5:5247588455056183688",
+      "name": "ObjectBoxLogEvent",
+      "properties": [
+        {
+          "id": "1:2450308111518365238",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5908930620054630975",
+          "name": "name",
+          "type": 9
+        },
+        {
+          "id": "3:6367796519333607472",
+          "name": "startTime",
+          "type": 6
+        },
+        {
+          "id": "4:5070282660290826394",
+          "name": "endTime",
+          "type": 6
+        },
+        {
+          "id": "5:5247588455056183688",
+          "name": "logsProtobuf",
+          "type": 23
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "1:8839141575972601853",
+  "lastEntityId": "2:8427937818337454191",
   "lastIndexId": "0:0",
   "lastRelationId": "0:0",
   "lastSequenceId": "0:0",

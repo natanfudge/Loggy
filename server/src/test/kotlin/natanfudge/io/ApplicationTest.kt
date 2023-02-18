@@ -1,12 +1,5 @@
 package natanfudge.io
 
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.server.testing.*
-import kotlin.test.*
-import io.ktor.http.*
-import natanfudge.io.plugins.*
-
 class ApplicationTest {
 //    @Test
 //    fun testRoot() = testApplication {

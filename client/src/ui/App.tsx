@@ -1,13 +1,14 @@
 import React, {useState} from 'react'
-import {CircularProgress, createTheme, CssBaseline, Theme as MaterialUiTheme, ThemeProvider} from "@mui/material";
+import {createTheme, CssBaseline, Theme as MaterialUiTheme, ThemeProvider} from "@mui/material";
 import "../extensions/ExtensionsImpl"
-import {Endpoint, LogsTitle} from "./Endpoint";
+import {Endpoint, LogsTitle, ThemeSwitch} from "./Endpoint";
 import {Column, usePromise} from "../utils/Utils";
 import {dayJsToDay, LoggingServer} from "../server/LoggingServer";
 import dayjs from "dayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {BrowserRouter, Route, Routes, useNavigate, useParams} from "react-router-dom";
+import {useScreenSize} from "../utils/ScreenSize";
 
 
 export function AppWrapper() {
@@ -37,9 +38,9 @@ export interface ThemeState {
 
 function RoutedApp(props: { theme: ThemeState }) {
     return <Routes>
-        <Route path = "/" element={<App theme={props.theme} endpoint={undefined}/>}/>
-        <Route path = "/:endpoint" element={<RoutedEndpointApp theme={props.theme}/>}/>
-        <Route path = "*" element = {"Nothing Here"}/>
+        <Route path="/" element={<App theme={props.theme} endpoint={undefined}/>}/>
+        <Route path="/:endpoint" element={<RoutedEndpointApp theme={props.theme}/>}/>
+        <Route path="*" element={"Nothing Here"}/>
     </Routes>
     // const endpoints = usePromise(LoggingServer.getEndpoints(), [])
     // if (endpoints === undefined) {
@@ -49,9 +50,9 @@ function RoutedApp(props: { theme: ThemeState }) {
     // }
 }
 
-function RoutedEndpointApp(props: {theme: ThemeState}) {
+function RoutedEndpointApp(props: { theme: ThemeState }) {
     const {endpoint} = useParams<"endpoint">()
-    return <App theme = {props.theme} endpoint={endpoint}/>
+    return <App theme={props.theme} endpoint={endpoint}/>
 }
 
 
@@ -65,15 +66,25 @@ function RoutedEndpointApp(props: {theme: ThemeState}) {
 // }
 
 function App(props: { theme: ThemeState, endpoint: string | undefined }) {
+    // Changed when a refresh is requested, to rerun getEndpoints()
+    const [refreshMarker,setRefreshMarker] = useState(false)
     const endpoints = usePromise(LoggingServer.getEndpoints(), [])
     const [day, setDay] = useState(dayjs())
-    const endpoint = props.endpoint ?? (endpoints !== undefined? endpoints[0] : undefined)
+    const endpoint = props.endpoint ?? (endpoints !== undefined ? endpoints[0] : undefined)
     const navigate = useNavigate()
-    return <Column>
+    const screen = useScreenSize()
+    return <Column style={{height: "100%"}}>
         <LogsTitle endpoints={endpoints} endpoint={{value: endpoint, onChange: (endpoint) => navigate("/" + endpoint)}}
-                   day={{value: day, onChange: setDay}} theme={props.theme}/>
+                   day={{value: day, onChange: setDay}} theme={props.theme}
+                   onRefresh={() => {
+                       setRefreshMarker(old => !old)
+                   }}
+        />
 
-        <Endpoint day={dayJsToDay(day)} theme={props.theme} endpoint={endpoint}/>
+        <Endpoint day={dayJsToDay(day)} theme={props.theme} endpoint={endpoint} refreshMarker={refreshMarker}/>
+        <div style = {{flexGrow: 1}}/>
+        {screen.isPhone && <ThemeSwitch theme={props.theme}/>}
+        <div style = {{height: 10}}/>
     </Column>
 }
 

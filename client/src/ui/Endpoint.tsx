@@ -4,7 +4,7 @@ import {
     AccordionDetails,
     AccordionSummary,
     CircularProgress,
-    Divider,
+    Divider, IconButton,
     styled,
     Switch,
     TextField,
@@ -12,7 +12,7 @@ import {
     useTheme
 } from "@mui/material";
 import {DetailLog, ErrorLog, isDetailLog, isErrorLog, isMessageLog, LogEvent, LogLine, MessageLog} from "../core/Logs";
-import {ExpandMore} from "@mui/icons-material";
+import {ExpandMore, Refresh} from "@mui/icons-material";
 import {LongRightArrow} from "./LongRightArrow";
 import React, {Fragment} from "react";
 import {KeyValueTable} from "./KeyValueTable";
@@ -21,22 +21,22 @@ import {DesktopDatePicker} from "@mui/x-date-pickers";
 import {Dayjs} from "dayjs";
 import {Dropdown} from "./UiUtils";
 import {Day, LoggingServer} from "../server/LoggingServer";
+import {useScreenSize} from "../utils/ScreenSize";
 
 
 
-export function Endpoint(props: { theme: ThemeState, endpoint: string | undefined, day: Day }) {
+export function Endpoint(props: { theme: ThemeState, endpoint: string | undefined, day: Day, refreshMarker: boolean }) {
     const logs = props.endpoint === undefined ? undefined :
-        usePromise(LoggingServer.getLogs(props.endpoint, props.day), [props.endpoint, props.day])
+        usePromise(LoggingServer.getLogs(props.endpoint, props.day), [props.endpoint, props.day, props.refreshMarker])
     if (logs === undefined) {
         return <Typography>
             <CircularProgress/>
         </Typography>
     } else {
-        return <div>
-            <Column style={{width: "fit-content"}}>
+        //TODO: scrolling when there are many logs
+        return <Column style={{width: "fit-content"}}>
                 {logs.map((l, i) => <LogEventAccordion key={i} log={l}/>)}
             </Column>
-        </div>
     }
 
 }
@@ -48,34 +48,37 @@ const NoticableDivider = styled(Divider)(({theme}) => ({
 export function LogsTitle(props: {
     endpoints: string[] | undefined,
     endpoint: State<string | undefined>,
+    onRefresh: () => void,
     day: State<Dayjs>,
     theme: ThemeState
 }) {
-    return <Row style={{padding: 10, paddingLeft: 30}}>
+    const screen = useScreenSize()
+    return <Row style={{padding: 10, paddingLeft: screen.isPhone? undefined : 30}}>
 
-        <Column>
+        <Column style = {{paddingLeft: screen.isPhone? 10: undefined}}>
             <Row style={{alignItems: "center"}}>
-                <Typography style={{marginRight: 10, marginBottom: 4, alignSelf: "end"}}>
+                { !screen.isPhone && <Typography style={{marginRight: 10, marginBottom: 4, alignSelf: "end"}}>
                     Logs for
-                </Typography>
+                </Typography>}
                 {/*When props.endpoints is defined, props.endpoint.value must also be defined*/}
                 {props.endpoints === undefined ? <CircularProgress/> :
                     <Dropdown options={props.endpoints} value={props.endpoint.value!!}
                               onValueChanged={props.endpoint.onChange}
                               style={{width: "max-content"}}/>}
 
+
+
             </Row>
             <NoticableDivider style={{marginTop: -1}}/>
         </Column>
-
+        <IconButton style = {{height: "fit-content", alignSelf: "center"}} onClick={props.onRefresh}>
+            <Refresh/>
+        </IconButton>
 
         <div style={{flexGrow: 1}}/>
 
-        <ThemeSwitch theme={props.theme}/>
+        {!screen.isPhone && <ThemeSwitch theme={props.theme}/>}
         <DaySelection day={props.day}/>
-        {/*<Typography variant={"h6"} style={{paddingRight: 20, alignSelf: "center"}}>*/}
-        {/*    {props.day}*/}
-        {/*</Typography>*/}
     </Row>;
 }
 
@@ -89,7 +92,7 @@ export function DaySelection(props: { day: State<Dayjs> }) {
 }
 
 
-function ThemeSwitch({theme}: { theme: ThemeState }) {
+export function ThemeSwitch({theme}: { theme: ThemeState }) {
     return <ThemeBorder>
         <Typography style={{alignSelf: "center"}}>
             {theme.isDark ? "Dark" : "Light"}
@@ -104,7 +107,9 @@ const ThemeBorder = styled(Row)(({theme}) => ({
     border: `1px solid ${addAlphaToColor(theme.palette.primary.dark, 0.2)}`,
     paddingLeft: "10px",
     marginRight: "5px",
-    borderRadius: "10px"
+    borderRadius: "10px",
+    width: "fit-content",
+    alignSelf: "center"
 }));
 
 
@@ -142,15 +147,11 @@ function LogEventAccordion({log}: { log: LogEvent }) {
 
 
 function LogEventContent({log}: { log: LogEvent }) {
-    return <Row style={{padding: 30, paddingTop: 0}}>
-
-        <Column>
+    const screen = useScreenSize()
+    return <Column  style={{padding: screen.isPhone ? 0 : 30, paddingTop: 0}}>
             <LogLinesUi logs={log.logs}/>
             <LogErrorUi log={log}/>
         </Column>
-
-
-    </Row>
 }
 
 function LogErrorUi({log}: { log: LogEvent }) {
@@ -194,12 +195,14 @@ function LogLinesUi({logs}: { logs: LogLine[] }) {
     const details = logs.filter(l => isDetailLog(l)) as DetailLog[]
     const messages = logs.filter(l => isMessageLog(l)) as MessageLog[]
 
-    return <Row>
+    const screen = useScreenSize()
+
+    return <div style = {{display: "flex", flexDirection: screen.isPhone? "column" : "row"}}>
         <KeyValueTable details={details.toRecord(l => [l.key, l.value])}/>
-        <Column style={{paddingLeft: 20, paddingTop: 10}}>
+        <Column style={{paddingLeft: screen.isPhone? 0: 20, paddingTop: 10}}>
             {messages.map((m, i) => <MessageLogUi key={i} message={m}/>)}
         </Column>
-    </Row>
+    </div>
 }
 
 const SubtitleText = styled(Typography)(({theme}) => ({

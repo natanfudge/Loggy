@@ -20,12 +20,16 @@ fun main() {
 
 fun Application.module() {
     routing {
-        get("/") {
-            call.respondText("Hello XDD!")
-        }
+//        get("/") {
+//            call.respondText("Hello Amar!")
+//        }
+
+
         // Static plugin. Try to access `/static/index.html`
-        static("/static") {
-            resources("static")
+        static("/") {
+            staticBasePackage = "static"
+            resources(".")
+            defaultResource("index.html")
         }
     }
 }

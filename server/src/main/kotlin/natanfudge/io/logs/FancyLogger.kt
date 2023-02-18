@@ -22,25 +22,6 @@ class FancyLogger(val logToConsole: Boolean) {
         }
         return value
     }
-
-//    private val allLogsDir = Crashy.HomeDir.resolve("old_logs")
-//
-//    val todayLogDir = allLogsDir.resolve(Instant.now().systemDate().replace("/", ".")).createDirectories()
-//
-//    fun logsOfEndpoint(endpoint: String): Path {
-//        return todayLogDir.resolve(endpoint.replace("/", "") + ".log")
-//    }
-//
-//    context(LogContext) @OptIn(ExperimentalPathApi::class)
-//    fun deleteOldLogs() {
-//        // Delete all log dirs that are over 30 days old
-//        allLogsDir.forEachDirectoryEntry { logDirOfDay ->
-//            if (logDirOfDay.lastAccessInstant().plus(Duration.ofDays(30)).isBefore(Instant.now())) {
-//                logDirOfDay.deleteRecursively()
-//                logInfo { "Deleted logs at $logDirOfDay" }
-//            }
-//        }
-//    }
 }
 
 

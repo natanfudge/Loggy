@@ -3,10 +3,14 @@
 package natanfudge.io.logs
 
 
+import io.objectbox.annotation.Entity
+import io.objectbox.annotation.Id
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import java.time.Instant
+
+
 
 @Serializable
 data class LogEvent(val name: String, val startTime: Instant, val endTime: Instant, val logs: List<LogLine>)

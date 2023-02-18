@@ -2,9 +2,18 @@ import {LogEvent, parseLogEvents} from "../core/Logs";
 import {Dayjs} from "dayjs";
 
 export namespace LoggingServer {
-    export async function getEndpoints(): Promise<string[]>{
+     async function getEndpointsImpl(): Promise<string[]> {
         await new Promise(resolve => setTimeout(resolve, 2000))
-        return ["getCrash","uploadCrash","scheduleTasks"]
+        return ["getCrash", "uploadCrash", "scheduleTasks"]
+    }
+
+    let endpoints: string[] | undefined = undefined
+
+    export async function getEndpoints(): Promise<string[]> {
+        if (endpoints === undefined) {
+            endpoints = await getEndpointsImpl();
+        }
+        return endpoints!!
     }
 
     export async function getLogs(endpoint: string, day: Day): Promise<LogEvent[]> {
@@ -13,10 +22,10 @@ export namespace LoggingServer {
         return parseLogEvents(string)
     }
 
-    function getLogsImpl(endpoint: string, day: Day): string{
-        switch (endpoint){
+    function getLogsImpl(endpoint: string, day: Day): string {
+        switch (endpoint) {
             case "getCrash" :
-                if(day.day === 17) return getCrash1
+                if (day.day === 17) return getCrash1
                 else return getCrash2
             case "uploadCrash" :
                 return uploadCrash
@@ -28,7 +37,7 @@ export namespace LoggingServer {
     }
 }
 
-export function dayJsToDay(dayjs: Dayjs): Day  {
+export function dayJsToDay(dayjs: Dayjs): Day {
     return {
         day: dayjs.date(),
         month: dayjs.month() + 1,
@@ -41,7 +50,6 @@ export interface Day {
     month: number
     year: number
 }
-
 
 
 const scheduleTasks = `[
