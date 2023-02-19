@@ -5,7 +5,11 @@ import io.ktor.server.netty.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import natanfudge.io.logs.FancyLogger
+import natanfudge.io.logs.LoggingCredentials
+import java.nio.charset.Charset
 import java.nio.file.Paths
+
+object TestApp
 
 fun main() {
     embeddedServer(
@@ -18,10 +22,20 @@ fun main() {
         .start(wait = true)
 }
 
+private fun getResource(path: String): CharArray =
+    TestApp::class.java.getResourceAsStream(path)!!.readBytes().toString(Charset.defaultCharset()).toCharArray()
+
+val logger = FancyLogger(
+    logToConsole = true,
+    credentials = LoggingCredentials(
+        username = getResource("/secrets/admin_user.txt"),
+        password = getResource("/secrets/admin_pass.txt")
+    ),
+    logsDir = Paths.get(System.getProperty("user.home"), ".log_viewer_test")
+)
+
 private fun Application.module() {
-    val logger = FancyLogger(
-        logToConsole = true, logsDir = Paths.get(System.getProperty("user.home"), ".log_viewer_test")
-    )
+    logger.install()
     logger.startCall("amar") {
         logInfo { "Info Test" }
         logWarn { "Warn Test" }
@@ -32,27 +46,23 @@ private fun Application.module() {
     }
     routing {
         logger.route()
-        get("test"){
+        get("test") {
             logger.startCall("testRequest1") {
-                logData("Amar"){"XD"}
+                logData("Amar") { "XD" }
                 throw NullPointerException()
             }
             call.respondText("Test")
         }
 
-        get("test2"){
-            logger.startCall("testRequest2"){
+        get("test2") {
+            logger.startCall("testRequest2") {
                 logInfo { "Test Test" }
                 logWarn { "Warn Test Test" }
             }
             call.respondText("Test2")
         }
-        // Static plugin. Try to access `/static/index.html`
-        static("/logs") {
-            staticBasePackage = "__log_viewer__/static"
-            resources(".")
-            defaultResource("index.html")
+        get("/"){
+            call.respondRedirect("/logs")
         }
     }
 }
-

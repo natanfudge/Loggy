@@ -117,7 +117,6 @@ export function ThemeSwitch({theme}: { theme: ThemeState }) {
 const ThemeBorder = styled(Row)(({theme}) => ({
     border: `1px solid ${addAlphaToColor(theme.palette.primary.dark, 0.2)}`,
     paddingLeft: "10px",
-    // marginTop: "5px",
     marginRight: "5px",
     borderRadius: "10px",
     width: "fit-content",
@@ -130,12 +129,13 @@ function LogEventAccordion({log}: { log: LogEvent }) {
     const errored = log.logs.some(l => isErrorLog(l))
     const erroredSuffix = errored ? " - ERROR" : ""
     const textColor = errored ? theme.palette.error.main : theme.palette.text.primary
+    const screen = useScreenSize()
     return <Accordion defaultExpanded={false}>
         <LogEventSummary expandIcon={<ExpandMore/>} style={{color: textColor}}>
             {timeToString(log.startTime)}
             {/*Style must be passed explicitly to work properly with the svg*/}
             <LongRightArrow style={durationArrowStyle} color={textColor}/>
-            {timeToString(log.endTime) + ` (${log.endTime.millisecond() - log.startTime.millisecond()}ms total)` + erroredSuffix}
+            {timeToString(log.endTime) + ` (${log.endTime.millisecond() - log.startTime.millisecond()}ms${screen.isPhone ? "" : " total"})` + erroredSuffix}
         </LogEventSummary>
         <AccordionDetails>
             <LogEventContent log={log}/>
@@ -149,7 +149,7 @@ const LogEventSummary = styled(AccordionSummary)`
   padding-right: 10px;
   width: 100%;
 `
-const durationArrowStyle = {height: "20px", width: "46px", marginLeft: 4, marginRight: 2, alignSelf: "center"}
+const durationArrowStyle = {height: "20px", width: "46px", marginLeft: 4, marginRight: 4, alignSelf: "center"}
 
 function LogEventContent({log}: { log: LogEvent }) {
     const screen = useScreenSize()
@@ -162,27 +162,23 @@ function LogEventContent({log}: { log: LogEvent }) {
 function LogErrorUi({log}: { log: LogEvent }) {
     const errors = log.logs.filter(l => isErrorLog(l)) as ErrorLog[]
     if (errors.isEmpty()) return <Fragment/>
+    const screen = useScreenSize()
 
     return <Column style={{paddingTop: 10}}>
         <ErrorTitle variant="h5">
             Errors
         </ErrorTitle>
-        <span style={{paddingLeft: 20}}>
+        <span style={{paddingLeft: screen.isPhone ? 0 : 20}}>
             {errors.map((error, i) =>
                 <ErrorContent key={i}>
                     <span style={{textDecoration: "underline"}}>{error.message}</span><br/>
-                    <Column style={{paddingLeft: 20}}>
-                        {/*TODO: optimize error view in mobile*/}
+                    <Column style={{paddingLeft: screen.isPhone ? 5 : 20}}>
                         {error.exception.flatMap(element => {
                             return element.stacktrace.split("\n").map((line, i) => <span
-                                style={{paddingLeft: i == 0 ? 0 : 20}} key={i}>
+                                style={{paddingLeft: i == 0 ? 0 : screen.isPhone? 5 : 20, lineBreak: "anywhere"}} key={i}>
                             {line}
                         </span>)
                         })}
-                        {/*{error.exception.flatMap(element => element.stacktrace).split("\n").map((line, i) => <span*/}
-                        {/*    style={{paddingLeft: i == 0 ? 0 : 20}} key={i}>*/}
-                        {/*    {line}*/}
-                        {/*</span>)}*/}
                     </Column>
 
                 </ErrorContent>)

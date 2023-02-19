@@ -4,7 +4,7 @@
 
 main = ["ktor-server-core-jvm", "ktor-server-host-common-jvm", "ktor-server-content-negotiation-jvm",
     "ktor-server-netty-jvm", "logback-classic", "kotlinx-serialization-json", "kotlinx-serialization-protobuf",
-    "jansi"
+    "jansi", "ktor-auth"
 ]
 test = ["kotlin-test-junit","ktor-server-tests-jvm"]
 build = ["objectbox","brotli", "brotli-windows"]
@@ -28,7 +28,7 @@ objectbox = "3.5.1"
 brotli = "1.9.0"
 
 [libraries]
-
+ktor-auth = {group = "io.ktor", name = "ktor-server-auth", version.ref = "ktor"}
 ktor-server-core-jvm = { group = "io.ktor", name = "ktor-server-core-jvm", version.ref = "ktor" }
 ktor-server-host-common-jvm = { group = "io.ktor", name = "ktor-server-host-common-jvm", version.ref = "ktor" }
 ktor-server-content-negotiation-jvm = { group = "io.ktor", name = "ktor-server-content-negotiation-jvm", version.ref = "ktor" }

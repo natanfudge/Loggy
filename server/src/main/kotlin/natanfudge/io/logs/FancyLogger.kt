@@ -1,16 +1,29 @@
 package natanfudge.io.logs
 
+import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.http.content.*
 import io.ktor.server.routing.*
 import io.objectbox.Box
 import io.objectbox.kotlin.boxFor
+import kotlinx.coroutines.*
 import java.nio.file.Path
 import java.time.Instant
+import java.time.ZonedDateTime
+import java.util.*
+import kotlin.concurrent.schedule
 import kotlin.io.path.createDirectories
 
-//TODO automatic eviction
+public class LoggingCredentials(
+    internal val username: CharArray,
+    internal val password: CharArray
+)
 
-public class FancyLogger(public val logToConsole: Boolean, logsDir: Path) {
+public class FancyLogger(
+    private val logToConsole: Boolean,
+    logsDir: Path,
+    private val credentials: LoggingCredentials
+) {
     private val boxStore = MyObjectBox.builder()
         .directory(logsDir.toFile())
         .build()
@@ -21,6 +34,59 @@ public class FancyLogger(public val logToConsole: Boolean, logsDir: Path) {
     init {
         logsDir.createDirectories()
     }
+
+    context(Application)
+    public fun install() {
+        installAuthentication(credentials)
+        scheduleOldLogDeletion()
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun scheduleOldLogDeletion() {
+        val timer = Timer()
+        // Runs once every day
+        timer.schedule(DayMs) {
+            GlobalScope.launch(Dispatchers.IO) {
+                startCall("logViewer_cleanup") {
+                    logData("Time") { Instant.now() }
+                    evictOld()
+                }
+            }
+        }.apply {
+            // Run once at startup
+            run()
+        }
+    }
+
+    context(LogContext)
+    private fun evictOld() {
+        // Query for all logs more than a month old and remove them
+        val monthAgo = ZonedDateTime.now().minusMinutes(3).toEpochSecond() * 1000
+        logsBox.query(ObjectBoxLogEvent_.startTime.less(monthAgo)).build().use {
+            logData("Log Size") { (boxStore.sizeOnDisk() / 1000).toString() + "KB" }
+            val removed = it.remove()
+            logData("Logs Removed") { removed }
+        }
+    }
+
+    context(Routing)
+    public fun route() {
+        routeAuthentication()
+        authenticate(AuthSessionName) {
+            routeApi(logsBox)
+            routeReactApp()
+        }
+    }
+
+    private fun Route.routeReactApp() {
+        singlePageApplication {
+            useResources = true
+            filesPath = "__log_viewer__/static"
+            defaultPage = "index.html"
+            applicationRoute = "/logs"
+        }
+    }
+
 
     public inline fun <T> startCall(name: String, call: LogContext.() -> T): T {
         return startCallWithContextAsParam(name, call)
@@ -50,18 +116,11 @@ public class FancyLogger(public val logToConsole: Boolean, logsDir: Path) {
         }
     }
 
-
-    context(Routing)
-    public fun route() {
-        logViewerApi(logsBox)
-        static("/logs") {
-            staticBasePackage = "__log_viewer__/static"
-            resources(".")
-            defaultResource("index.html")
-        }
-    }
 }
 
+
+internal const val LoginPath = "/_log_viewer/login"
+private const val DayMs = 1000 * 60 * 60 * 24L
 
 public class LogContext(private val name: String, private val startTime: Instant) {
     @PublishedApi
