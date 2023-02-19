@@ -108,3 +108,20 @@ object Utils {
     }
 }
 
+java {
+    withSourcesJar()
+}
+
+
+publishing {
+    publications {
+        create<MavenPublication>("logViewer") {
+            from(components["java"])
+
+            // set the coordinates of the artifact
+            groupId = "io.github.natanfudge"
+            artifactId = "log-viewer"
+            version = "0.1.0"
+        }
+    }
+}

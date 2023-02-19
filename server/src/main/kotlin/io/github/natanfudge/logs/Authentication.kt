@@ -1,4 +1,4 @@
-package natanfudge.io.logs
+package io.github.natanfudge.logs
 
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -6,9 +6,9 @@ import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.server.sessions.*
-private const val UserSessionName = "user_session"
-internal const val AuthSessionName = "auth-session"
-private const val AuthFormName = "auth-form"
+private const val UserSessionName = "log-admin_session"
+internal const val AuthSessionName = "log-auth-session"
+private const val AuthFormName = "log-auth-form"
 private const val AuthUsernameField = "username"
 private const val AuthPasswordField = "password"
 internal const val LogsPath = "/logs"

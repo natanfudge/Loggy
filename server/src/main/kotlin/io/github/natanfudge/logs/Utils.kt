@@ -1,4 +1,4 @@
-package natanfudge.io.logs
+package io.github.natanfudge.logs
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable

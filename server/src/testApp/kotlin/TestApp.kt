@@ -4,8 +4,8 @@ import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import natanfudge.io.logs.FancyLogger
-import natanfudge.io.logs.LoggingCredentials
+import io.github.natanfudge.logs.FancyLogger
+import io.github.natanfudge.logs.LoggingCredentials
 import java.nio.charset.Charset
 import java.nio.file.Paths
 

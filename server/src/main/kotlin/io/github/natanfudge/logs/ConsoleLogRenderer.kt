@@ -1,4 +1,4 @@
-package natanfudge.io.logs
+package io.github.natanfudge.logs
 
 import org.fusesource.jansi.Ansi
 import java.time.Instant

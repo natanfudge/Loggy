@@ -1,4 +1,4 @@
-package natanfudge.io.logs
+package io.github.natanfudge.logs
 
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -95,7 +95,7 @@ public class FancyLogger(
     // Context receivers are bugging out, so we pass LogContext as a parameter for some use cases
     // (try removing this with K2)
     public inline fun <T> startCallWithContextAsParam(name: String, call: (LogContext) -> T): T {
-        val context = LogContext(name, Instant.now())
+        val context = LogContext(name.removePrefix("/").replace("/", "_"), Instant.now())
         val value = try {
             call(context)
         } catch (e: Throwable) {

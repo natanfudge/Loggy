@@ -1,4 +1,4 @@
-package natanfudge.io.logs
+package io.github.natanfudge.logs
 
 import io.ktor.http.*
 import io.ktor.server.application.*

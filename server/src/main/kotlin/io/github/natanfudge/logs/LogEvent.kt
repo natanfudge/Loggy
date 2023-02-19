@@ -1,6 +1,6 @@
 @file:UseSerializers(InstantSerializer::class)
 
-package natanfudge.io.logs
+package io.github.natanfudge.logs
 
 
 import io.objectbox.annotation.Entity
