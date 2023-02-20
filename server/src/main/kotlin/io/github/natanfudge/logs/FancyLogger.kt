@@ -61,7 +61,7 @@ public class FancyLogger(
     context(LogContext)
     private fun evictOld() {
         // Query for all logs more than a month old and remove them
-        val monthAgo = ZonedDateTime.now().minusMinutes(3).toEpochSecond() * 1000
+        val monthAgo = ZonedDateTime.now().minusMonths(1).toEpochSecond() * 1000
         logsBox.query(ObjectBoxLogEvent_.startTime.less(monthAgo)).build().use {
             logData("Log Size") { (boxStore.sizeOnDisk() / 1000).toString() + "KB" }
             val removed = it.remove()
