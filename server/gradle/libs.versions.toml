@@ -18,16 +18,17 @@ ktor = {id = "io.ktor.plugin",version.ref = "ktor"}
 
 [versions]
 
-ktor = "2.2.3"
-kotlin = "1.8.10"
-logback = "1.4.5"
-kotlinx-serialization = "1.4.1"
+ktor = "2.3.0"
+kotlin = "1.8.21"
+logback = "1.4.7"
+kotlinx-serialization = "1.5.1"
 jansi = "2.4.0"
-gradle-node="3.5.1"
+gradle-node="5.0.0"
 objectbox = "3.5.1"
-brotli = "1.9.0"
+brotli = "1.11.0"
 
 [libraries]
+
 ktor-auth = {group = "io.ktor", name = "ktor-server-auth", version.ref = "ktor"}
 ktor-server-core-jvm = { group = "io.ktor", name = "ktor-server-core-jvm", version.ref = "ktor" }
 ktor-server-host-common-jvm = { group = "io.ktor", name = "ktor-server-host-common-jvm", version.ref = "ktor" }

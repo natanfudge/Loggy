@@ -1,5 +1,7 @@
-package io.github.natanfudge.logs
+package io.github.natanfudge.logs.impl
 
+import io.github.natanfudge.logs.LogContext
+import io.github.natanfudge.logs.Loggy
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.http.content.*
@@ -23,20 +25,20 @@ public class FancyLogger(
     private val logToConsole: Boolean,
     logsDir: Path,
     private val credentials: LoggingCredentials
-) {
+): Loggy {
     private val boxStore = MyObjectBox.builder()
         .directory(logsDir.toFile())
         .build()
 
     @PublishedApi
-    internal val logsBox: Box<ObjectBoxLogEvent> = boxStore.boxFor<ObjectBoxLogEvent>()
+    internal val logsBox: Box<LogEventEntity> = boxStore.boxFor<LogEventEntity>()
 
     init {
         logsDir.createDirectories()
     }
 
     context(Application)
-    public fun install() {
+    override fun install() {
         installAuthentication(credentials)
         scheduleOldLogDeletion()
     }
@@ -62,7 +64,7 @@ public class FancyLogger(
     private fun evictOld() {
         // Query for all logs more than a month old and remove them
         val monthAgo = ZonedDateTime.now().minusMonths(1).toEpochSecond() * 1000
-        logsBox.query(ObjectBoxLogEvent_.startTime.less(monthAgo)).build().use {
+        logsBox.query(LogEventEntity_.startTime.less(monthAgo)).build().use {
             logData("Log Size") { (boxStore.sizeOnDisk() / 1000).toString() + "KB" }
             val removed = it.remove()
             logData("Logs Removed") { removed }
@@ -70,7 +72,7 @@ public class FancyLogger(
     }
 
     context(Routing)
-    public fun route() {
+     override fun route() {
         routeAuthentication()
         authenticate(AuthSessionName) {
             routeApi(logsBox)
@@ -88,13 +90,13 @@ public class FancyLogger(
     }
 
 
-    public inline fun <T> startCall(name: String, call: LogContext.() -> T): T {
+    override  fun <T> startCall(name: String, call: LogContext.() -> T): T {
         return startCallWithContextAsParam(name, call)
     }
 
     // Context receivers are bugging out, so we pass LogContext as a parameter for some use cases
     // (try removing this with K2)
-    public inline fun <T> startCallWithContextAsParam(name: String, call: (LogContext) -> T): T {
+     override fun <T> startCallWithContextAsParam(name: String, call: (LogContext) -> T): T {
         val context = LogContext(name.removePrefix("/").replace("/", "_"), Instant.now())
         val value = try {
             call(context)
@@ -122,28 +124,3 @@ public class FancyLogger(
 internal const val LoginPath = "/_log_viewer/login"
 private const val DayMs = 1000 * 60 * 60 * 24L
 
-public class LogContext(private val name: String, private val startTime: Instant) {
-    @PublishedApi
-    internal val logDetails: MutableList<LogLine> = mutableListOf()
-
-    public inline fun logInfo(message: () -> String) {
-        logDetails.add(LogLine.Message.Normal(message(), Instant.now(), LogLine.Severity.Info))
-    }
-
-    public inline fun logWarn(message: () -> String) {
-        logDetails.add(LogLine.Message.Normal(message(), Instant.now(), LogLine.Severity.Warn))
-    }
-
-    public inline fun logError(exception: Throwable, message: () -> String) {
-        logDetails.add(LogLine.Message.Error(message(), Instant.now(), exception.toSerializable()))
-    }
-
-    public inline fun logData(key: String, value: () -> Any) {
-        logDetails.add(LogLine.Detail(key, value().toString()))
-    }
-
-    @PublishedApi
-    internal fun buildLog(): LogEvent = LogEvent(
-        name, startTime = startTime, endTime = Instant.now(), logDetails
-    )
-}

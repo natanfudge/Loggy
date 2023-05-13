@@ -1,0 +1,4 @@
+- Allow selecting date range instead of just one day
+- Save the following info for evicted logs:
+  - For every endpoint, save the amount of requests done per day.
+- Graphs for usages of each endpoint. 

@@ -1,10 +1,8 @@
 @file:UseSerializers(InstantSerializer::class)
 
-package io.github.natanfudge.logs
+package io.github.natanfudge.logs.impl
 
 
-import io.objectbox.annotation.Entity
-import io.objectbox.annotation.Id
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers

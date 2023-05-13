@@ -6,3 +6,8 @@
     line-height: 1.5;
     letter-spacing: 0.00938em;
 }
+
+.MuiNativeSelect-root {
+    /*Remove annoying padding from dropdown*/
+    margin-top: 0 !important;
+}

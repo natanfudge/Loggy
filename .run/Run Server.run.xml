@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Run Server" type="JetRunConfigurationType">
-    <option name="MAIN_CLASS_NAME" value="TestAppKt" />
+    <option name="MAIN_CLASS_NAME" value="test.TestAppKt" />
     <module name="natanfudge.io.LogViewer.testApp" />
     <shortenClasspath name="NONE" />
     <option name="VM_PARAMETERS" value="-Dio.ktor.development=true" />

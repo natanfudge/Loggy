@@ -1,6 +1,5 @@
 import {assert, expect, test} from 'vitest'
 import {LogEvent} from "../src/core/Logs";
-import dayjs from "dayjs";
 
 // Edit an assertion and save to see HMR in action
 

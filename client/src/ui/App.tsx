@@ -8,9 +8,9 @@ import {
     Typography
 } from "@mui/material";
 import "../extensions/ExtensionsImpl"
-import {Endpoint, LogsTitle, ThemeSwitch} from "./Endpoint";
+import {Endpoint, FilterConfig, LogsTitle, ThemeSwitch} from "./Endpoint";
 import {Column, usePromise} from "../utils/Utils";
-import {dayJsToDay, LoggingServer} from "../server/LoggingServer";
+import {dayJsToDay, DEBUG_ENDPOINT, LoggingServer} from "../server/LoggingServer";
 import dayjs from "dayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
@@ -59,11 +59,13 @@ function RoutedEndpointApp(props: { theme: ThemeState }) {
 function App(props: { theme: ThemeState, endpoint: string | undefined }) {
     // Changed when a refresh is requested, to rerun getEndpoints()
     const [refreshMarker, setRefreshMarker] = useState(false)
-    const endpoints = usePromise(LoggingServer.getEndpoints(), [])
+    const endpoints = props.endpoint === DEBUG_ENDPOINT ? [DEBUG_ENDPOINT] : usePromise(LoggingServer.getEndpoints(), [])
     const [day, setDay] = useState(dayjs())
     const endpoint = props.endpoint ?? (endpoints !== undefined ? endpoints[0] : undefined)
     const navigate = useNavigate()
     const screen = useScreenSize()
+    const [filter, setFilter] = useState<FilterConfig>({info: true, warn: true, error: true})
+
     if (endpoints !== undefined) {
         if (endpoints.length === 0) {
             return <Typography>
@@ -83,10 +85,12 @@ function App(props: { theme: ThemeState, endpoint: string | undefined }) {
                        LoggingServer.refreshLog()
                        setRefreshMarker(old => !old)
                    }}
+                   filter = {filter}
+                   setFilter = {setFilter}
         />
 
         {endpoint !== undefined ?
-            <Endpoint day={dayJsToDay(day)} theme={props.theme} endpoint={endpoint} refreshMarker={refreshMarker}/>
+            <Endpoint filter={filter} day={dayJsToDay(day)} theme={props.theme} endpoint={endpoint} refreshMarker={refreshMarker}/>
             : <CircularProgress/>
         }
 

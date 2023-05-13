@@ -1,4 +1,4 @@
-package io.github.natanfudge.logs
+package io.github.natanfudge.logs.impl
 
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -17,10 +17,10 @@ import java.time.ZonedDateTime
 import kotlin.math.ceil
 
 context(Routing)
-internal fun routeApi(box: Box<ObjectBoxLogEvent>) {
+internal fun routeApi(box: Box<LogEventEntity>) {
     get("/__log_viewer__/endpoints") {
         val endpoints = box.query().build().use {
-            it.property(ObjectBoxLogEvent_.name).distinct().findStrings()
+            it.property(LogEventEntity_.name).distinct().findStrings()
         }.toList()
 
         addCorsHeader()
@@ -52,8 +52,8 @@ internal fun routeApi(box: Box<ObjectBoxLogEvent>) {
         }
 
         // Get logs with the specified endpoint in the specified day
-        val logs: List<ObjectBoxLogEvent> = box.query(
-            ObjectBoxLogEvent_.name.equal(endpoint)
+        val logs: List<LogEventEntity> = box.query(
+            LogEventEntity_.name.equal(endpoint)
                 .and(inDay(day))
         ).build().use { it.find() }
 
@@ -75,24 +75,17 @@ private fun PipelineContext<Unit, ApplicationCall>.addCorsHeader() {
     call.response.header("Access-Control-Allow-Origin", "*")
 }
 
-private fun inDay(day: Day): PropertyQueryCondition<ObjectBoxLogEvent> {
-//    val calendar = Calendar.getInstance()
-//    calendar.set(day.year, day.month, day.day, 0, 0, 0) // set to the start of the day
-//    val startOfDay = calendar.time.time
-//    calendar.set(day.year, day.month, day.day, 23, 59, 59) // set to the end of the day
-//    val endOfDay = calendar.time.time
-
+private fun inDay(day: Day): PropertyQueryCondition<LogEventEntity> {
     val startOfDay = ZonedDateTime.of(day.year, day.month, day.day, 0, 0, 0, 0, GMT)
         .toInstant().toEpochMilli()
     val endOfDay = ZonedDateTime.of(day.year, day.month, day.day, 23, 59, 59, 999_999_999, GMT)
         .toInstant().toEpochMilli()
 
-    return ObjectBoxLogEvent_.startTime.between(startOfDay, endOfDay)
+    return LogEventEntity_.startTime.between(startOfDay, endOfDay)
 }
 
 private val GMT = ZoneId.of("GMT")
 
-//#1: 'amar', 1676755225068 -> 1676755225071 (1381 bytes)
 private const val PageSize = 18
 
 

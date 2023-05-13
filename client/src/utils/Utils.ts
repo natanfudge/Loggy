@@ -35,11 +35,20 @@ export function typedKeys<K extends TsKey, V>(object: Record<K, V>): K[] {
 
 export type TsKey = string | number | symbol
 
+export function millsecondTimeToString(date: Dayjs): string {
+    return `${timeToString(date)}:${threeChars(date.millisecond())}`
+}
+
+
 export function timeToString(date: Dayjs): string {
-    return `${simpleTimeToString(date)}:${threeChars(date.millisecond())}`
+    if (!isDayJs(date)) {
+        throw new Error(`Unexpected type of date: ${date} of type ${typeof date}`)
+    }
+    return `${simpleTimeToString(date)}:${twoChars(date.second())}`
 }
 
 export function simpleTimeToString(date: Dayjs): string {
+    // console.log("Date: " + typeof date)
     return `${twoChars(date.hour())}:${twoChars(date.minute())}`
 }
 
@@ -56,9 +65,6 @@ export function threeChars(number: number): string {
     else return str
 }
 
-export function dayToString(date: Dayjs): string {
-    return `${twoChars(date.day())}/${twoChars(date.month() + 1)}/${twoChars(date.year())}`
-}
 
 export function addAlphaToColor(color: string, alpha: number): string {
     if (!color) return '';
@@ -76,5 +82,10 @@ export interface State<T> {
     onChange: (value: T) => void
 }
 
+export function isDayJs(obj: unknown): boolean {
+    return obj !== null && typeof obj === "object" && "millisecond" in obj;
+}
 
-// export const materialFont
+export function unixMs(date: Dayjs): number {
+    return date.unix() * 1000 + date.millisecond()
+}

@@ -1,10 +1,22 @@
-import {addAlphaToColor, Column, Row, State, timeToString, usePromise} from "../utils/Utils";
+import {
+    addAlphaToColor,
+    Column,
+    millsecondTimeToString,
+    Row,
+    State,
+    timeToString,
+    unixMs,
+    usePromise
+} from "../utils/Utils";
 import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
+    Checkbox,
     CircularProgress,
     Divider,
+    FormControlLabel,
+    FormGroup,
     IconButton,
     List,
     Pagination,
@@ -14,7 +26,17 @@ import {
     Typography,
     useTheme
 } from "@mui/material";
-import {DetailLog, ErrorLog, isDetailLog, isErrorLog, isMessageLog, LogEvent, LogLine, MessageLog} from "../core/Logs";
+import {
+    DetailLog,
+    ErrorLog,
+    isDetailLog,
+    isErrorLog,
+    isMessageLog,
+    isWarningLog,
+    LogEvent,
+    LogLine,
+    MessageLog
+} from "../core/Logs";
 import {ExpandMore, Refresh} from "@mui/icons-material";
 import {LongRightArrow} from "./LongRightArrow";
 import React, {Fragment, useState} from "react";
@@ -27,11 +49,18 @@ import {Day, LoggingServer} from "../server/LoggingServer";
 import {useScreenSize} from "../utils/ScreenSize";
 
 
-export function Endpoint(props: { theme: ThemeState, endpoint: string, day: Day, refreshMarker: boolean }) {
+export function Endpoint(props: {
+    theme: ThemeState,
+    endpoint: string,
+    day: Day,
+    refreshMarker: boolean,
+    filter: FilterConfig
+}) {
     const [page, setPage] = useState(0)
     const response = usePromise(
         LoggingServer.getLogs(props.endpoint, props.day, page), [props.endpoint, props.day, props.refreshMarker, page]
     )
+
     if (response === undefined) {
         return <Typography>
             <CircularProgress/>
@@ -40,17 +69,28 @@ export function Endpoint(props: { theme: ThemeState, endpoint: string, day: Day,
         return <Fragment>
             <List style={{maxHeight: "100%", overflow: "auto"}}>
                 <div style={{width: "fit-content"}}>
-                    {response.logs.map((l, i) => <LogEventAccordion key={i} log={l}/>)}
-                </div>
-            </List>
-            {response.pageCount > 1 &&
-                // Pages in Pagination are 0-indexed
-                <Pagination count={response.pageCount} page={page + 1}
-                            onChange={(_, p) => setPage(p - 1)}
-                            style={{alignSelf: "center"}}
-                />}
-        </Fragment>
+                    {response.logs
+                        .filter(log =>shouldDisplayLog(log, props.filter))
+                        .map((l, i) => <LogEventAccordion key={i} log={l}/>
+                )}
+            </div>
+        </List>
+    {
+        response.pageCount > 1 &&
+        // Pages in Pagination are 0-indexed
+        <Pagination count={response.pageCount} page={page + 1}
+                    onChange={(_, p) => setPage(p - 1)}
+                    style={{alignSelf: "center"}}
+        />
     }
+    </Fragment>
+    }
+}
+
+function shouldDisplayLog(log: LogEvent, filter: FilterConfig): boolean {
+    if (hasErrorLogs(log)) return filter.error
+    if (hasWarningLogs(log)) return filter.warn
+    return filter.info
 }
 
 const NoticableDivider = styled(Divider)(({theme}) => ({
@@ -62,12 +102,14 @@ export function LogsTitle(props: {
     endpoint: State<string | undefined>,
     onRefresh: () => void,
     day: State<Dayjs>,
-    theme: ThemeState
+    theme: ThemeState,
+    filter: FilterConfig,
+    setFilter: (filter: FilterConfig) => void
 }) {
     const screen = useScreenSize()
     return <Row style={{padding: 10, paddingLeft: screen.isPhone ? undefined : 30}}>
 
-        <Column style={{paddingLeft: screen.isPhone ? 10 : undefined}}>
+        <Column style={{paddingLeft: screen.isPhone ? 10 : undefined, alignSelf: "center"}}>
             <Row style={{alignItems: "center"}}>
                 {!screen.isPhone && <Typography style={{marginRight: 10, marginBottom: 4, alignSelf: "end"}}>
                     Logs for
@@ -88,10 +130,43 @@ export function LogsTitle(props: {
 
         <div style={{flexGrow: 1}}/>
 
-        {!screen.isPhone && <ThemeSwitch theme={props.theme}/>}
-        <DaySelection day={props.day}/>
-    </Row>;
+
+        {!screen.isPhone && <Fragment>
+            <FilterConfigSelection row={true} config={props.filter} setConfig={props.setFilter}/>
+            <ThemeSwitch theme={props.theme}/>
+        </Fragment>}
+        <Column>
+            <DaySelection day={props.day}/>
+            {screen.isPhone && <FilterConfigSelection row={false} config={props.filter} setConfig={props.setFilter}/>}
+        </Column>
+    </Row>
 }
+
+
+function FilterConfigSelection({config, setConfig, row}: {
+    config: FilterConfig,
+    setConfig: (config: FilterConfig) => void,
+    row: boolean
+}) {
+    return <FormGroup row>
+        <FormControlLabel
+            control={<Checkbox checked={config.info} onChange={(e) => setConfig({...config, info: e.target.checked})}/>}
+            label="Info"/>
+        <FormControlLabel
+            control={<Checkbox checked={config.warn} onChange={(e) => setConfig({...config, warn: e.target.checked})}/>}
+            label="Warning"/>
+        <FormControlLabel control={<Checkbox checked={config.error}
+                                             onChange={(e) => setConfig({...config, error: e.target.checked})}/>}
+                          label="Error"/>
+    </FormGroup>
+}
+
+export interface FilterConfig {
+    info: boolean
+    warn: boolean
+    error: boolean
+}
+
 
 export function DaySelection(props: { day: State<Dayjs> }) {
     return <DesktopDatePicker inputFormat={"DD/MM/YY"}
@@ -99,7 +174,8 @@ export function DaySelection(props: { day: State<Dayjs> }) {
                                   if (value !== null) props.day.onChange(value)
                               })}
                               value={props.day.value}
-                              renderInput={(params) => <TextField {...params} style={{width: "8rem"}}/>}/>
+                              renderInput={(params) => <TextField {...params}
+                                                                  style={{width: "8rem", alignSelf: "center"}}/>}/>
 }
 
 
@@ -126,21 +202,51 @@ const ThemeBorder = styled(Row)(({theme}) => ({
 
 function LogEventAccordion({log}: { log: LogEvent }) {
     const theme = useTheme();
-    const errored = log.logs.some(l => isErrorLog(l))
-    const erroredSuffix = errored ? " - ERROR" : ""
-    const textColor = errored ? theme.palette.error.main : theme.palette.text.primary
-    const screen = useScreenSize()
-    return <Accordion defaultExpanded={false}>
+    const errored = hasErrorLogs(log)
+    const warned = hasWarningLogs(log)
+    const textColor = errored ? theme.palette.error.main : warned ? theme.palette.warning.main : theme.palette.text.primary
+    const [expanded, setExpanded] = useState(false);
+
+    return <Accordion expanded={expanded} onChange={(e, newValue) => setExpanded(newValue)}>
         <LogEventSummary expandIcon={<ExpandMore/>} style={{color: textColor}}>
-            {timeToString(log.startTime)}
-            {/*Style must be passed explicitly to work properly with the svg*/}
-            <LongRightArrow style={durationArrowStyle} color={textColor}/>
-            {timeToString(log.endTime) + ` (${log.endTime.millisecond() - log.startTime.millisecond()}ms${screen.isPhone ? "" : " total"})` + erroredSuffix}
+            <LogEventSummaryText log={log} expanded={expanded} textColor={textColor} errored={errored} warned={warned}/>
         </LogEventSummary>
         <AccordionDetails>
             <LogEventContent log={log}/>
         </AccordionDetails>
     </Accordion>
+}
+
+export function hasErrorLogs(log: LogEvent): boolean {
+    return log.logs.some(l => isErrorLog(l))
+}
+
+export function hasWarningLogs(log: LogEvent): boolean {
+    return log.logs.some(l => isWarningLog(l))
+}
+
+function LogEventSummaryText({log, expanded, textColor, errored, warned}: {
+    log: LogEvent,
+    expanded: boolean,
+    textColor: string,
+    errored: boolean,
+    warned: boolean
+}) {
+    const duration = `${unixMs(log.endTime) - unixMs(log.startTime)}ms`
+    const suffix = errored ? " - ERROR" : warned ? " - Warning" : ""
+    const screen = useScreenSize()
+    if (expanded) {
+        return <Fragment>
+            {millsecondTimeToString(log.startTime)}
+            {/*Style must be passed explicitly to work properly with the svg*/}
+            <LongRightArrow style={durationArrowStyle} color={textColor}/>
+            {millsecondTimeToString(log.endTime) + ` (${duration}${screen.isPhone ? "" : " total"})`}
+        </Fragment>
+    } else {
+        return <Fragment>
+            {timeToString(log.startTime) + ` (${duration})` + suffix}
+        </Fragment>
+    }
 }
 
 const LogEventSummary = styled(AccordionSummary)`
@@ -175,7 +281,8 @@ function LogErrorUi({log}: { log: LogEvent }) {
                     <Column style={{paddingLeft: screen.isPhone ? 5 : 20}}>
                         {error.exception.flatMap(element => {
                             return element.stacktrace.split("\n").map((line, i) => <span
-                                style={{paddingLeft: i == 0 ? 0 : screen.isPhone? 5 : 20, lineBreak: "anywhere"}} key={i}>
+                                style={{paddingLeft: i == 0 ? 0 : screen.isPhone ? 5 : 20, lineBreak: "anywhere"}}
+                                key={i}>
                             {line}
                         </span>)
                         })}

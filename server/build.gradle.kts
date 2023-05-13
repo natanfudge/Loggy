@@ -24,9 +24,11 @@ apply(plugin = "io.objectbox") // Apply last.
 group = "natanfudge.io"
 version = "0.0.1"
 application {
-    mainClass.set("natanfudge.io.ApplicationKt")
+    mainClass.set("test.TestAppKt")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=true")
 }
+
+
 
 kotlin {
     jvmToolchain(17)
@@ -63,6 +65,16 @@ val testApp = sourceSets.create("testApp") {
 
 
 tasks {
+//    task stubRun(type: JavaExec, dependsOn: ['testClasses']) {
+//    classpath sourceSets.test.runtimeClasspath
+//            main = "StubApplication"
+//}
+    val runTest by registering(JavaExec::class) {
+        group = "test"
+        dependsOn("testAppClasses")
+        classpath(sourceSets["testApp"].runtimeClasspath)
+        mainClass.set("test.TestAppKt")
+    }
 
     val clientBuildDir = clientDir.resolve("dist")
 

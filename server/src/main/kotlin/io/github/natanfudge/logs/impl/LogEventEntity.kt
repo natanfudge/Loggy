@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 
-package io.github.natanfudge.logs
+package io.github.natanfudge.logs.impl
 
 import io.objectbox.annotation.Entity
 import io.objectbox.annotation.Id
@@ -9,16 +9,10 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.protobuf.ProtoBuf
 import java.time.Instant
-import java.util.*
 
-//@Entity
-//internal data class EndpointMetadata(
-//    @Id var id: Long = 0,
-//    @Index val endpoint: String = ""
-//)
 
 @Entity
-internal data class ObjectBoxLogEvent(
+internal data class LogEventEntity(
     @Id var id: Long = 0,
     @Index var name: String = "",
     @Index val startTime: Long = 0,
@@ -26,7 +20,7 @@ internal data class ObjectBoxLogEvent(
     var logsProtobuf: ByteArray = ByteArray(0)
 ) {
     override fun equals(other: Any?): Boolean {
-        return other is ObjectBoxLogEvent && id == other.id
+        return other is LogEventEntity && id == other.id
     }
 
     override fun hashCode(): Int {
@@ -42,7 +36,7 @@ private val protobuf = ProtoBuf
 private val logLinesSerializer = ListSerializer(LogLine.serializer())
 
 
-internal fun ObjectBoxLogEvent.toLogEvent() = LogEvent(
+internal fun LogEventEntity.toLogEvent() = LogEvent(
     name,
     Instant.ofEpochMilli(startTime),
     Instant.ofEpochMilli(endTime),
@@ -50,7 +44,7 @@ internal fun ObjectBoxLogEvent.toLogEvent() = LogEvent(
 )
 
 @PublishedApi
-internal fun LogEvent.toObjectBox(): ObjectBoxLogEvent = ObjectBoxLogEvent(
+internal fun LogEvent.toObjectBox(): LogEventEntity = LogEventEntity(
     0,
     name,
     startTime.toEpochMilli(),

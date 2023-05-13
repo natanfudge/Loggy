@@ -1,11 +1,12 @@
+package test
+
+import io.github.natanfudge.logs.Loggy
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
-import io.ktor.server.http.content.*
 import io.ktor.server.netty.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.github.natanfudge.logs.FancyLogger
-import io.github.natanfudge.logs.LoggingCredentials
+import io.github.natanfudge.logs.impl.LoggingCredentials
 import java.nio.charset.Charset
 import java.nio.file.Paths
 
@@ -25,7 +26,7 @@ fun main() {
 private fun getResource(path: String): CharArray =
     TestApp::class.java.getResourceAsStream(path)!!.readBytes().toString(Charset.defaultCharset()).toCharArray()
 
-val logger = FancyLogger(
+val logger = Loggy.create(
     logToConsole = true,
     credentials = LoggingCredentials(
         username = getResource("/secrets/admin_user.txt"),
