@@ -3,35 +3,53 @@ import dayjs, {Dayjs} from "dayjs";
 import {SimplePromiseMemoryCache} from "../ui/SimplePromiseMemoryCache";
 import {PromiseMemoryCache} from "../ui/PromiseMemoryCache";
 import utc from 'dayjs/plugin/utc'
-import {isDayJs, unixMs} from "../utils/Utils";
+import {unixMs} from "../utils/Utils";
+import {LoggyApi, parseLogResponse} from "./Api";
+import objectSupport from "dayjs/plugin/objectSupport";
 
 dayjs.extend(utc)
+dayjs.extend(objectSupport);
+
 
 export const DEBUG_ENDPOINT = "debug"
 
 export namespace LoggingServer {
-    const origin = window.location.origin.startsWith("http://localhost")
-    || window.location.origin.startsWith("http://127.0.0.1") ? "http://localhost:80" : window.location.origin;
-
-
-    async function fetchEndpoints(): Promise<string[]> {
-        const response = await fetch(`${origin}/__log_viewer__/endpoints`)
-        const text = await response.text()
-        return JSON.parse(text)
-    }
 
     export async function getEndpoints(): Promise<string[]> {
-        const value = endpointCache.get(() => fetchEndpoints())
+        const value = endpointCache.get(() => LoggyApi.getEndpoints())
         return value
     }
 
     const endpointCache = new SimplePromiseMemoryCache<string[]>()
 
 
-    export async function getLogs(endpoint: string, day: Day, page: number): Promise<LogResponse> {
+    export async function getLogs(endpoint: string, startDay: Day, endDay: Day, page: number): Promise<LogResponse> {
+        const startDate = startOfDay(startDay)
+        const endDate = endOfDay(endDay)
         return endpoint === DEBUG_ENDPOINT ? parseLogResponse(testLogResponse) :
-            logsCache.get(`${endpoint}${JSON.stringify(day)}${page}`, () => getLogsImpl(endpoint, day, page))
+            logsCache.get(
+                `${endpoint}${unixMs(startDate)}${unixMs(endDate)}${page}`,
+                () => LoggyApi.getLogs(endpoint, startDate, endDate, page)
+            )
     }
+
+    function startOfDay(day: Day): Dayjs {
+        return dayjs({year: day.year, month: day.month, day: day.day})
+    }
+
+    function endOfDay(day: Day): Dayjs {
+        return dayjs({
+            year: day.year,
+            month: day.month,
+            day: day.day,
+            hour: 23,
+            minute: 59,
+            second: 59,
+            millisecond: 999
+        })
+    }
+
+    // 23, 59, 59, 999_999_999
 
     export function refreshLog() {
         logsCache.dumpAll()
@@ -39,23 +57,8 @@ export namespace LoggingServer {
 
     const logsCache = new PromiseMemoryCache<LogResponse>()
 
-    async function getLogsImpl(endpoint: string, day: Day, page: number): Promise<LogResponse> {
-        const args = `?endpoint=${endpoint}&day=${JSON.stringify(day)}&page=${page}`
-        const response = await fetch(`${origin}/__log_viewer__/logs${args}`)
-        const text = await response.text()
-        return parseLogResponse(text)
-    }
 }
 
-function parseLogResponse(json: string): LogResponse {
-    return JSON.parse(json, (k, v) => {
-        if (typeof v === "number" && k.toLowerCase().endsWith("time")) {
-            return dayjs(v)
-        } else {
-            return v
-        }
-    })
-}
 
 export function stringifyLogResponse(log: LogResponse): string {
     return JSON.stringify(log, (k, v) => {
@@ -67,8 +70,6 @@ export function stringifyLogResponse(log: LogResponse): string {
         }
     })
 }
-
-
 
 
 export interface LogResponse {
@@ -86,7 +87,9 @@ export function dayJsToDay(dayjs: Dayjs): Day {
 }
 
 export interface Day {
+    // 1-indexed
     day: number,
+    // 1-indexed
     month: number
     year: number
 }

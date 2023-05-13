@@ -2,16 +2,16 @@ import React, {Fragment, useState} from 'react'
 import {
     CircularProgress,
     createTheme,
-    CssBaseline,
+    CssBaseline, styled,
     Theme as MaterialUiTheme,
     ThemeProvider,
     Typography
 } from "@mui/material";
 import "../extensions/ExtensionsImpl"
-import {Endpoint, FilterConfig, LogsTitle, ThemeSwitch} from "./Endpoint";
-import {Column, usePromise} from "../utils/Utils";
+import {DaySelection, Endpoint, FilterConfig, LogsTitle, ThemeSwitch, TimeRangeSelector} from "./Endpoint";
+import {Column, Row, State, usePromise} from "../utils/Utils";
 import {dayJsToDay, DEBUG_ENDPOINT, LoggingServer} from "../server/LoggingServer";
-import dayjs from "dayjs";
+import dayjs, {Dayjs} from "dayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {BrowserRouter, Route, Routes, useNavigate, useParams} from "react-router-dom";
@@ -60,7 +60,7 @@ function App(props: { theme: ThemeState, endpoint: string | undefined }) {
     // Changed when a refresh is requested, to rerun getEndpoints()
     const [refreshMarker, setRefreshMarker] = useState(false)
     const endpoints = props.endpoint === DEBUG_ENDPOINT ? [DEBUG_ENDPOINT] : usePromise(LoggingServer.getEndpoints(), [])
-    const [day, setDay] = useState(dayjs())
+    const [timeRange, setTimeRange] = useState<TimeRange>({startDay: dayjs(), endDay: dayjs()})
     const endpoint = props.endpoint ?? (endpoints !== undefined ? endpoints[0] : undefined)
     const navigate = useNavigate()
     const screen = useScreenSize()
@@ -77,30 +77,41 @@ function App(props: { theme: ThemeState, endpoint: string | undefined }) {
             </Typography>
         }
     }
-    return <Column style={{height: "100%"}} className="material-text">
-        <LogsTitle endpoints={endpoints}
-                   endpoint={{value: endpoint, onChange: (endpoint) => navigate("/logs/" + endpoint)}}
-                   day={{value: day, onChange: setDay}} theme={props.theme}
-                   onRefresh={() => {
-                       LoggingServer.refreshLog()
-                       setRefreshMarker(old => !old)
-                   }}
-                   filter = {filter}
-                   setFilter = {setFilter}
-        />
+    return <Row style = {{justifyContent: "space-between"}}>
+        <Column style={{height: "100%"}} className="material-text">
+            <LogsTitle endpoints={endpoints}
+                       endpoint={{value: endpoint, onChange: (endpoint) => navigate("/logs/" + endpoint)}}
+                       timeRange={{value: timeRange, onChange: setTimeRange}} theme={props.theme}
+                       onRefresh={() => {
+                           LoggingServer.refreshLog()
+                           setRefreshMarker(old => !old)
+                       }}
+                       filter={filter}
+                       setFilter={setFilter}
+            />
 
-        {endpoint !== undefined ?
-            <Endpoint filter={filter} day={dayJsToDay(day)} theme={props.theme} endpoint={endpoint} refreshMarker={refreshMarker}/>
-            : <CircularProgress/>
-        }
+            {endpoint !== undefined ?
+                <Endpoint filter={filter} startDay={dayJsToDay(timeRange.startDay)} endDay={dayJsToDay(timeRange.endDay)}
+                          theme={props.theme} endpoint={endpoint} refreshMarker={refreshMarker}/>
+                : <CircularProgress/>
+            }
 
-        {screen.isPhone && <Fragment>
-            <div style={{flexGrow: 1, height: 10}}/>
-            <ThemeSwitch theme={props.theme}/>
-            <div style={{height: 10}}/>
-        </Fragment>}
+            {screen.isPhone && <Fragment>
+                <div style={{flexGrow: 1, height: 10}}/>
+                <ThemeSwitch theme={props.theme}/>
+                <div style={{height: 10}}/>
+            </Fragment>}
 
-    </Column>
+        </Column>
+        {!screen.isPhone && <TimeRangeSelector state={{value: timeRange, onChange: setTimeRange}}/>}
+    </Row>
+}
+
+
+
+export interface TimeRange {
+    startDay: Dayjs
+    endDay: Dayjs
 }
 
 export default App

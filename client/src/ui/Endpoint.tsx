@@ -41,7 +41,7 @@ import {ExpandMore, Refresh} from "@mui/icons-material";
 import {LongRightArrow} from "./LongRightArrow";
 import React, {Fragment, useState} from "react";
 import {KeyValueTable} from "./KeyValueTable";
-import {ThemeState} from "./App";
+import {ThemeState, TimeRange} from "./App";
 import {DesktopDatePicker} from "@mui/x-date-pickers";
 import {Dayjs} from "dayjs";
 import {Dropdown} from "./UiUtils";
@@ -52,13 +52,14 @@ import {useScreenSize} from "../utils/ScreenSize";
 export function Endpoint(props: {
     theme: ThemeState,
     endpoint: string,
-    day: Day,
+    startDay: Day,
+    endDay: Day,
     refreshMarker: boolean,
     filter: FilterConfig
 }) {
     const [page, setPage] = useState(0)
     const response = usePromise(
-        LoggingServer.getLogs(props.endpoint, props.day, page), [props.endpoint, props.day, props.refreshMarker, page]
+        LoggingServer.getLogs(props.endpoint, props.startDay, props.endDay, page), [props.endpoint, props.startDay, props.endDay, props.refreshMarker, page]
     )
 
     if (response === undefined) {
@@ -70,20 +71,20 @@ export function Endpoint(props: {
             <List style={{maxHeight: "100%", overflow: "auto"}}>
                 <div style={{width: "fit-content"}}>
                     {response.logs
-                        .filter(log =>shouldDisplayLog(log, props.filter))
+                        .filter(log => shouldDisplayLog(log, props.filter))
                         .map((l, i) => <LogEventAccordion key={i} log={l}/>
-                )}
-            </div>
-        </List>
-    {
-        response.pageCount > 1 &&
-        // Pages in Pagination are 0-indexed
-        <Pagination count={response.pageCount} page={page + 1}
-                    onChange={(_, p) => setPage(p - 1)}
-                    style={{alignSelf: "center"}}
-        />
-    }
-    </Fragment>
+                        )}
+                </div>
+            </List>
+            {
+                response.pageCount > 1 &&
+                // Pages in Pagination are 0-indexed
+                <Pagination count={response.pageCount} page={page + 1}
+                            onChange={(_, p) => setPage(p - 1)}
+                            style={{alignSelf: "center"}}
+                />
+            }
+        </Fragment>
     }
 }
 
@@ -101,7 +102,7 @@ export function LogsTitle(props: {
     endpoints: string[] | undefined,
     endpoint: State<string | undefined>,
     onRefresh: () => void,
-    day: State<Dayjs>,
+    timeRange: State<TimeRange>,
     theme: ThemeState,
     filter: FilterConfig,
     setFilter: (filter: FilterConfig) => void
@@ -135,12 +136,42 @@ export function LogsTitle(props: {
             <FilterConfigSelection row={true} config={props.filter} setConfig={props.setFilter}/>
             <ThemeSwitch theme={props.theme}/>
         </Fragment>}
+        {screen.isPhone && <FilterConfigSelection row={false} config={props.filter} setConfig={props.setFilter}/>}
         <Column>
-            <DaySelection day={props.day}/>
-            {screen.isPhone && <FilterConfigSelection row={false} config={props.filter} setConfig={props.setFilter}/>}
+            {screen.isPhone &&<Fragment>
+                <TimeRangeSelector state={props.timeRange}/>
+            </Fragment> }
         </Column>
     </Row>
 }
+
+
+export function TimeRangeSelector(props: { state: State<TimeRange> }) {
+    const timeRange = props.state.value
+    const screen = useScreenSize()
+    return <Column style = {{padding: screen.isPhone ? 0 : 10}}>
+        <Row style = {{paddingBottom: 10}}>
+            <TimeRangeText> Start</TimeRangeText>
+            <DaySelection day={{
+                value: timeRange.startDay,
+                onChange: (value) => props.state.onChange({...timeRange, startDay: value})
+            }}/>
+        </Row>
+        <Row style = {{alignSelf: "end"}}>
+            <TimeRangeText style = {{marginRight: 3}}> End  </TimeRangeText>
+            <DaySelection day={{
+                value: timeRange.endDay,
+                onChange: (value) => props.state.onChange({...timeRange, endDay: value})
+            }}/>
+        </Row>
+    </Column>;
+}
+
+
+const TimeRangeText = styled("span")`
+  align-self: center;
+  padding: 5px;
+`
 
 
 function FilterConfigSelection({config, setConfig, row}: {
@@ -148,16 +179,18 @@ function FilterConfigSelection({config, setConfig, row}: {
     setConfig: (config: FilterConfig) => void,
     row: boolean
 }) {
+    const screen = useScreenSize();
+    const phone = screen.isPhone
     return <FormGroup row>
         <FormControlLabel
             control={<Checkbox checked={config.info} onChange={(e) => setConfig({...config, info: e.target.checked})}/>}
-            label="Info"/>
+            label={phone ? "I" : "Info"}/>
         <FormControlLabel
             control={<Checkbox checked={config.warn} onChange={(e) => setConfig({...config, warn: e.target.checked})}/>}
-            label="Warning"/>
+            label={phone? "W": "Warning"}/>
         <FormControlLabel control={<Checkbox checked={config.error}
                                              onChange={(e) => setConfig({...config, error: e.target.checked})}/>}
-                          label="Error"/>
+                          label={phone? "E": "Error"}/>
     </FormGroup>
 }
 

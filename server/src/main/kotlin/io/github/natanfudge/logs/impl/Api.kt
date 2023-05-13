@@ -8,10 +8,10 @@ import io.ktor.util.pipeline.*
 import io.objectbox.Box
 import io.objectbox.query.PropertyQueryCondition
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.math.ceil
@@ -31,9 +31,10 @@ internal fun routeApi(box: Box<LogEventEntity>) {
     get("/__log_viewer__/logs") {
         addCorsHeader()
         val endpoint = call.parameters["endpoint"]
-        val dayString = call.parameters["day"]
+        val startString = call.parameters["start"]
+        val endString = call.parameters["end"]
         val page = call.parameters["page"]
-        if (endpoint == null || dayString == null || page == null) {
+        if (endpoint == null || startString == null || endString == null || page == null) {
             call.respondText("Missing parameter", status = HttpStatusCode.BadRequest)
             return@get
         }
@@ -43,18 +44,22 @@ internal fun routeApi(box: Box<LogEventEntity>) {
             return@get
         }
 
-        val day = try {
-            json.decodeFromString(Day.serializer(), dayString)
-        } catch (e: SerializationException) {
-            e.printStackTrace()
-            call.respondText("Malformed day", status = HttpStatusCode.BadRequest)
+
+        val start = startString.toLongOrNull() ?: run {
+            call.respondText("Malformed start time", status = HttpStatusCode.BadRequest)
             return@get
         }
+
+        val end = endString.toLongOrNull() ?: run {
+            call.respondText("Malformed end time", status = HttpStatusCode.BadRequest)
+            return@get
+        }
+
 
         // Get logs with the specified endpoint in the specified day
         val logs: List<LogEventEntity> = box.query(
             LogEventEntity_.name.equal(endpoint)
-                .and(inDay(day))
+                .and(LogEventEntity_.startTime.between(start, end))
         ).build().use { it.find() }
 
         val response = LogResponse(
@@ -75,16 +80,16 @@ private fun PipelineContext<Unit, ApplicationCall>.addCorsHeader() {
     call.response.header("Access-Control-Allow-Origin", "*")
 }
 
-private fun inDay(day: Day): PropertyQueryCondition<LogEventEntity> {
-    val startOfDay = ZonedDateTime.of(day.year, day.month, day.day, 0, 0, 0, 0, GMT)
-        .toInstant().toEpochMilli()
-    val endOfDay = ZonedDateTime.of(day.year, day.month, day.day, 23, 59, 59, 999_999_999, GMT)
-        .toInstant().toEpochMilli()
+//private fun inDay(day: Day): PropertyQueryCondition<LogEventEntity> {
+//    val startOfDay = ZonedDateTime.of(day.year, day.month, day.day, 0, 0, 0, 0, GMT)
+//        .toInstant().toEpochMilli()
+//    val endOfDay = ZonedDateTime.of(day.year, day.month, day.day, 23, 59, 59, 999_999_999, GMT)
+//        .toInstant().toEpochMilli()
+//
+//    return LogEventEntity_.startTime.between(startOfDay, endOfDay)
+//}
 
-    return LogEventEntity_.startTime.between(startOfDay, endOfDay)
-}
-
-private val GMT = ZoneId.of("GMT")
+//private val GMT = ZoneId.of("GMT")
 
 private const val PageSize = 18
 
