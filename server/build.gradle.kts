@@ -33,7 +33,7 @@ application {
 
 kotlin {
     jvmToolchain(17)
-    explicitApi()
+//    explicitApi()
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

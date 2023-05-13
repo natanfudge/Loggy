@@ -6,7 +6,7 @@ main = ["ktor-server-core-jvm", "ktor-server-host-common-jvm", "ktor-server-cont
     "ktor-server-netty-jvm", "logback-classic", "kotlinx-serialization-json", "kotlinx-serialization-protobuf",
     "jansi", "ktor-auth"
 ]
-test = ["kotlin-test-junit","ktor-server-tests-jvm"]
+test = ["kotlin-test-junit","ktor-server-tests-jvm",  "strikt", ]
 build = ["objectbox","brotli", "brotli-windows"]
 
 [plugins]
@@ -26,7 +26,7 @@ jansi = "2.4.0"
 gradle-node="5.0.0"
 objectbox = "3.5.1"
 brotli = "1.11.0"
-
+strikt = "0.34.1"
 [libraries]
 
 ktor-auth = {group = "io.ktor", name = "ktor-server-auth", version.ref = "ktor"}
@@ -43,3 +43,4 @@ jansi = { group = "org.fusesource.jansi", name = "jansi", version.ref = "jansi" 
 objectbox = {group = "io.objectbox",name = "objectbox-gradle-plugin",version.ref = "objectbox"}
 brotli-windows = {group = "com.aayushatharva.brotli4j", name = "native-windows-x86_64", version.ref = "brotli"}
 brotli = {group = "com.aayushatharva.brotli4j", name = "brotli4j", version.ref = "brotli"}
+strikt = {group = "io.strikt", name = "strikt-core", version.ref= "strikt"}

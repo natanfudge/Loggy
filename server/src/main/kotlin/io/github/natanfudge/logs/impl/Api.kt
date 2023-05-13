@@ -105,7 +105,7 @@ private const val PageSize = 18
 private val json = Json { encodeDefaults = true }
 
 @Serializable
-internal data class Day(val day: Int, val month: Int, val year: Int)
+data class Day(val day: UByte, val month: UByte, val year: UShort)
 
 @Serializable
 internal data class LogResponse(
