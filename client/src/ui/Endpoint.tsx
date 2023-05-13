@@ -125,11 +125,11 @@ export function LogsTitle(props: {
             </Row>
             <NoticableDivider style={{marginTop: -1}}/>
         </Column>
-        <IconButton style={{height: "fit-content", alignSelf: "center"}} onClick={props.onRefresh}>
+        <IconButton style={{height: "fit-content", alignSelf: "center", paddingRight: screen.isPhone? 20 : 50}} onClick={props.onRefresh}>
             <Refresh/>
         </IconButton>
 
-        <div style={{flexGrow: 1}}/>
+        {/*<div style={{flexGrow: 1}}/>*/}
 
 
         {!screen.isPhone && <Fragment>

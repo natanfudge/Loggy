@@ -34,13 +34,13 @@ export namespace LoggingServer {
     }
 
     function startOfDay(day: Day): Dayjs {
-        return dayjs({year: day.year, month: day.month, day: day.day})
+        return dayjs({year: day.year, month: day.month - 1, day: day.day})
     }
 
     function endOfDay(day: Day): Dayjs {
         return dayjs({
             year: day.year,
-            month: day.month,
+            month: day.month - 1,
             day: day.day,
             hour: 23,
             minute: 59,
@@ -221,6 +221,48 @@ const testLogResponse = `{
           "message": "Info Test",
           "time": 1683973690,
           "severity": "Info"
+        },
+        {
+          "type": "DetailLog",
+          "key": "Foo",
+          "value": "Bar"
+        },
+        {
+          "type": "DetailLog",
+          "key": "Biz",
+          "value": "Baz"
+        }
+      ]
+    },
+    {
+      "name": "amar",
+      "startTime": 1683973662,
+      "endTime": 1683973662,
+      "logs": [
+        {
+          "type": "MessageLog",
+          "message": "Info Test",
+          "time": 1683973662,
+          "severity": "Info"
+        },
+        {
+          "type": "MessageLog",
+          "message": "Warn Test",
+          "time": 1683973662,
+          "severity": "Warn"
+        },
+        {
+          "type": "ErrorLog",
+          "message": "Error Test",
+          "time": 1683996662,
+          "exception": [
+            {
+              "className": "java.lang.NullPointerException",
+              "message": "",
+              "stacktrace": "java.lang.NullPointerException\\r\\n\\tat test.TestAppKt$module$1.invoke(TestApp.kt:43)\\r\\n\\tat test.TestAppKt$module$1.invoke(TestApp.kt:40)\\r\\n\\tat io.github.natanfudge.logs.impl.FancyLogger.startCallWithContextAsParam(FancyLogger.kt:102)\\r\\n\\tat io.github.natanfudge.logs.impl.FancyLogger.startCall(FancyLogger.kt:94)\\r\\n\\tat test.TestAppKt.module(TestApp.kt:40)\\r\\n\\tat test.TestAppKt.access$module(TestApp.kt:1)\\r\\n\\tat test.TestAppKt$main$1.invoke(TestApp.kt:20)\\r\\n\\tat test.TestAppKt$main$1.invoke(TestApp.kt:20)\\r\\n\\tat io.ktor.server.engine.ApplicationEngineEnvironmentReloading$instantiateAndConfigureApplication$1.invoke(ApplicationEngineEnvironmentReloading.kt:320)\\r\\n\\tat io.ktor.server.engine.ApplicationEngineEnvironmentReloading$instantiateAndConfigureApplication$1.invoke(ApplicationEngineEnvironmentReloading.kt:309)\\r\\n\\tat io.ktor.server.engine.ApplicationEngineEnvironmentReloading.avoidingDoubleStartup(ApplicationEngineEnvironmentReloading.kt:337)\\r\\n\\tat io.ktor.server.engine.ApplicationEngineEnvironmentReloading.instantiateAndConfigureApplication(ApplicationEngineEnvironmentReloading.kt:309)\\r\\n\\tat io.ktor.server.engine.ApplicationEngineEnvironmentReloading.createApplication(ApplicationEngineEnvironmentReloading.kt:150)\\r\\n\\tat io.ktor.server.engine.ApplicationEngineEnvironmentReloading.start(ApplicationEngineEnvironmentReloading.kt:276)\\r\\n\\tat io.ktor.server.netty.NettyApplicationEngine.start(NettyApplicationEngine.kt:216)\\r\\n\\tat test.TestAppKt.main(TestApp.kt:23)\\r\\n\\tat test.TestAppKt.main(TestApp.kt)\\r\\n"
+            }
+          ],
+          "severity": "Error"
         },
         {
           "type": "DetailLog",

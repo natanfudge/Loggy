@@ -1,6 +1,7 @@
 import com.aayushatharva.brotli4j.Brotli4jLoader
 import com.aayushatharva.brotli4j.encoder.Encoder
 import com.github.gradle.node.npm.task.NpmTask
+import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 
 
 buildscript {
@@ -41,6 +42,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     }
 }
 
+
 repositories {
     mavenCentral()
 }
@@ -62,6 +64,15 @@ val testApp = sourceSets.create("testApp") {
     compileClasspath += main.compileClasspath + mainOutput
     runtimeClasspath += main.runtimeClasspath + mainOutput
 }
+
+afterEvaluate {
+    tasks.named("compileTestAppKotlin", KotlinCompile::class) {
+        kotlinOptions {
+            freeCompilerArgs += "-Xdebug"
+        }
+    }
+}
+
 
 
 tasks {

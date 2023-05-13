@@ -62,6 +62,11 @@ internal fun routeApi(box: Box<LogEventEntity>) {
                 .and(LogEventEntity_.startTime.between(start, end))
         ).build().use { it.find() }
 
+        val allLogs = box.query(
+            LogEventEntity_.name.equal(endpoint)
+//                .and(LogEventEntity_.startTime.between(start, end))
+        ).build().use { it.find() }
+
         val response = LogResponse(
             pageCount = ceil(logs.size.toDouble() / PageSize).toInt(),
             // Return only PageSize items, and skip pages before the requested page
@@ -69,6 +74,9 @@ internal fun routeApi(box: Box<LogEventEntity>) {
                 .map { it.toLogEvent() }
         )
 
+        println(allLogs)
+        println(start)
+        println(end)
 
         call.respondText(json.encodeToString(LogResponse.serializer(), response))
     }

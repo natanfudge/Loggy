@@ -9,6 +9,8 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.protobuf.ProtoBuf
 import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 
 @Entity
@@ -28,9 +30,11 @@ internal data class LogEventEntity(
     }
 
     override fun toString(): String {
-        return "#$id: '$name', $startTime -> $endTime (${logsProtobuf.size} bytes)"
+        return "#$id: '$name', ${startTime.toSystemDate()} -> ${endTime.toSystemDate()} (${logsProtobuf.size} bytes)"
     }
 }
+
+private fun Long.toSystemDate() = ZonedDateTime.ofInstant(Instant.ofEpochMilli(this), ZoneId.systemDefault())
 
 private val protobuf = ProtoBuf
 private val logLinesSerializer = ListSerializer(LogLine.serializer())
