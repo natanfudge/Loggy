@@ -54,20 +54,20 @@ export function simpleTimeToString(date: Dayjs): string {
 
 export function twoChars(number: number): string {
     const str = String(number)
-    if (str.length == 1) return `0${str}`
+    if (str.length === 1) return `0${str}`
     else return str.substring(str.length - 2, str.length)
 }
 
 export function threeChars(number: number): string {
     const str = String(number)
-    if (str.length == 1) return `00${str}`
-    if (str.length == 2) return `0${str}`
+    if (str.length === 1) return `00${str}`
+    if (str.length === 2) return `0${str}`
     else return str
 }
 
 
 export function addAlphaToColor(color: string, alpha: number): string {
-    if (!color) return '';
+    if (color === "") return '';
     if (!color.startsWith('#')) return color;
 
     const r = parseInt(color.substring(1, 3), 16);

@@ -16,6 +16,7 @@ import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {BrowserRouter, Route, Routes, useNavigate, useParams} from "react-router-dom";
 import {useScreenSize} from "../utils/ScreenSize";
+import {UsageGraph} from "./UsageGraph";
 
 
 export function AppWrapper() {
@@ -29,9 +30,10 @@ export function AppWrapper() {
     return <ThemeProvider theme={darkTheme}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <CssBaseline/>
-            <BrowserRouter>
-                <RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>
-            </BrowserRouter>
+            {/*<BrowserRouter>*/}
+                <UsageGraph/>
+                {/*<RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>*/}
+            {/*</BrowserRouter>*/}
         </LocalizationProvider>
     </ThemeProvider>
 }
