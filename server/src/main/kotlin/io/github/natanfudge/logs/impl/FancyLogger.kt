@@ -79,6 +79,7 @@ public class FancyLogger(
         }
     }
 
+    //TODO: test this
     context(LogContext)
     private fun archiveMinimalAnalyticalInfo(toBeDestroyed: List<LogEventEntity>) {
         val breakdown = toBeDestroyed

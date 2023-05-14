@@ -8,17 +8,22 @@ import {
     Typography
 } from "@mui/material";
 import "../extensions/ExtensionsImpl"
+import "../utils-proposals/extensions/ExtensionsImpl"
 import {DaySelection, Endpoint, FilterConfig, LogsTitle, ThemeSwitch, TimeRangeSelector} from "./Endpoint";
 import {Column, Row, State, usePromise} from "../utils/Utils";
-import {dayJsToDay, DEBUG_ENDPOINT, LoggingServer} from "../server/LoggingServer";
+import {DEBUG_ENDPOINT, LoggingServer} from "../server/LoggingServer";
 import dayjs, {Dayjs} from "dayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {BrowserRouter, Route, Routes, useNavigate, useParams} from "react-router-dom";
 import {useScreenSize} from "../utils/ScreenSize";
-import {UsageGraph} from "./UsageGraph";
+import {Analytics, UsageGraph} from "./UsageGraph";
+import {Day} from "../core/Day";
 
-
+const testAnalytics: Analytics = [
+    [new Day({day: 1, month: 1, year: 2000}), {infoCount: 10, errorCount: 5, warningCount: 3}],
+    [new Day({day: 3, month: 1, year: 2000}), {infoCount: 16, errorCount: 0, warningCount: 0}],
+]
 export function AppWrapper() {
     const [isDark, setIsDark] = useState<boolean>(true)
     const darkTheme = createTheme({
@@ -31,7 +36,7 @@ export function AppWrapper() {
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <CssBaseline/>
             {/*<BrowserRouter>*/}
-                <UsageGraph/>
+                <UsageGraph analytics={testAnalytics}/>
                 {/*<RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>*/}
             {/*</BrowserRouter>*/}
         </LocalizationProvider>
@@ -93,7 +98,7 @@ function App(props: { theme: ThemeState, endpoint: string | undefined }) {
             />
 
             {endpoint !== undefined ?
-                <Endpoint filter={filter} startDay={dayJsToDay(timeRange.startDay)} endDay={dayJsToDay(timeRange.endDay)}
+                <Endpoint filter={filter} startDay={Day.ofDate(timeRange.startDay)} endDay={Day.ofDate(timeRange.endDay)}
                           theme={props.theme} endpoint={endpoint} refreshMarker={refreshMarker}/>
                 : <CircularProgress/>
             }
@@ -118,7 +123,7 @@ export interface TimeRange {
 
 export default App
 declare module '@emotion/react' {
-    export interface Theme extends MaterialUiTheme {
-
-    }
+    // export interface Theme extends MaterialUiTheme {
+    //
+    // }
 }

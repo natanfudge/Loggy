@@ -6,6 +6,7 @@ import utc from 'dayjs/plugin/utc'
 import {unixMs} from "../utils/Utils";
 import {LoggyApi, parseLogResponse} from "./Api";
 import objectSupport from "dayjs/plugin/objectSupport";
+import {Day} from "../core/Day";
 
 dayjs.extend(utc)
 dayjs.extend(objectSupport);
@@ -24,8 +25,8 @@ export namespace LoggingServer {
 
 
     export async function getLogs(endpoint: string, startDay: Day, endDay: Day, page: number): Promise<LogResponse> {
-        const startDate = startOfDay(startDay)
-        const endDate = endOfDay(endDay)
+        const startDate = startDay.start()
+        const endDate = endDay.end()
         return endpoint === DEBUG_ENDPOINT ? parseLogResponse(testLogResponse) :
             logsCache.get(
                 `${endpoint}${unixMs(startDate)}${unixMs(endDate)}${page}`,
@@ -33,21 +34,6 @@ export namespace LoggingServer {
             )
     }
 
-    function startOfDay(day: Day): Dayjs {
-        return dayjs({year: day.year, month: day.month - 1, day: day.day})
-    }
-
-    function endOfDay(day: Day): Dayjs {
-        return dayjs({
-            year: day.year,
-            month: day.month - 1,
-            day: day.day,
-            hour: 23,
-            minute: 59,
-            second: 59,
-            millisecond: 999
-        })
-    }
 
     // 23, 59, 59, 999_999_999
 
@@ -77,22 +63,7 @@ export interface LogResponse {
     logs: LogEvent[]
 }
 
-export function dayJsToDay(dayjs: Dayjs): Day {
-    const utc = dayjs.utc()
-    return {
-        day: utc.date(),
-        month: utc.month() + 1,
-        year: utc.year()
-    }
-}
 
-export interface Day {
-    // 1-indexed
-    day: number,
-    // 1-indexed
-    month: number
-    year: number
-}
 
 // language=JSON
 const testLogResponse = `{
