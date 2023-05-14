@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "update-lib": "npm update fudge-lib"
   },
   "eslintConfig": ".eslintrc.json",
   "dependencies": {
-    "fudge-lib" : "latest",
+    "fudge-lib" : "^1.0.7",
     "@date-io/dayjs": "^2.16.0",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",

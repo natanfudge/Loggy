@@ -20,10 +20,7 @@ import {useScreenSize} from "../utils/ScreenSize";
 import {Analytics, UsageGraph} from "./UsageGraph";
 import {Day} from "../core/Day";
 
-const testAnalytics: Analytics = [
-    [new Day({day: 1, month: 1, year: 2000}), {infoCount: 10, errorCount: 5, warningCount: 3}],
-    [new Day({day: 3, month: 1, year: 2000}), {infoCount: 16, errorCount: 0, warningCount: 0}],
-]
+
 export function AppWrapper() {
     const [isDark, setIsDark] = useState<boolean>(true)
     const darkTheme = createTheme({
@@ -35,10 +32,10 @@ export function AppWrapper() {
     return <ThemeProvider theme={darkTheme}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <CssBaseline/>
-            {/*<BrowserRouter>*/}
-                <UsageGraph analytics={testAnalytics}/>
-                {/*<RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>*/}
-            {/*</BrowserRouter>*/}
+            <BrowserRouter>
+                {/*<UsageGraph analytics={testAnalytics}/>*/}
+                <RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>
+            </BrowserRouter>
         </LocalizationProvider>
     </ThemeProvider>
 }

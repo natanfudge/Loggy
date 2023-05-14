@@ -1,12 +1,13 @@
 import {LogEvent} from "../core/Logs";
 import dayjs, {Dayjs} from "dayjs";
 import {SimplePromiseMemoryCache} from "../ui/SimplePromiseMemoryCache";
-import {PromiseMemoryCache} from "../ui/PromiseMemoryCache";
 import utc from 'dayjs/plugin/utc'
 import {unixMs} from "../utils/Utils";
-import {LoggyApi, parseLogResponse} from "./Api";
+import {GetLogsResponse, LoggyApi, parseLogResponse} from "./Api";
 import objectSupport from "dayjs/plugin/objectSupport";
 import {Day} from "../core/Day";
+import {Analytics} from "../ui/UsageGraph";
+import {PromiseMemoryCache} from "fudge-lib/src/collections/PromiseMemoryCache"
 
 dayjs.extend(utc)
 dayjs.extend(objectSupport);
@@ -24,13 +25,13 @@ export namespace LoggingServer {
     const endpointCache = new SimplePromiseMemoryCache<string[]>()
 
 
-    export async function getLogs(endpoint: string, startDay: Day, endDay: Day, page: number): Promise<LogResponse> {
+    export async function getLogs(endpoint: string, startDay: Day, endDay: Day, page: number): Promise<GetLogsResponse> {
         const startDate = startDay.start()
         const endDate = endDay.end()
         return endpoint === DEBUG_ENDPOINT ? parseLogResponse(testLogResponse) :
             logsCache.get(
                 `${endpoint}${unixMs(startDate)}${unixMs(endDate)}${page}`,
-                () => LoggyApi.getLogs(endpoint, startDate, endDate, page)
+                () => LoggyApi.getLogs({endpoint, startDate, endDate, page})
             )
     }
 
@@ -41,12 +42,18 @@ export namespace LoggingServer {
         logsCache.dumpAll()
     }
 
-    const logsCache = new PromiseMemoryCache<LogResponse>()
+    const logsCache = new PromiseMemoryCache<GetLogsResponse>()
+
+    export async function getAnalytics(endpoint: string, startDay: Day, endDay: Day): Promise<Analytics> {
+
+    }
+
+    const analyticsCache = new PromiseMemoryCache<Analytics>()
 
 }
 
 
-export function stringifyLogResponse(log: LogResponse): string {
+export function stringifyLogResponse(log: GetLogsResponse): string {
     return JSON.stringify(log, (k, v) => {
         // console.log(`k: ${k}, v: ${v}, v is dayjs: ${isDayJs(v)}, type of v: ${typeof v}`)
         if (typeof v === "string" && k.toLowerCase().endsWith("time")) {
@@ -58,10 +65,6 @@ export function stringifyLogResponse(log: LogResponse): string {
 }
 
 
-export interface LogResponse {
-    pageCount: number,
-    logs: LogEvent[]
-}
 
 
 

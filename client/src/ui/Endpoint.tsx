@@ -45,8 +45,9 @@ import {ThemeState, TimeRange} from "./App";
 import {DesktopDatePicker} from "@mui/x-date-pickers";
 import {Dayjs} from "dayjs";
 import {Dropdown} from "./UiUtils";
-import {Day, LoggingServer} from "../server/LoggingServer";
+import {LoggingServer} from "../server/LoggingServer";
 import {useScreenSize} from "../utils/ScreenSize";
+import {Day} from "../core/Day";
 
 
 export function Endpoint(props: {
@@ -117,7 +118,7 @@ export function LogsTitle(props: {
                 </Typography>}
                 {/*When props.endpoints is defined, props.endpoint.value must also be defined*/}
                 {props.endpoints === undefined ? <CircularProgress/> :
-                    <Dropdown options={props.endpoints} value={props.endpoint.value!!}
+                    <Dropdown options={props.endpoints} value={props.endpoint.value!}
                               onValueChanged={props.endpoint.onChange}
                               style={{width: "max-content"}}/>}
 

@@ -1,5 +1,6 @@
 import {assert, expect, test} from 'vitest'
 import {LogEvent} from "../src/core/Logs";
+import {Day} from "../src/core/Day";
 
 // Edit an assertion and save to see HMR in action
 
@@ -11,7 +12,15 @@ test('Math.sqrt()', () => {
 
 
 test('JSON', () => {
+    const day = new Day({day: 1, month: 2, year: 1970})
+    console.log(JSON.stringify(day))
+    const back: Day = JSON.parse(JSON.stringify(day))
 
+    const dayInstanceof = day instanceof Day
+    const backInstanceof = back instanceof Day
+
+    const dateDay = day.dateString()
+    const backDay = back.dateString()
 
     const x = 2;
     // const input = {

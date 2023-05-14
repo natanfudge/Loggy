@@ -23,17 +23,17 @@ export function usePromise<T>(promise: Promise<NonNullable<T>> | T, deps: unknow
 }
 
 
-export type StringMap = Record<string, string>
-
-export  function recordToArray<V,Rec extends Record<keyof Rec, V>,K extends keyof Rec, R>(record: Record<K,V>, mapFn: (key: K, value: V, index: number) => R): R[] {
-    return typedKeys(record).map((key, index) => mapFn(key, record[key], index));
-}
-
-export function typedKeys<K extends TsKey, V>(object: Record<K, V>): K[] {
-    return Object.keys(object) as K[];
-}
-
-export type TsKey = string | number | symbol
+// export type StringMap = Record<string, string>
+//
+// export  function recordToArray<V,Rec extends Record<keyof Rec, V>,K extends keyof Rec, R>(record: Record<K,V>, mapFn: (key: K, value: V, index: number) => R): R[] {
+//     return typedKeys(record).map((key, index) => mapFn(key, record[key], index));
+// }
+//
+// export function typedKeys<K extends TsKey, V>(object: Record<K, V>): K[] {
+//     return Object.keys(object) as K[];
+// }
+//
+// export type TsKey = string | number | symbol
 
 export function millsecondTimeToString(date: Dayjs): string {
     return `${timeToString(date)}:${threeChars(date.millisecond())}`
@@ -82,7 +82,7 @@ export interface State<T> {
     onChange: (value: T) => void
 }
 
-export function isDayJs(obj: unknown): boolean {
+export function isDayJs(obj: unknown): obj is Dayjs {
     return obj !== null && typeof obj === "object" && "millisecond" in obj;
 }
 

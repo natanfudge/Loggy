@@ -1,5 +1,8 @@
-import {TsKey} from "../utils/Utils";
+import { TsKey } from "fudge-lib/src/types/Basic";
 
+/**
+ * Version of the PromiseMemoryCache that stores only one value
+ */
 export class SimplePromiseMemoryCache<T> {
     private cache: T | undefined = undefined
 
