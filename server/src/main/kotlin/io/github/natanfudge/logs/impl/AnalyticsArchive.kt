@@ -2,9 +2,17 @@
 
 package io.github.natanfudge.logs.impl
 
+import kotlinx.serialization.Serializable
 import java.nio.file.Path
+import kotlin.io.path.appendBytes
+import kotlin.io.path.createFile
+import kotlin.io.path.exists
+import kotlin.io.path.readBytes
 
 internal typealias DayIndex = UShort
+
+@Serializable
+data class Day(val day: UByte, val month: UByte, val year: UShort)
 
 public typealias Analytics = Map<Day, DayBreakdown>
 
@@ -39,14 +47,22 @@ private const val CreationYearOfTheUniverse = 1970u
 
 // For test access only
 public class AnalyticsArchive(private val dir: Path) {
-    fun save(key: String, analytics: Analytics) {
-
+    fun append(key: String, analytics: Analytics) {
+        val file = dir.withKey(key)
+        if (!file.exists()) file.createFile()
+        file.appendBytes(encode(analytics).toByteArray())
     }
+
+    fun getAll(key: String): Analytics {
+        return decode(dir.withKey(key).readBytes().toUByteArray())
+    }
+
+    private fun Path.withKey(key: String) = resolve("$key.kv")
 
     /**
      * It's stored forever so I make sure to make it extra compact
      */
-    fun encode(analytics: Analytics): UByteArray {
+    private fun encode(analytics: Analytics): UByteArray {
         val bytes = UByteArray(analytics.size * AnalyticsRowBytes)
         var shift = 0
         for ((day, breakdown) in analytics) {
@@ -58,7 +74,7 @@ public class AnalyticsArchive(private val dir: Path) {
         return bytes
     }
 
-    fun decode(bytes: UByteArray): Analytics {
+    private fun decode(bytes: UByteArray): Analytics {
         val analytics: MutableMap<Day, DayBreakdown> = mutableMapOf()
         var shift = 0
         while (shift < bytes.size) {
@@ -91,9 +107,7 @@ public class AnalyticsArchive(private val dir: Path) {
         )
     }
 
-    fun get(key: String): Analytics {
-        TODO()
-    }
+
 }
 
 fun UByteArray.getUShort(index: Int): UShort {
@@ -107,6 +121,7 @@ fun UByteArray.putUShort(index: Int, num: UShort): Int {
     this[index + 1] = (num.toUInt()).bitRange(start = 8, length = 8)
     return 2
 }
+
 // actual: 217680115
 // expected: 234523123
 fun UByteArray.getUInt(index: Int): UInt {

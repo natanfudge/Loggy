@@ -62,10 +62,6 @@ internal fun routeApi(box: Box<LogEventEntity>) {
                 .and(LogEventEntity_.startTime.between(start, end))
         ).build().use { it.find() }
 
-        val allLogs = box.query(
-            LogEventEntity_.name.equal(endpoint)
-//                .and(LogEventEntity_.startTime.between(start, end))
-        ).build().use { it.find() }
 
         val response = LogResponse(
             pageCount = ceil(logs.size.toDouble() / PageSize).toInt(),
@@ -73,10 +69,6 @@ internal fun routeApi(box: Box<LogEventEntity>) {
             logs = logs.sortedByDescending { it.startTime }.drop(pageInt * PageSize).take(PageSize)
                 .map { it.toLogEvent() }
         )
-
-        println(allLogs)
-        println(start)
-        println(end)
 
         call.respondText(json.encodeToString(LogResponse.serializer(), response))
     }
@@ -88,24 +80,13 @@ private fun PipelineContext<Unit, ApplicationCall>.addCorsHeader() {
     call.response.header("Access-Control-Allow-Origin", "*")
 }
 
-//private fun inDay(day: Day): PropertyQueryCondition<LogEventEntity> {
-//    val startOfDay = ZonedDateTime.of(day.year, day.month, day.day, 0, 0, 0, 0, GMT)
-//        .toInstant().toEpochMilli()
-//    val endOfDay = ZonedDateTime.of(day.year, day.month, day.day, 23, 59, 59, 999_999_999, GMT)
-//        .toInstant().toEpochMilli()
-//
-//    return LogEventEntity_.startTime.between(startOfDay, endOfDay)
-//}
-
-//private val GMT = ZoneId.of("GMT")
 
 private const val PageSize = 18
 
 
 private val json = Json { encodeDefaults = true }
 
-@Serializable
-data class Day(val day: UByte, val month: UByte, val year: UShort)
+
 
 @Serializable
 internal data class LogResponse(

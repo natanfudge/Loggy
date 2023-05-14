@@ -13,6 +13,9 @@ import java.time.Instant
 @Serializable
 internal data class LogEvent(val name: String, val startTime: Instant, val endTime: Instant, val logs: List<LogLine>)
 
+internal val LogLine.isError get() = this is LogLine.Message.Error
+internal val LogLine.isWarning get() = this is LogLine.Message && severity == LogLine.Severity.Warn
+
 @Serializable
 @PublishedApi internal sealed interface LogLine {
     @Serializable

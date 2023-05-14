@@ -7,6 +7,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.time.Instant
+import java.time.ZoneId
 
 
 internal object InstantSerializer : KSerializer<Instant> {
@@ -39,3 +40,5 @@ private fun Throwable.selfToSerializable() : SerializableThrowableElement {
 
 internal fun getResourceBytes(path: String): ByteArray? =
     FancyLogger::class.java.getResourceAsStream(path)?.readBytes()
+
+val GMTZoneId = ZoneId.of("GMT")

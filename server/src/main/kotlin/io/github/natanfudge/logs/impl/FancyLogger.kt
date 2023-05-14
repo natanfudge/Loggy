@@ -8,13 +8,17 @@ import io.ktor.server.http.content.*
 import io.ktor.server.routing.*
 import io.objectbox.Box
 import io.objectbox.kotlin.boxFor
-import kotlinx.coroutines.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.nio.file.Path
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.util.*
 import kotlin.concurrent.schedule
 import kotlin.io.path.createDirectories
+import kotlin.math.log
 
 public class LoggingCredentials(
     internal val username: CharArray,
@@ -25,10 +29,12 @@ public class FancyLogger(
     private val logToConsole: Boolean,
     logsDir: Path,
     private val credentials: LoggingCredentials
-): Loggy {
+) : Loggy {
     private val boxStore = MyObjectBox.builder()
         .directory(logsDir.toFile())
         .build()
+
+    private val analyticsArchive = AnalyticsArchive(logsDir.resolve("archive/analytics").createDirectories())
 
     @PublishedApi
     internal val logsBox: Box<LogEventEntity> = boxStore.boxFor<LogEventEntity>()
@@ -65,16 +71,47 @@ public class FancyLogger(
         // Query for all logs more than a month old and remove them
         val monthAgo = ZonedDateTime.now().minusMonths(1).toEpochSecond() * 1000
         logsBox.query(LogEventEntity_.startTime.less(monthAgo)).build().use {
-            val logs = it.find()
-
+            // We save a minimal amount of information for later analysis
+            archiveMinimalAnalyticalInfo(it.find())
             logData("Log Size") { (boxStore.sizeOnDisk() / 1000).toString() + "KB" }
             val removed = it.remove()
             logData("Logs Removed") { removed }
         }
     }
 
+    context(LogContext)
+    private fun archiveMinimalAnalyticalInfo(toBeDestroyed: List<LogEventEntity>) {
+        val breakdown = toBeDestroyed
+            .groupBy { it.name }
+            .mapValues {(_, logs) -> breakdownDays(logs) }
+
+        for((endpoint, analytics) in breakdown) {
+            analyticsArchive.append(endpoint, analytics)
+        }
+    }
+
+    private fun breakdownDays(logEvents: List<LogEventEntity>): Analytics {
+        return logEvents.map { dayOfUnixMs(it.startTime) to it }
+            .groupBy {(day, _) -> day }
+            .mapValues { (_, logsOfDay) ->
+                var errors = 0
+                var warnings = 0
+                var infos = 0
+                for((_, log) in logsOfDay) {
+                    val decoded = log.toLogEvent()
+                    // A log event counts an error/warning if there was at least one error/warning log line.
+                    when {
+                        decoded.logs.any { it.isError } -> errors++
+                        decoded.logs.any { it.isWarning } -> warnings++
+                        else -> infos++
+                    }
+                }
+                DayBreakdown(errorCount = errors, warningCount = warnings, infoCount = infos)
+            }
+    }
+
     context(Routing)
-     override fun route() {
+    override fun route() {
         routeAuthentication()
         authenticate(AuthSessionName) {
             routeApi(logsBox)
@@ -92,13 +129,13 @@ public class FancyLogger(
     }
 
 
-    override  fun <T> startCall(name: String, call: LogContext.() -> T): T {
+    override fun <T> startCall(name: String, call: LogContext.() -> T): T {
         return startCallWithContextAsParam(name, call)
     }
 
     // Context receivers are bugging out, so we pass LogContext as a parameter for some use cases
     // (try removing this with K2)
-     override fun <T> startCallWithContextAsParam(name: String, call: (LogContext) -> T): T {
+    override fun <T> startCallWithContextAsParam(name: String, call: (LogContext) -> T): T {
         val context = LogContext(name.removePrefix("/").replace("/", "_"), Instant.now())
         val value = try {
             call(context)
@@ -122,6 +159,14 @@ public class FancyLogger(
 
 }
 
+private fun dayOfUnixMs(ms: Long): Day {
+    val datetime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(ms), GMTZoneId)
+    return Day(
+        year = datetime.year.toUShort(),
+        month = datetime.month.value.toUByte(),
+        day = datetime.dayOfMonth.toUByte()
+    )
+}
 
 internal const val LoginPath = "/_log_viewer/login"
 private const val DayMs = 1000 * 60 * 60 * 24L

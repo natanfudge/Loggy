@@ -6,7 +6,7 @@ import io.github.natanfudge.logs.impl.*
 import org.junit.Test
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
-import java.nio.file.Paths
+import java.nio.file.Files
 
 class AnalyticsTest {
     @Test
@@ -36,15 +36,29 @@ class AnalyticsTest {
     }
 
     @Test
-    fun testEncodeDecode() {
-        val archive = AnalyticsArchive(Paths.get(""))
+    fun testWriteRead() {
+        val archive = AnalyticsArchive(Files.createTempDirectory("analytics_test"))
 
-        val analytics: Analytics = mapOf(
+        val analytics1: Analytics = mapOf(
             Day(1u, 2u, 1973u) to DayBreakdown(234523123, 41, 45),
             Day(2u, 1u, 1970u) to DayBreakdown(0, 9, 2),
             Day(11u, 9u, 1980u) to DayBreakdown(2343123, 0, 5),
         )
 
-        expectThat(archive.decode(archive.encode(analytics))).isEqualTo(analytics)
+        archive.append("test", analytics1)
+        expectThat(archive.getAll("test")).isEqualTo(analytics1)
+
+        archive.append("test", analytics1)
+        // Because of the way maps work the new keys would override the old keys
+        expectThat(archive.getAll("test")).isEqualTo(analytics1)
+
+        val analytics2 = mapOf(
+            Day(1u, 2u, 1973u) to DayBreakdown(234523123, 41, 45),
+            Day(5u, 1u, 1970u) to DayBreakdown(0, 9, 2),
+            Day(14u, 9u, 1980u) to DayBreakdown(2343123, 0, 5),
+        )
+
+        archive.append("test", analytics2)
+        expectThat(archive.getAll("test")).isEqualTo(analytics1 + analytics2)
     }
 }
