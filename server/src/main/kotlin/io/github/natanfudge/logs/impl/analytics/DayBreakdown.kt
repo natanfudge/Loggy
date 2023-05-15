@@ -8,7 +8,7 @@ public data class DayBreakdown(
     val warningCount: UShort,
     val errorCount: UShort
 ) {
-    constructor(infoCount: Int, warningCount: Int, errorCount: Int) :
+    public constructor(infoCount: Int, warningCount: Int, errorCount: Int) :
             this(
                 infoCount = infoCount.toUInt(),
                 warningCount = warningCount.toUShort(),

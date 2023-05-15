@@ -41,4 +41,4 @@ private fun Throwable.selfToSerializable() : SerializableThrowableElement {
 internal fun getResourceBytes(path: String): ByteArray? =
     FancyLogger::class.java.getResourceAsStream(path)?.readBytes()
 
-val GMTZoneId = ZoneId.of("GMT")
+internal val GMTZoneId = ZoneId.of("GMT")

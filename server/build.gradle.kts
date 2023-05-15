@@ -33,7 +33,7 @@ application {
 
 kotlin {
     jvmToolchain(17)
-//    explicitApi()
+    explicitApi()
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
@@ -76,16 +76,6 @@ afterEvaluate {
 
 
 tasks {
-//    task stubRun(type: JavaExec, dependsOn: ['testClasses']) {
-//    classpath sourceSets.test.runtimeClasspath
-//            main = "StubApplication"
-//}
-    val runTest by registering(JavaExec::class) {
-        group = "test"
-        dependsOn("testAppClasses")
-        classpath(sourceSets["testApp"].runtimeClasspath)
-        mainClass.set("test.TestAppKt")
-    }
 
     val clientBuildDir = clientDir.resolve("dist")
 
@@ -118,7 +108,9 @@ tasks {
         into(sourceSets.main.get().output.resourcesDir!!.resolve("__log_viewer__/static"))
     }
 
-    publish.get().dependsOn(syncClient)
+    afterEvaluate {
+        getByName("generateMetadataFileForLoggyPublication").dependsOn(syncClient)
+    }
 
 }
 
@@ -143,8 +135,8 @@ publishing {
 
             // set the coordinates of the artifact
             groupId = "io.github.natanfudge"
-            artifactId = "log-viewer"
-            version = "0.1.0"
+            artifactId = "loggy"
+            version = "0.2.0"
         }
     }
 }

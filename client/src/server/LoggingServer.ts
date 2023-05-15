@@ -6,8 +6,8 @@ import {GetAnalyticsResponse, GetLogsResponse, LoggyApi, parseLogResponse} from 
 import objectSupport from "dayjs/plugin/objectSupport";
 import {Day} from "../core/Day";
 import {Analytics, DayBreakdown} from "../ui/AnalyticsGraph";
-import {PromiseMemoryCache} from "fudge-lib/src/collections/PromiseMemoryCache"
-import {recordToArray} from "fudge-lib/src/methods/Javascript";
+import {PromiseMemoryCache} from "fudge-lib/dist/collections/PromiseMemoryCache"
+import {recordToArray} from "fudge-lib/dist/methods/Javascript";
 
 dayjs.extend(utc)
 dayjs.extend(objectSupport);

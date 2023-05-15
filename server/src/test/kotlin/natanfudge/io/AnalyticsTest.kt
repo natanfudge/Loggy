@@ -3,6 +3,7 @@
 package natanfudge.io
 
 import io.github.natanfudge.logs.impl.*
+import io.github.natanfudge.logs.impl.analytics.*
 import org.junit.Test
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo

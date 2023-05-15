@@ -10,10 +10,7 @@ import {useNavigate} from "react-router-dom";
 import {ThemeState, TimeRange} from "./App";
 import dayjs from "dayjs";
 
-//TODO: pull out the non-log specific stuff out of here -
-// - Refresh button
-// - Theme button
-// - non-existent endpoint handling
+
 export function Logs(props: { theme: ThemeState, endpoint: string | undefined }) {
     // Changed when a refresh is requested, to rerun getEndpoints()
     const [refreshMarker, setRefreshMarker] = useState(false)
@@ -57,7 +54,7 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
 
             {screen.isPhone && <Fragment>
                 <div style={{flexGrow: 1, height: 10}}/>
-                <ThemeSwitch theme={props.theme}/>
+                <ThemeSwitch themeState={props.theme}/>
                 <div style={{height: 10}}/>
             </Fragment>}
 

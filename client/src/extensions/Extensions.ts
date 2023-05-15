@@ -1,4 +1,4 @@
-import {TsKey} from "../utils/Utils";
+import {TsKey} from "fudge-lib/dist/types/Basic";
 
 export {}
 declare global {

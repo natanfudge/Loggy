@@ -6,7 +6,7 @@ import {Dayjs} from "dayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {BrowserRouter, Route, Routes, useParams} from "react-router-dom";
-import {AnalyticsUI} from "./AnalyticsUI";
+import {AnalyticsPage} from "./AnalyticsPage";
 import {Logs} from "./Logs";
 
 
@@ -41,19 +41,28 @@ function RoutedApp(props: { theme: ThemeState }) {
     return <Routes>
         <Route path="/logs/" element={<Logs theme={props.theme} endpoint={undefined}/>}/>
         <Route path="/logs/:endpoint" element={<RoutedLogs theme={props.theme}/>}/>
-        <Route path="/logs/:endpoint/stats" element={<RoutedAnalytics/> }/>
-            <Route path="*" element={"Nothing Here"}/>
+        <Route path="/logs/:endpoint/stats" element={<RoutedAnalytics theme={props.theme}/>}/>
+        <Route path="*" element={"Nothing Here"}/>
     </Routes>
 }
 
-function RoutedLogs(props: { theme: ThemeState }) {
-    const {endpoint} = useParams<"endpoint">()
-    return <Logs theme={props.theme} endpoint={endpoint}/>
+type PageContents = {
+    // theme: ThemeState
+    endpoint: string | undefined
 }
 
-function RoutedAnalytics() {
+function Page({Content}: { Content: React.FC<PageContents> }) {
     const {endpoint} = useParams<"endpoint">()
-    return <AnalyticsUI endpoint={endpoint!}/>
+    return <Content endpoint={endpoint}/>
+}
+
+function RoutedLogs(props: { theme: ThemeState }) {
+    return <Page Content={({endpoint}) => <Logs theme={props.theme} endpoint={endpoint}/>}/>
+}
+
+function RoutedAnalytics(props: {theme: ThemeState}) {
+    const {endpoint} = useParams<"endpoint">()
+    return <AnalyticsPage theme={props.theme} endpoint={endpoint!}/>
 }
 
 

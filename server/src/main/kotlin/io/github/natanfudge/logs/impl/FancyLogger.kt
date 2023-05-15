@@ -26,7 +26,7 @@ public class LoggingCredentials(
     internal val password: CharArray
 )
 
-public class FancyLogger(
+internal class FancyLogger(
     private val logToConsole: Boolean,
     logsDir: Path,
     private val credentials: LoggingCredentials
@@ -80,7 +80,6 @@ public class FancyLogger(
         }
     }
 
-    //TODO: test this
     context(LogContext)
     private fun archiveMinimalAnalyticalInfo(toBeDestroyed: List<LogEventEntity>) {
         val breakdown = toBeDestroyed
@@ -116,9 +115,14 @@ public class FancyLogger(
         return startCallWithContextAsParam(name, call)
     }
 
+    override suspend fun <T> startSuspend(name: String, call: suspend LogContext.() -> T): T {
+        return startCallWithContextAsParam(name) { call(it) }
+    }
+
     // Context receivers are bugging out, so we pass LogContext as a parameter for some use cases
     // (try removing this with K2)
-    override fun <T> startCallWithContextAsParam(name: String, call: (LogContext) -> T): T {
+    @Suppress("OVERRIDE_BY_INLINE")
+    override inline fun <T> startCallWithContextAsParam(name: String, call: (LogContext) -> T): T {
         val context = LogContext(name.removePrefix("/").replace("/", "_"), Instant.now())
         val value = try {
             call(context)
@@ -130,6 +134,20 @@ public class FancyLogger(
         }
         return value
     }
+
+
+//    override fun <T> startCallWithContextAsParam(name: String, call: (LogContext) -> T): T {
+//        val context = LogContext(name.removePrefix("/").replace("/", "_"), Instant.now())
+//        val value = try {
+//            call(context)
+//        } catch (e: Throwable) {
+//            context.logError(e) { "Unexpected error handling '$name'" }
+//            throw e
+//        } finally {
+//            storeLog(context)
+//        }
+//        return value
+//    }
 
     @PublishedApi
     internal fun storeLog(context: LogContext) {

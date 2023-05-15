@@ -82,6 +82,11 @@ export interface State<T> {
     onChange: (value: T) => void
 }
 
+export function usePassedState<T>(initial: T): State<T> {
+    const [value, setValue] = useState(initial)
+    return {value: value, onChange: setValue}
+}
+
 export function isDayJs(obj: unknown): obj is Dayjs {
     return obj !== null && typeof obj === "object" && "millisecond" in obj;
 }

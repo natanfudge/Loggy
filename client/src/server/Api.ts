@@ -3,7 +3,7 @@ import {isDayJs, unixMs} from "../utils/Utils";
 import {Analytics, DayBreakdown} from "../ui/AnalyticsGraph";
 import {Day} from "../core/Day";
 import {LogEvent} from "../core/Logs";
-import {recordToArray} from "fudge-lib/src/methods/Javascript";
+import {recordToArray} from "fudge-lib/dist/methods/Javascript";
 
 export namespace LoggyApi {
     const origin = window.location.origin.startsWith("http://localhost")

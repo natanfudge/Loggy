@@ -1,4 +1,4 @@
-import {HashMap} from "fudge-lib/src/collections/hashmap/HashMap";
+import {HashMap} from "fudge-lib/dist/collections/hashmap/HashMap";
 
 export function StaticHashMapFromPairArray<K, V>(array: [K, V][]): HashMap<K, V> {
     const map = new HashMap<K, V>(array.length)

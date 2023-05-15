@@ -16,7 +16,7 @@ public interface Loggy {
             logToConsole: Boolean,
             logsDir: Path,
             credentials: LoggingCredentials
-        ): FancyLogger {
+        ): Loggy {
             return FancyLogger(logToConsole, logsDir, credentials)
         }
     }
@@ -34,5 +34,6 @@ public interface Loggy {
     public fun route()
 
     public fun <T> startCall(name: String, call: LogContext.() -> T): T
+    public suspend fun <T> startSuspend(name: String, call: suspend LogContext.() -> T): T
     public fun <T> startCallWithContextAsParam(name: String, call: (LogContext) -> T): T
 }

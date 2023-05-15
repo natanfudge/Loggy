@@ -23,13 +23,13 @@ private const val CreationYearOfTheUniverse = 1970u
 
 // For test access only
 public class AnalyticsArchive(private val dir: Path) {
-    fun append(key: String, analytics: Analytics) {
+    public fun append(key: String, analytics: Analytics) {
         val file = dir.withKey(key)
         if (!file.exists()) file.createFile()
         file.appendBytes(encode(analytics).toByteArray())
     }
 
-    fun getAll(key: String): Analytics {
+   public fun getAll(key: String): Analytics {
         val path = dir.withKey(key)
         if (!path.exists()) return mapOf()
         return decode(path.readBytes().toUByteArray())
@@ -88,25 +88,23 @@ public class AnalyticsArchive(private val dir: Path) {
 
 }
 
-fun UByteArray.getUShort(index: Int): UShort {
+public fun UByteArray.getUShort(index: Int): UShort {
     val leastSignificant = this[index]
     val mostSignificant = this[index + 1]
     return ((mostSignificant.toUInt() shl 8) + leastSignificant).toUShort()
 }
 
-fun UByteArray.putUShort(index: Int, num: UShort): Int {
+public fun UByteArray.putUShort(index: Int, num: UShort): Int {
     this[index] = (num.toUInt()).bitRange(start = 0, length = 8)
     this[index + 1] = (num.toUInt()).bitRange(start = 8, length = 8)
     return 2
 }
 
-// actual: 217680115
-// expected: 234523123
-fun UByteArray.getUInt(index: Int): UInt {
+public fun UByteArray.getUInt(index: Int): UInt {
     return this[index].toUInt() + (this[index + 1].toUInt() shl 8) + (this[index + 2].toUInt() shl 16) + (this[index + 3].toUInt() shl 24)
 }
 
-fun UByteArray.putUInt(index: Int, num: UInt): Int {
+public fun UByteArray.putUInt(index: Int, num: UInt): Int {
     this[index] = num.bitRange(start = 0, length = 8)
     this[index + 1] = num.bitRange(start = 8, length = 8)
     this[index + 2] = num.bitRange(start = 16, length = 8)

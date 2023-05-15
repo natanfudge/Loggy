@@ -107,7 +107,7 @@ internal data class GetAnalyticsRequest(
 )
 
 // Map from unixms of day to breakdown
-typealias GetAnalyticsResponse = Map<Long, DayBreakdown>
+internal typealias GetAnalyticsResponse = Map<Long, DayBreakdown>
 
 
 private fun PipelineContext<Unit, ApplicationCall>.addCorsHeader() {

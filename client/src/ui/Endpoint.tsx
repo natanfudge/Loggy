@@ -39,7 +39,7 @@ import {
 } from "../core/Logs";
 import {ExpandMore, Refresh, ShowChart} from "@mui/icons-material";
 import {LongRightArrow} from "./LongRightArrow";
-import React, {Fragment, useState} from "react";
+import React, {CSSProperties, Fragment, useState} from "react";
 import {KeyValueTable} from "./KeyValueTable";
 import {ThemeState, TimeRange} from "./App";
 import {DesktopDatePicker} from "@mui/x-date-pickers";
@@ -135,7 +135,7 @@ export function LogsTitle(props: {
 
         {!screen.isPhone && <Fragment>
             <FilterConfigSelection row={true} config={props.filter} setConfig={props.setFilter}/>
-            <ThemeSwitch theme={props.theme}/>
+            <ThemeSwitch themeState={props.theme}/>
         </Fragment>}
 
         {screen.isPhone && <Fragment>
@@ -163,10 +163,10 @@ function StatsButton(props: {endpoint: string}) {
 }
 
 
-export function TimeRangeSelector(props: { state: State<TimeRange> }) {
+export function TimeRangeSelector(props: { state: State<TimeRange>, className?: string, style?: CSSProperties }) {
     const timeRange = props.state.value
     const screen = useScreenSize()
-    return <Column style = {{padding: screen.isPhone ? 0 : 10}}>
+    return <Column style = {{padding: screen.isPhone ? 0 : 10, ...props.style}} className={props.className}>
         <Row style = {{paddingBottom: 10}}>
             <TimeRangeText> Start</TimeRangeText>
             <DaySelection day={{
@@ -229,13 +229,13 @@ export function DaySelection(props: { day: State<Dayjs> }) {
 }
 
 
-export function ThemeSwitch({theme}: { theme: ThemeState }) {
-    return <ThemeBorder>
+export function ThemeSwitch({themeState, className, style}: { themeState: ThemeState, className?: string, style?: CSSProperties }) {
+    return <ThemeBorder style ={style} className={className}>
         <Typography style={{alignSelf: "center"}}>
-            {theme.isDark ? "Dark" : "Light"}
+            {themeState.isDark ? "Dark" : "Light"}
         </Typography>
-        <Switch sx={{alignSelf: "center"}} checked={!theme.isDark} onChange={(event, checked) => {
-            theme.setThemeDark(!checked)
+        <Switch sx={{alignSelf: "center"}} checked={!themeState.isDark} onChange={(event, checked) => {
+            themeState.setThemeDark(!checked)
         }}/>
     </ThemeBorder>
 }

@@ -12,6 +12,7 @@ import {
 } from 'chart.js';
 import {InstanceHashMapGetOr, StaticHashMapFromPairArray} from "../utils-proposals/collections/hashmap/HashMap";
 import {Day} from "../core/Day";
+import {Theme, useTheme} from "@mui/material";
 
 ChartJS.register(
     CategoryScale,
@@ -49,10 +50,11 @@ const emptyBreakdown: DayBreakdown = {
 
 
 export function AnalyticsGraph(props: { analytics: Analytics }) {
-    return <Line style={{maxHeight: "100%", maxWidth: "100%"}} data={analyticsToDatasets(props.analytics)} options={options}/>
+    const theme = useTheme()
+    return <Line style={{maxHeight: "100%", maxWidth: "100%"}} data={analyticsToDatasets(props.analytics, theme)} options={options}/>
 }
 
-function analyticsToDatasets(analytics: Analytics): ChartData<"line", number[], string> {
+function analyticsToDatasets(analytics: Analytics, theme: Theme): ChartData<"line", number[], string> {
     if (analytics.isEmpty()) return {labels: [], datasets: []}
     const daysSorted = [...analytics]
     daysSorted.sort((a, b) => compareDays(a[0], b[0]))
@@ -76,8 +78,8 @@ function analyticsToDatasets(analytics: Analytics): ChartData<"line", number[], 
             {
                 label: 'Successful Calls',
                 data: infoDataset,
-                borderColor: 'rgb(255,255,255)',
-                backgroundColor: 'rgba(245,245,245,0.5)',
+                borderColor: theme.palette.text.primary ,
+                backgroundColor: theme.palette.text.secondary,
             },
             {
                 label: 'Warnings',
@@ -107,8 +109,6 @@ function compareDays(day1: Day, day2: Day): number {
 function daysBetween(start: Day, end: Day): Day[] {
     const startDayjs = start.start()
     const endDayjs = end.end()
-
-    console.log("Start day: " + startDayjs.toISOString())
 
     const days: Day[] = []
     let currentDay = startDayjs
