@@ -52,6 +52,10 @@ export class Day {
         })
     }
 
+    public static ofUnixMs(unixMs: number): Day {
+        return this.ofDate(dayjs.utc(unixMs))
+    }
+
     start(): Dayjs {
         return dayjs.utc({year: this.year, month: this.month - 1, day: this.day})
     }

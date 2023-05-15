@@ -3,9 +3,7 @@ import {isDayJs, unixMs} from "../utils/Utils";
 import {Analytics, DayBreakdown} from "../ui/UsageGraph";
 import {Day} from "../core/Day";
 import {LogEvent} from "../core/Logs";
-import {recordForEach} from "fudge-lib/src/methods/Javascript";
 import {recordToArray} from "fudge-lib/src/methods/Javascript";
-import {TsObject} from "fudge-lib/src/types/Basic";
 
 export namespace LoggyApi {
     const origin = window.location.origin.startsWith("http://localhost")
@@ -22,7 +20,7 @@ export namespace LoggyApi {
     }
 
     export async function getAnalytics(request: GetAnalyticsRequest): Promise<GetAnalyticsResponse> {
-        const analytics = await makeRequest("analytics",request)
+        const analytics = await makeRequest("analytics", request)
         return JSON.parse(analytics)
     }
 
@@ -33,9 +31,9 @@ export namespace LoggyApi {
 
 }
 
-function encodeObjectToUrl(obj: object | undefined) : string {
-    if(obj === undefined) return ""
-    return "?" + recordToArray(obj, (k,v) => {
+function encodeObjectToUrl(obj: object | undefined): string {
+    if (obj === undefined) return ""
+    return "?" + recordToArray(obj, (k, v) => {
         const value = isDayJs(v) ? unixMs(v) : v;
         return `${k}=${value}`;
     }).join("&")

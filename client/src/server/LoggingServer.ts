@@ -1,13 +1,13 @@
-import {LogEvent} from "../core/Logs";
-import dayjs, {Dayjs} from "dayjs";
+import dayjs from "dayjs";
 import {SimplePromiseMemoryCache} from "../ui/SimplePromiseMemoryCache";
 import utc from 'dayjs/plugin/utc'
 import {unixMs} from "../utils/Utils";
-import {GetLogsResponse, LoggyApi, parseLogResponse} from "./Api";
+import {GetAnalyticsResponse, GetLogsResponse, LoggyApi, parseLogResponse} from "./Api";
 import objectSupport from "dayjs/plugin/objectSupport";
 import {Day} from "../core/Day";
-import {Analytics} from "../ui/UsageGraph";
+import {Analytics, DayBreakdown} from "../ui/UsageGraph";
 import {PromiseMemoryCache} from "fudge-lib/src/collections/PromiseMemoryCache"
+import {recordToArray} from "fudge-lib/src/methods/Javascript";
 
 dayjs.extend(utc)
 dayjs.extend(objectSupport);
@@ -30,7 +30,7 @@ export namespace LoggingServer {
         const endDate = endDay.end()
         return endpoint === DEBUG_ENDPOINT ? parseLogResponse(testLogResponse) :
             logsCache.get(
-                `${endpoint}${unixMs(startDate)}${unixMs(endDate)}${page}`,
+                encodeAsKey(endpoint, unixMs(startDate), unixMs(endDate), page),
                 () => LoggyApi.getLogs({endpoint, startDate, endDate, page})
             )
     }
@@ -45,7 +45,17 @@ export namespace LoggingServer {
     const logsCache = new PromiseMemoryCache<GetLogsResponse>()
 
     export async function getAnalytics(endpoint: string, startDay: Day, endDay: Day): Promise<Analytics> {
+        const startDate = startDay.start()
+        const endDate = endDay.end()
+        return analyticsCache.get(encodeAsKey(endpoint, unixMs(startDate), unixMs(endDate)),
+            async () => {
+                const response = await LoggyApi.getAnalytics({endpoint, startDate, endDate})
+                return recordToArray(response, (unixMs: number, breakdown: DayBreakdown) => [Day.ofUnixMs(unixMs), breakdown]);
+            })
+    }
 
+    function encodeAsKey(...stuff: unknown[]): string {
+        return stuff.join()
     }
 
     const analyticsCache = new PromiseMemoryCache<Analytics>()
@@ -63,9 +73,6 @@ export function stringifyLogResponse(log: GetLogsResponse): string {
         }
     })
 }
-
-
-
 
 
 // language=JSON
