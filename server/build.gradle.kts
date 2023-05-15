@@ -20,10 +20,11 @@ plugins {
     alias(libs.plugins.gradle.node)
     id("maven-publish")
 }
+val loggyVersion  = "0.2.2"
 
 apply(plugin = "io.objectbox") // Apply last.
 group = "natanfudge.io"
-version = "0.0.1"
+version = loggyVersion
 application {
     mainClass.set("test.TestAppKt")
     applicationDefaultJvmArgs = listOf("-Dio.ktor.development=true")
@@ -109,7 +110,8 @@ tasks {
     }
 
     afterEvaluate {
-        getByName("generateMetadataFileForLoggyPublication").dependsOn(syncClient)
+        getByName("shadowJar").dependsOn(syncClient)
+        getByName("jar").dependsOn(syncClient)
     }
 
 }
@@ -136,7 +138,7 @@ publishing {
             // set the coordinates of the artifact
             groupId = "io.github.natanfudge"
             artifactId = "loggy"
-            version = "0.2.0"
+            version = loggyVersion
         }
     }
 }

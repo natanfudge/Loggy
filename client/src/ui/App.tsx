@@ -9,6 +9,7 @@ import {BrowserRouter, Route, Routes, useParams} from "react-router-dom";
 import {AnalyticsPage} from "./AnalyticsPage";
 import {Logs} from "./Logs";
 
+//TODO: add date to log lines...
 
 export function AppWrapper() {
     const [isDark, setIsDark] = useState<boolean>(true)

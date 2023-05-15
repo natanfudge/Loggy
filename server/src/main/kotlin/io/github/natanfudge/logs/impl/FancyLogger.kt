@@ -19,7 +19,6 @@ import java.time.ZonedDateTime
 import java.util.*
 import kotlin.concurrent.schedule
 import kotlin.io.path.createDirectories
-import kotlin.math.log
 
 public class LoggingCredentials(
     internal val username: CharArray,
@@ -84,9 +83,9 @@ internal class FancyLogger(
     private fun archiveMinimalAnalyticalInfo(toBeDestroyed: List<LogEventEntity>) {
         val breakdown = toBeDestroyed
             .groupBy { it.name }
-            .mapValues {(_, logs) -> logs.analyze()}
+            .mapValues { (_, logs) -> logs.analyze() }
 
-        for((endpoint, analytics) in breakdown) {
+        for ((endpoint, analytics) in breakdown) {
             analyticsArchive.append(endpoint, analytics)
         }
     }
@@ -133,6 +132,10 @@ internal class FancyLogger(
             storeLog(context)
         }
         return value
+    }
+
+    override suspend fun <T> startSuspendWithContextAsParam(name: String, call: suspend (LogContext) -> T): T {
+        return startCallWithContextAsParam(name) { call(it) }
     }
 
 
