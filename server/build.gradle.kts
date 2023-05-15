@@ -97,7 +97,7 @@ tasks {
      * Requirement: NPM client project present in ../client
      */
     val buildClient by registering(NpmTask::class) {
-        group = "logviewer setup"
+        group = "loggy setup"
 
         inputs.dir("../client/src")
         inputs.dir("../client/public")
@@ -113,7 +113,7 @@ tasks {
 
     val syncClient by registering(Sync::class) {
         dependsOn(buildClient)
-        group = "logviewer setup"
+        group = "loggy setup"
         from(clientBuildDir)
         into(sourceSets.main.get().output.resourcesDir!!.resolve("__log_viewer__/static"))
     }
@@ -138,7 +138,7 @@ java {
 
 publishing {
     publications {
-        create<MavenPublication>("logViewer") {
+        create<MavenPublication>("loggy") {
             from(components["java"])
 
             // set the coordinates of the artifact

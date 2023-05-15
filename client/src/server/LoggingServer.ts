@@ -5,7 +5,7 @@ import {unixMs} from "../utils/Utils";
 import {GetAnalyticsResponse, GetLogsResponse, LoggyApi, parseLogResponse} from "./Api";
 import objectSupport from "dayjs/plugin/objectSupport";
 import {Day} from "../core/Day";
-import {Analytics, DayBreakdown} from "../ui/UsageGraph";
+import {Analytics, DayBreakdown} from "../ui/AnalyticsGraph";
 import {PromiseMemoryCache} from "fudge-lib/src/collections/PromiseMemoryCache"
 import {recordToArray} from "fudge-lib/src/methods/Javascript";
 
@@ -50,7 +50,7 @@ export namespace LoggingServer {
         return analyticsCache.get(encodeAsKey(endpoint, unixMs(startDate), unixMs(endDate)),
             async () => {
                 const response = await LoggyApi.getAnalytics({endpoint, startDate, endDate})
-                return recordToArray(response, (unixMs: number, breakdown: DayBreakdown) => [Day.ofUnixMs(unixMs), breakdown]);
+                return recordToArray(response, (unixMs: string, breakdown: DayBreakdown) => [Day.ofUnixMs(parseInt(unixMs)), breakdown]);
             })
     }
 

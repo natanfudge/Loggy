@@ -2,6 +2,7 @@ package io.github.natanfudge.logs.impl
 
 import io.github.natanfudge.logs.LogContext
 import io.github.natanfudge.logs.Loggy
+import io.github.natanfudge.logs.impl.analytics.AnalyticsArchive
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.http.content.*
@@ -55,7 +56,7 @@ public class FancyLogger(
         // Runs once every day
         timer.schedule(DayMs) {
             GlobalScope.launch(Dispatchers.IO) {
-                startCall("logViewer_cleanup") {
+                startCall("loggy_cleanup") {
                     logData("Time") { Instant.now() }
                     evictOld()
                 }
@@ -84,38 +85,19 @@ public class FancyLogger(
     private fun archiveMinimalAnalyticalInfo(toBeDestroyed: List<LogEventEntity>) {
         val breakdown = toBeDestroyed
             .groupBy { it.name }
-            .mapValues {(_, logs) -> breakdownDays(logs) }
+            .mapValues {(_, logs) -> logs.analyze()}
 
         for((endpoint, analytics) in breakdown) {
             analyticsArchive.append(endpoint, analytics)
         }
     }
 
-    private fun breakdownDays(logEvents: List<LogEventEntity>): Analytics {
-        return logEvents.map { dayOfUnixMs(it.startTime) to it }
-            .groupBy {(day, _) -> day }
-            .mapValues { (_, logsOfDay) ->
-                var errors = 0
-                var warnings = 0
-                var infos = 0
-                for((_, log) in logsOfDay) {
-                    val decoded = log.toLogEvent()
-                    // A log event counts an error/warning if there was at least one error/warning log line.
-                    when {
-                        decoded.logs.any { it.isError } -> errors++
-                        decoded.logs.any { it.isWarning } -> warnings++
-                        else -> infos++
-                    }
-                }
-                DayBreakdown(errorCount = errors, warningCount = warnings, infoCount = infos)
-            }
-    }
 
     context(Routing)
     override fun route() {
         routeAuthentication()
         authenticate(AuthSessionName) {
-            routeApi(logsBox)
+            Router(logsBox, analyticsArchive).routeApi()
             routeReactApp()
         }
     }
@@ -160,14 +142,6 @@ public class FancyLogger(
 
 }
 
-private fun dayOfUnixMs(ms: Long): Day {
-    val datetime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(ms), GMTZoneId)
-    return Day(
-        year = datetime.year.toUShort(),
-        month = datetime.month.value.toUByte(),
-        day = datetime.dayOfMonth.toUByte()
-    )
-}
 
 internal const val LoginPath = "/_log_viewer/login"
 private const val DayMs = 1000 * 60 * 60 * 24L

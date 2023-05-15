@@ -1,13 +1,7 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Run Fullstack" type="BatchConfigurationType" factoryName="Batch">
-    <module name="Loggy" />
-    <option name="INTERPRETER_OPTIONS" value="" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-    <option name="PARENT_ENVS" value="true" />
-    <option name="SCRIPT_NAME" value="run.cmd" />
-    <option name="PARAMETERS" value="" />
-    <method v="2">
-      <option name="Make" enabled="true" />
-    </method>
+  <configuration default="false" name="Run Fullstack" type="CompoundRunConfigurationType">
+    <toRun name="Run Server" type="JetRunConfigurationType" />
+    <toRun name="Run Client" type="js.build_tools.npm" />
+    <method v="2" />
   </configuration>
 </component>

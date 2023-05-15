@@ -37,7 +37,7 @@ import {
     LogLine,
     MessageLog
 } from "../core/Logs";
-import {ExpandMore, Refresh} from "@mui/icons-material";
+import {ExpandMore, Refresh, ShowChart} from "@mui/icons-material";
 import {LongRightArrow} from "./LongRightArrow";
 import React, {Fragment, useState} from "react";
 import {KeyValueTable} from "./KeyValueTable";
@@ -48,6 +48,7 @@ import {Dropdown} from "./UiUtils";
 import {LoggingServer} from "../server/LoggingServer";
 import {useScreenSize} from "../utils/ScreenSize";
 import {Day} from "../core/Day";
+import {useNavigate, useNavigation} from "react-router-dom";
 
 
 export function Endpoint(props: {
@@ -130,20 +131,35 @@ export function LogsTitle(props: {
             <Refresh/>
         </IconButton>
 
-        {/*<div style={{flexGrow: 1}}/>*/}
 
 
         {!screen.isPhone && <Fragment>
             <FilterConfigSelection row={true} config={props.filter} setConfig={props.setFilter}/>
             <ThemeSwitch theme={props.theme}/>
         </Fragment>}
-        {screen.isPhone && <FilterConfigSelection row={false} config={props.filter} setConfig={props.setFilter}/>}
-        <Column>
-            {screen.isPhone &&<Fragment>
-                <TimeRangeSelector state={props.timeRange}/>
-            </Fragment> }
-        </Column>
+
+        {screen.isPhone && <Fragment>
+            <FilterConfigSelection row={false} config={props.filter} setConfig={props.setFilter}/>
+            <TimeRangeSelector state={props.timeRange}/>
+            {/*{props.endpoint.value !== undefined && <StatsButton endpoint={props.endpoint.value}/>}*/}
+        </Fragment> }
+        {props.endpoint.value !== undefined && <StatsButton endpoint={props.endpoint.value}/>}
+
+        {/*{screen.isPhone && }*/}
+        {/*</Column>*/}
+        {/*{}*/}
     </Row>
+}
+//
+// const PaddedStatsButton = styled(StatsButton)`
+//   padding-left: 20px
+// `
+
+function StatsButton(props: {endpoint: string}) {
+    const navigate = useNavigate()
+    return <IconButton style = {{marginLeft: 20, height: "min-content", alignSelf: "center"}} onClick={() => navigate(`/logs/${props.endpoint}/stats`)}>
+        <ShowChart/>
+    </IconButton>
 }
 
 

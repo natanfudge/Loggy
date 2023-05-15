@@ -1,6 +1,6 @@
 import dayjs, {Dayjs} from "dayjs";
 import {isDayJs, unixMs} from "../utils/Utils";
-import {Analytics, DayBreakdown} from "../ui/UsageGraph";
+import {Analytics, DayBreakdown} from "../ui/AnalyticsGraph";
 import {Day} from "../core/Day";
 import {LogEvent} from "../core/Logs";
 import {recordToArray} from "fudge-lib/src/methods/Javascript";
@@ -53,7 +53,7 @@ export interface GetLogsRequest {
 }
 
 // Map from day (unix timestamp) to breakdown
-export type GetAnalyticsResponse = Record<number, DayBreakdown>
+export type GetAnalyticsResponse = Record<string, DayBreakdown>
 
 export interface GetLogsResponse {
     pageCount: number,

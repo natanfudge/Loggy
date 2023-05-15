@@ -1,39 +1,15 @@
 @file:OptIn(ExperimentalUnsignedTypes::class)
 
-package io.github.natanfudge.logs.impl
+package io.github.natanfudge.logs.impl.analytics
 
-import kotlinx.serialization.Serializable
+
 import java.nio.file.Path
 import kotlin.io.path.appendBytes
 import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.readBytes
 
-internal typealias DayIndex = UShort
-
-@Serializable
-data class Day(val day: UByte, val month: UByte, val year: UShort)
-
 public typealias Analytics = Map<Day, DayBreakdown>
-
-public data class DayBreakdown(
-    val infoCount: UInt,
-    val warningCount: UShort,
-    val errorCount: UShort
-) {
-    constructor(infoCount: Int, warningCount: Int, errorCount: Int) :
-            this(
-                infoCount = infoCount.toUInt(),
-                warningCount = warningCount.toUShort(),
-                errorCount = errorCount.toUShort()
-            ) {
-        check(infoCount >= 0)
-        check(warningCount >= 0)
-        check(errorCount >= 0)
-        check(warningCount.toUShort() <= UShort.MAX_VALUE)
-        check(errorCount.toUShort() <= UShort.MAX_VALUE)
-    }
-}
 
 private const val InfoBytes = 4
 private const val WarningBytes = 2
@@ -54,7 +30,9 @@ public class AnalyticsArchive(private val dir: Path) {
     }
 
     fun getAll(key: String): Analytics {
-        return decode(dir.withKey(key).readBytes().toUByteArray())
+        val path = dir.withKey(key)
+        if (!path.exists()) return mapOf()
+        return decode(path.readBytes().toUByteArray())
     }
 
     private fun Path.withKey(key: String) = resolve("$key.kv")

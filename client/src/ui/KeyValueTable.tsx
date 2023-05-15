@@ -1,6 +1,9 @@
-import {recordToArray, StringMap} from "../utils/Utils";
 import {Paper, styled, Table, TableBody, TableCell, tableCellClasses, TableContainer, TableRow} from "@mui/material";
 import React from "react";
+import {recordToArray} from "fudge-lib/src/methods/Javascript";
+
+
+export type StringMap = Record<string,string>
 
 export function KeyValueTable({details}: { details: StringMap }) {
     return <TableContainer component={Paper} style={{height: "fit-content", width: "unset"}}>

@@ -1,24 +1,13 @@
-import React, {Fragment, useState} from 'react'
-import {
-    CircularProgress,
-    createTheme,
-    CssBaseline, styled,
-    Theme as MaterialUiTheme,
-    ThemeProvider,
-    Typography
-} from "@mui/material";
+import React, {useState} from 'react'
+import {createTheme, CssBaseline, ThemeProvider} from "@mui/material";
 import "../extensions/ExtensionsImpl"
 import "../utils-proposals/extensions/ExtensionsImpl"
-import {DaySelection, Endpoint, FilterConfig, LogsTitle, ThemeSwitch, TimeRangeSelector} from "./Endpoint";
-import {Column, Row, State, usePromise} from "../utils/Utils";
-import {DEBUG_ENDPOINT, LoggingServer} from "../server/LoggingServer";
-import dayjs, {Dayjs} from "dayjs";
+import {Dayjs} from "dayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers";
 import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
-import {BrowserRouter, Route, Routes, useNavigate, useParams} from "react-router-dom";
-import {useScreenSize} from "../utils/ScreenSize";
-import {Analytics, UsageGraph} from "./UsageGraph";
-import {Day} from "../core/Day";
+import {BrowserRouter, Route, Routes, useParams} from "react-router-dom";
+import {AnalyticsUI} from "./AnalyticsUI";
+import {Logs} from "./Logs";
 
 
 export function AppWrapper() {
@@ -29,11 +18,12 @@ export function AppWrapper() {
         },
     });
 
+
     return <ThemeProvider theme={darkTheme}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <CssBaseline/>
             <BrowserRouter>
-                {/*<UsageGraph analytics={testAnalytics}/>*/}
+                {/*{analytics !== undefined && <AnalyticsGraph analytics={analytics}/>}*/}
                 <RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>
             </BrowserRouter>
         </LocalizationProvider>
@@ -49,68 +39,22 @@ export interface ThemeState {
 
 function RoutedApp(props: { theme: ThemeState }) {
     return <Routes>
-        <Route path="/logs/" element={<App theme={props.theme} endpoint={undefined}/>}/>
-        <Route path="/logs/:endpoint" element={<RoutedEndpointApp theme={props.theme}/>}/>
-        <Route path="*" element={"Nothing Here"}/>
+        <Route path="/logs/" element={<Logs theme={props.theme} endpoint={undefined}/>}/>
+        <Route path="/logs/:endpoint" element={<RoutedLogs theme={props.theme}/>}/>
+        <Route path="/logs/:endpoint/stats" element={<RoutedAnalytics/> }/>
+            <Route path="*" element={"Nothing Here"}/>
     </Routes>
 }
 
-function RoutedEndpointApp(props: { theme: ThemeState }) {
+function RoutedLogs(props: { theme: ThemeState }) {
     const {endpoint} = useParams<"endpoint">()
-    return <App theme={props.theme} endpoint={endpoint}/>
+    return <Logs theme={props.theme} endpoint={endpoint}/>
 }
 
-function App(props: { theme: ThemeState, endpoint: string | undefined }) {
-    // Changed when a refresh is requested, to rerun getEndpoints()
-    const [refreshMarker, setRefreshMarker] = useState(false)
-    const endpoints = props.endpoint === DEBUG_ENDPOINT ? [DEBUG_ENDPOINT] : usePromise(LoggingServer.getEndpoints(), [])
-    const [timeRange, setTimeRange] = useState<TimeRange>({startDay: dayjs(), endDay: dayjs()})
-    const endpoint = props.endpoint ?? (endpoints !== undefined ? endpoints[0] : undefined)
-    const navigate = useNavigate()
-    const screen = useScreenSize()
-    const [filter, setFilter] = useState<FilterConfig>({info: true, warn: true, error: true})
-
-    if (endpoints !== undefined) {
-        if (endpoints.length === 0) {
-            return <Typography>
-                No endpoints defined.
-            </Typography>
-        } else if (endpoint !== undefined && !endpoints.includes(endpoint)) {
-            return <Typography>
-                Bad route.
-            </Typography>
-        }
-    }
-    return <Row style = {{justifyContent: "space-between"}}>
-        <Column style={{height: "100%"}} className="material-text">
-            <LogsTitle endpoints={endpoints}
-                       endpoint={{value: endpoint, onChange: (endpoint) => navigate("/logs/" + endpoint)}}
-                       timeRange={{value: timeRange, onChange: setTimeRange}} theme={props.theme}
-                       onRefresh={() => {
-                           LoggingServer.refreshLog()
-                           setRefreshMarker(old => !old)
-                       }}
-                       filter={filter}
-                       setFilter={setFilter}
-            />
-
-            {endpoint !== undefined ?
-                <Endpoint filter={filter} startDay={Day.ofDate(timeRange.startDay)} endDay={Day.ofDate(timeRange.endDay)}
-                          theme={props.theme} endpoint={endpoint} refreshMarker={refreshMarker}/>
-                : <CircularProgress/>
-            }
-
-            {screen.isPhone && <Fragment>
-                <div style={{flexGrow: 1, height: 10}}/>
-                <ThemeSwitch theme={props.theme}/>
-                <div style={{height: 10}}/>
-            </Fragment>}
-
-        </Column>
-        {!screen.isPhone && <TimeRangeSelector state={{value: timeRange, onChange: setTimeRange}}/>}
-    </Row>
+function RoutedAnalytics() {
+    const {endpoint} = useParams<"endpoint">()
+    return <AnalyticsUI endpoint={endpoint!}/>
 }
-
 
 
 export interface TimeRange {
@@ -118,7 +62,6 @@ export interface TimeRange {
     endDay: Dayjs
 }
 
-export default App
 declare module '@emotion/react' {
     // export interface Theme extends MaterialUiTheme {
     //

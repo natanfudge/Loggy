@@ -2,6 +2,9 @@
 
 package io.github.natanfudge.logs.impl
 
+import io.github.natanfudge.logs.impl.analytics.Analytics
+import io.github.natanfudge.logs.impl.analytics.Day
+import io.github.natanfudge.logs.impl.analytics.DayBreakdown
 import io.objectbox.annotation.Entity
 import io.objectbox.annotation.Id
 import io.objectbox.annotation.Index
@@ -56,3 +59,31 @@ internal fun LogEvent.toObjectBox(): LogEventEntity = LogEventEntity(
     protobuf.encodeToByteArray(logLinesSerializer, logs)
 )
 
+
+internal fun List<LogEventEntity>.analyze(): Analytics {
+    return map { dayOfUnixMs(it.startTime) to it }
+        .groupBy {(day, _) -> day }
+        .mapValues { (_, logsOfDay) ->
+            var errors = 0
+            var warnings = 0
+            var infos = 0
+            for((_, log) in logsOfDay) {
+                val decoded = log.toLogEvent()
+                // A log event counts an error/warning if there was at least one error/warning log line.
+                when {
+                    decoded.logs.any { it.isError } -> errors++
+                    decoded.logs.any { it.isWarning } -> warnings++
+                    else -> infos++
+                }
+            }
+            DayBreakdown(errorCount = errors, warningCount = warnings, infoCount = infos)
+        }
+}
+private fun dayOfUnixMs(ms: Long): Day {
+    val datetime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(ms), GMTZoneId)
+    return Day(
+        year = datetime.year.toUShort(),
+        month = datetime.month.value.toUByte(),
+        day = datetime.dayOfMonth.toUByte()
+    )
+}

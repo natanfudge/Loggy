@@ -53,6 +53,7 @@ export class Day {
     }
 
     public static ofUnixMs(unixMs: number): Day {
+        if(typeof unixMs !== "number") throw new Error(`${unixMs} should be a number`)
         return this.ofDate(dayjs.utc(unixMs))
     }
 

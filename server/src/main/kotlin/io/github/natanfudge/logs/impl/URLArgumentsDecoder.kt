@@ -13,11 +13,18 @@ import kotlinx.serialization.internal.NamedValueDecoder
 import kotlinx.serialization.internal.TaggedDecoder
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
+import java.lang.Exception
 
 
 object UrlParameters {
     fun <T> decodeFromParameters(value: Parameters, deserializer: DeserializationStrategy<T>) =
         URLArgumentsDecoder(value).decodeSerializableValue(deserializer)
+    fun <T> decodeSafelyFromParameters(value: Parameters, deserializer: DeserializationStrategy<T>): Result<T> = try {
+        Result.success(URLArgumentsDecoder(value).decodeSerializableValue(deserializer))
+    } catch (e: SerializationException) {
+        Result.failure(e)
+    }
+
 }
 
 /**
