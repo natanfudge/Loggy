@@ -285,8 +285,11 @@ function LogEventSummaryText({log, expanded, textColor, errored, warned}: {
     const duration = `${unixMs(log.endTime) - unixMs(log.startTime)}ms`
     const suffix = errored ? " - ERROR" : warned ? " - Warning" : ""
     const screen = useScreenSize()
+    console.log("Start unix: " + log.startTime)
+    const date = `${Day.ofDate(log.startTime).dateString()} - `
     if (expanded) {
         return <Fragment>
+            {date}
             {millsecondTimeToString(log.startTime)}
             {/*Style must be passed explicitly to work properly with the svg*/}
             <LongRightArrow style={durationArrowStyle} color={textColor}/>
@@ -294,6 +297,7 @@ function LogEventSummaryText({log, expanded, textColor, errored, warned}: {
         </Fragment>
     } else {
         return <Fragment>
+            {date}
             {timeToString(log.startTime) + ` (${duration})` + suffix}
         </Fragment>
     }

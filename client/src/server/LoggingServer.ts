@@ -63,17 +63,6 @@ export namespace LoggingServer {
 }
 
 
-export function stringifyLogResponse(log: GetLogsResponse): string {
-    return JSON.stringify(log, (k, v) => {
-        // console.log(`k: ${k}, v: ${v}, v is dayjs: ${isDayJs(v)}, type of v: ${typeof v}`)
-        if (typeof v === "string" && k.toLowerCase().endsWith("time")) {
-            return unixMs(dayjs(v));
-        } else {
-            return v
-        }
-    })
-}
-
 
 // language=JSON
 const testLogResponse = `{
@@ -81,25 +70,25 @@ const testLogResponse = `{
   "logs": [
     {
       "name": "amar",
-      "startTime": 1683974074,
-      "endTime": 1683975084,
+      "startTime": 1683974074000,
+      "endTime": 1683975084000,
       "logs": [
         {
           "type": "MessageLog",
           "message": "Info Test",
-          "time": 1683975074,
+          "time": 1683975074000,
           "severity": "Info"
         },
         {
           "type": "MessageLog",
           "message": "Warn Test",
-          "time": 1683975074,
+          "time": 1683975074000,
           "severity": "Warn"
         },
         {
           "type": "ErrorLog",
           "message": "Error Test",
-          "time": 1683975074,
+          "time": 1683975074000,
           "exception": [
             {
               "className": "java.lang.NullPointerException",
@@ -123,19 +112,19 @@ const testLogResponse = `{
     },
     {
       "name": "amar",
-      "startTime": 1683975074,
-      "endTime": 1683975074,
+      "startTime": 1683975074000,
+      "endTime": 1683975074000,
       "logs": [
         {
           "type": "MessageLog",
           "message": "Info Test",
-          "time": 1683975074,
+          "time": 1683975074000,
           "severity": "Info"
         },
         {
           "type": "MessageLog",
           "message": "Warn Test",
-          "time": 1683975074,
+          "time": 1683975074000,
           "severity": "Warn"
         },
         {
@@ -152,8 +141,8 @@ const testLogResponse = `{
     },
     {
       "name": "amar",
-      "startTime": 1683974133,
-      "endTime": 1683974133,
+      "startTime": 1683974133000,
+      "endTime": 1683974133000,
       "logs": [
         {
           "type": "MessageLog",
@@ -164,13 +153,13 @@ const testLogResponse = `{
         {
           "type": "MessageLog",
           "message": "Warn Test",
-          "time": 1683974133,
+          "time": 1683974133000,
           "severity": "Warn"
         },
         {
           "type": "ErrorLog",
           "message": "Error Test",
-          "time": 1683974133,
+          "time": 1683974133000,
           "exception": [
             {
               "className": "java.lang.NullPointerException",
@@ -194,13 +183,13 @@ const testLogResponse = `{
     },
     {
       "name": "amar",
-      "startTime": 1683973690,
-      "endTime": 1683973690,
+      "startTime": 1683973690000,
+      "endTime": 1683973690000,
       "logs": [
         {
           "type": "MessageLog",
           "message": "Info Test",
-          "time": 1683973690,
+          "time": 1683973690000,
           "severity": "Info"
         },
         {
@@ -217,25 +206,25 @@ const testLogResponse = `{
     },
     {
       "name": "amar",
-      "startTime": 1683973662,
-      "endTime": 1683973662,
+      "startTime": 1683973662000,
+      "endTime": 1683973662000,
       "logs": [
         {
           "type": "MessageLog",
           "message": "Info Test",
-          "time": 1683973662,
+          "time": 1683973662000,
           "severity": "Info"
         },
         {
           "type": "MessageLog",
           "message": "Warn Test",
-          "time": 1683973662,
+          "time": 1683973662000,
           "severity": "Warn"
         },
         {
           "type": "ErrorLog",
           "message": "Error Test",
-          "time": 1683996662,
+          "time": 1683996662000,
           "exception": [
             {
               "className": "java.lang.NullPointerException",
@@ -259,25 +248,25 @@ const testLogResponse = `{
     },
     {
       "name": "amar",
-      "startTime": 1683973662,
-      "endTime": 1683973662,
+      "startTime": 1683973662000,
+      "endTime": 1683973662000,
       "logs": [
         {
           "type": "MessageLog",
           "message": "Info Test",
-          "time": 1683973662,
+          "time": 1683973662000,
           "severity": "Info"
         },
         {
           "type": "MessageLog",
           "message": "Warn Test",
-          "time": 1683973662,
+          "time": 1683973662000,
           "severity": "Warn"
         },
         {
           "type": "ErrorLog",
           "message": "Error Test",
-          "time": 1683996662,
+          "time": 1683996662000,
           "exception": [
             {
               "className": "java.lang.NullPointerException",
