@@ -4,6 +4,7 @@ import {Analytics, DayBreakdown} from "../ui/AnalyticsGraph";
 import {Day} from "../core/Day";
 import {LogEvent} from "../core/Logs";
 import {recordToArray} from "fudge-lib/dist/methods/Javascript";
+import {FilterConfig} from "../ui/Endpoint";
 
 export namespace LoggyApi {
     const origin = window.location.origin.startsWith("http://localhost")
@@ -25,7 +26,12 @@ export namespace LoggyApi {
     }
 
     async function makeRequest(endpoint: string, request: object | undefined): Promise<string> {
-        return (await fetch(`${origin}/__log_viewer__/${endpoint}${encodeObjectToUrl(request)}`)).text()
+        const response =  (await fetch(`${origin}/__log_viewer__/${endpoint}${encodeObjectToUrl(request)}`))
+        if(response.ok) {
+            return response.text()
+        } else {
+            throw new Error(`Error making request: ${await response.text()}, code: ${response.status}`)
+        }
     }
 
 
@@ -63,7 +69,10 @@ export interface GetLogsRequest {
     endpoint: string
     startDate: Dayjs
     endDate: Dayjs
-    page: number
+    page: number,
+    allowInfo: boolean,
+    allowWarn: boolean,
+    allowError: boolean
 }
 
 // Map from day (unix timestamp) to breakdown
@@ -76,10 +85,6 @@ export interface GetLogsResponse {
 
 export type GetEndpointsResponse = string[]
 
-const testAnalytics: Analytics = [
-    [new Day({day: 1, month: 1, year: 2000}), {infoCount: 10, errorCount: 5, warningCount: 3}],
-    [new Day({day: 3, month: 1, year: 2000}), {infoCount: 16, errorCount: 0, warningCount: 0}],
-]
 
 export function parseLogResponse(json: string): GetLogsResponse {
     return JSON.parse(json, (k, v) => {

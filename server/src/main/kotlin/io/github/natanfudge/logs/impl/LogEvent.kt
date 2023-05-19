@@ -9,15 +9,24 @@ import kotlinx.serialization.UseSerializers
 import java.time.Instant
 
 
-
 @Serializable
 internal data class LogEvent(val name: String, val startTime: Instant, val endTime: Instant, val logs: List<LogLine>)
+
+internal fun LogEvent.getSeverity(): LogLine.Severity {
+    if (logs.any { it.isError }) return LogLine.Severity.Error
+    if (logs.any { it.isWarning }) return LogLine.Severity.Warn
+    return LogLine.Severity.Info
+}
+
+//internal val LogEvent.anyError get() = logs.any { it.isError }
+//internal val LogEvent.anyWarning get() = logs.any {  }
 
 internal val LogLine.isError get() = this is LogLine.Message.Error
 internal val LogLine.isWarning get() = this is LogLine.Message && severity == LogLine.Severity.Warn
 
 @Serializable
-@PublishedApi internal sealed interface LogLine {
+@PublishedApi
+internal sealed interface LogLine {
     @Serializable
     sealed interface Message : LogLine {
         val message: String
@@ -34,7 +43,11 @@ internal val LogLine.isWarning get() = this is LogLine.Message && severity == Lo
 
         @Serializable
         @SerialName("ErrorLog")
-        data class Error(override val message: String, override val time: Instant, val exception: SerializableThrowable) :
+        data class Error(
+            override val message: String,
+            override val time: Instant,
+            val exception: SerializableThrowable
+        ) :
             Message {
             override val severity: Severity = Severity.Error
         }

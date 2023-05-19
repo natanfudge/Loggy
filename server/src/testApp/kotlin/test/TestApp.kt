@@ -45,6 +45,12 @@ private fun Application.module() {
         logData("Foo") { "Bar" }
         logData("Biz") { "Baz" }
     }
+    logger.startCall("amar") {
+        logInfo { "Foo" }
+    }
+    logger.startCall("amar") {
+        logInfo { "Bar" }
+    }
     routing {
         logger.route()
         get("test") {

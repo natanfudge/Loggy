@@ -54,7 +54,7 @@ private class URLArgumentsDecoder(
     }
 
     override fun decodeTaggedBoolean(tag: String): Boolean {
-        return currentElement(tag) == "t"
+        return currentElement(tag) == "true"
     }
 
     override fun decodeTaggedChar(tag: String): Char {

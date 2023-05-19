@@ -8,6 +8,7 @@ import {Day} from "../core/Day";
 import {Analytics, DayBreakdown} from "../ui/AnalyticsGraph";
 import {PromiseMemoryCache} from "fudge-lib/dist/collections/PromiseMemoryCache"
 import {recordToArray} from "fudge-lib/dist/methods/Javascript";
+import {FilterConfig} from "../ui/Endpoint";
 
 dayjs.extend(utc)
 dayjs.extend(objectSupport);
@@ -25,13 +26,13 @@ export namespace LoggingServer {
     const endpointCache = new SimplePromiseMemoryCache<string[]>()
 
 
-    export async function getLogs(endpoint: string, startDay: Day, endDay: Day, page: number): Promise<GetLogsResponse> {
+    export async function getLogs(endpoint: string, startDay: Day, endDay: Day, page: number, filter: FilterConfig): Promise<GetLogsResponse> {
         const startDate = startDay.start()
         const endDate = endDay.end()
         return endpoint === DEBUG_ENDPOINT ? parseLogResponse(testLogResponse) :
             logsCache.get(
-                encodeAsKey(endpoint, unixMs(startDate), unixMs(endDate), page),
-                () => LoggyApi.getLogs({endpoint, startDate, endDate, page})
+                encodeAsKey(endpoint, unixMs(startDate), unixMs(endDate), page, filter.error, filter.warn, filter.info),
+                () => LoggyApi.getLogs({endpoint, startDate, endDate, page, allowError: filter.error, allowInfo: filter.info, allowWarn: filter.warn})
             )
     }
 

@@ -61,7 +61,8 @@ export function Endpoint(props: {
 }) {
     const [page, setPage] = useState(0)
     const response = usePromise(
-        LoggingServer.getLogs(props.endpoint, props.startDay, props.endDay, page), [props.endpoint, props.startDay, props.endDay, props.refreshMarker, page]
+        LoggingServer.getLogs(props.endpoint, props.startDay, props.endDay, page, props.filter),
+        [props.endpoint, props.startDay, props.endDay, props.refreshMarker, page, props.filter.warn, props.filter.info, props.filter.error]
     )
 
     if (response === undefined) {
@@ -293,7 +294,6 @@ function LogEventSummaryText({log, expanded, textColor, errored, warned}: {
     const duration = `${unixMs(log.endTime) - unixMs(log.startTime)}ms`
     const suffix = errored ? " - ERROR" : warned ? " - Warning" : ""
     const screen = useScreenSize()
-    console.log("Start unix: " + log.startTime)
     const date = `${Day.ofDate(log.startTime).dateString()} - `
     if (expanded) {
         return <Fragment>
@@ -321,7 +321,8 @@ const durationArrowStyle = {height: "20px", width: "46px", marginLeft: 4, margin
 
 function LogEventContent({log}: { log: LogEvent }) {
     const screen = useScreenSize()
-    return <Column style={{padding: screen.isPhone ? 0 : 30, paddingTop: 0}}>
+    const otherPadding = screen.isPhone? 0: 30
+    return <Column style={{paddingLeft: otherPadding, paddingTop: 0, paddingBottom: otherPadding, paddingRight: otherPadding}}>
         <LogLinesUi logs={log.logs}/>
         <LogErrorUi log={log}/>
     </Column>

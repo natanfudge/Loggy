@@ -1,6 +1,9 @@
 package io.github.natanfudge.logs.impl
 
-import io.github.natanfudge.logs.impl.analytics.*
+import io.github.natanfudge.logs.impl.analytics.Analytics
+import io.github.natanfudge.logs.impl.analytics.AnalyticsArchive
+import io.github.natanfudge.logs.impl.analytics.DayBreakdown
+import io.github.natanfudge.logs.impl.analytics.startOfDayGmt
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -29,6 +32,7 @@ internal class Router(private val box: Box<LogEventEntity>, private val analytic
         }
 
         endpoint("logs") {
+            val params = call.parameters
             val request = UrlParameters.decodeSafelyFromParameters(call.parameters, GetLogsRequest.serializer())
                 .getOrElse {
                     call.respondText("Malformed request: ${it.message}", status = HttpStatusCode.BadRequest)
@@ -42,13 +46,22 @@ internal class Router(private val box: Box<LogEventEntity>, private val analytic
                     .and(LogEventEntity_.startTime.between(request.startDate, request.endDate))
             ).build().use { it.find() }
 
+            val fittingLogs = logs.sortedByDescending { it.startTime }
+                .map { it.toLogEvent() }
+                .filter {
+                    when (it.getSeverity()) {
+                        LogLine.Severity.Error -> request.allowError
+                        LogLine.Severity.Warn -> request.allowWarn
+                        LogLine.Severity.Info -> request.allowInfo
+                    }
+                }
 
             val response = LogResponse(
-                pageCount = ceil(logs.size.toDouble() / PageSize).toInt(),
+                pageCount = ceil(fittingLogs.size.toDouble() / PageSize).toInt(),
                 // Return only PageSize items, and skip pages before the requested page
-                logs = logs.sortedByDescending { it.startTime }.drop(request.page * PageSize).take(PageSize)
-                    .map { it.toLogEvent() }
+                logs = fittingLogs.drop(request.page * PageSize).take(PageSize).toList()
             )
+            println(params)
 
             call.respondText(json.encodeToString(LogResponse.serializer(), response))
         }
@@ -66,7 +79,7 @@ internal class Router(private val box: Box<LogEventEntity>, private val analytic
             val start = ZonedDateTime.ofInstant(Instant.ofEpochMilli(request.startDate), GMTZoneId).minusDays(1)
                 .toInstant()
             val end = Instant.ofEpochMilli(request.endDate)
-            val requestedDayRange: GetAnalyticsResponse = all.mapKeys {(day, _) -> day.startOfDayGmt() }
+            val requestedDayRange: GetAnalyticsResponse = all.mapKeys { (day, _) -> day.startOfDayGmt() }
                 .filterKeys { instant -> instant.isBefore(end) && instant.isAfter(start) }
                 .mapKeys { (instant, _) -> instant.toEpochMilli() }
 
@@ -96,8 +109,15 @@ internal data class GetLogsRequest(
     val endpoint: String,
     val startDate: Long,
     val endDate: Long,
-    val page: Int
+    val page: Int,
+    val allowError: Boolean,
+    val allowWarn: Boolean,
+    val allowInfo: Boolean
+//    val filter: GetLogsFilter
 )
+
+@Serializable
+internal data class GetLogsFilter(val info: Boolean, val warn: Boolean, val error: Boolean)
 
 @Serializable
 internal data class GetAnalyticsRequest(
