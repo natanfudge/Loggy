@@ -14,7 +14,7 @@ import dayjs from "dayjs";
 export function Logs(props: { theme: ThemeState, endpoint: string | undefined }) {
     // Changed when a refresh is requested, to rerun getEndpoints()
     const [refreshMarker, setRefreshMarker] = useState(false)
-    const endpoints = props.endpoint === DEBUG_ENDPOINT ? [DEBUG_ENDPOINT] : usePromise(LoggingServer.getEndpoints(), [])
+    const endpoints = props.endpoint === DEBUG_ENDPOINT ? [DEBUG_ENDPOINT, "very long thing of hell"] : usePromise(LoggingServer.getEndpoints(), [])
     const [timeRange, setTimeRange] = useState<TimeRange>({startDay: dayjs(), endDay: dayjs()})
     const endpoint = props.endpoint ?? (endpoints !== undefined ? endpoints[0] : undefined)
     const navigate = useNavigate()

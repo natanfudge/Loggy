@@ -20,7 +20,7 @@ export namespace LoggyApi {
     }
 
     export async function getAnalytics(request: GetAnalyticsRequest): Promise<GetAnalyticsResponse> {
-        const analytics = await makeRequest("analytics", request)
+        const analytics = request.endpoint === "debug"? testAnalyticsResponse : await makeRequest("analytics", request)
         return JSON.parse(analytics)
     }
 
@@ -30,6 +30,20 @@ export namespace LoggyApi {
 
 
 }
+
+const testAnalyticsResponse = `{
+    "1684108800000": {
+        "infoCount": 4,
+        "warningCount": 0,
+        "errorCount": 0
+    },
+    "1684454400000": {
+        "infoCount": 1,
+        "warningCount": 0,
+        "errorCount": 0
+    }
+}`
+
 
 function encodeObjectToUrl(obj: object | undefined): string {
     if (obj === undefined) return ""

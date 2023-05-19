@@ -64,6 +64,7 @@ export namespace LoggingServer {
 
 
 
+
 // language=JSON
 const testLogResponse = `{
   "pageCount": 1,

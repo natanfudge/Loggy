@@ -9,6 +9,8 @@ import {BrowserRouter, Route, Routes, useParams} from "react-router-dom";
 import {AnalyticsPage} from "./AnalyticsPage";
 import {Logs} from "./Logs";
 
+//TODO: I need a rendering limit for very very large logs.
+
 //TODO: very poorly displaying logs:
 
 `[

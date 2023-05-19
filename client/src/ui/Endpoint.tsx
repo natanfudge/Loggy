@@ -109,72 +109,80 @@ export function LogsTitle(props: {
     filter: FilterConfig,
     setFilter: (filter: FilterConfig) => void
 }) {
-    const screen = useScreenSize()
-    return <Row style={{padding: 10, paddingLeft: screen.isPhone ? undefined : 30}}>
+    const isPhone = useScreenSize().isPhone
+    return <Row style={{padding: 10, paddingLeft: isPhone ? undefined : 30}}>
 
-        <Column style={{paddingLeft: screen.isPhone ? 10 : undefined, alignSelf: "center"}}>
-            <Row style={{alignItems: "center"}}>
-                {!screen.isPhone && <Typography style={{marginRight: 10, marginBottom: 4, alignSelf: "end"}}>
-                    Logs for
-                </Typography>}
-                {/*When props.endpoints is defined, props.endpoint.value must also be defined*/}
-                {props.endpoints === undefined ? <CircularProgress/> :
-                    <Dropdown options={props.endpoints} value={props.endpoint.value!}
-                              onValueChanged={props.endpoint.onChange}
-                              style={{width: "max-content"}}/>}
+        <Column style={{paddingLeft: isPhone ? 10 : undefined, alignSelf: "center"}}>
+            <Row>
+                <Row style={{alignItems: "center"}}>
+                    {!isPhone && <Typography style={{marginRight: 10, marginBottom: 4, alignSelf: "end"}}>
+                        Logs for
+                    </Typography>}
+                    {/*When props.endpoints is defined, props.endpoint.value must also be defined*/}
+                    {props.endpoints === undefined ? <CircularProgress/> :
+                        <Dropdown options={props.endpoints} value={props.endpoint.value!}
+                                  onValueChanged={props.endpoint.onChange}
+                                  style={{width: "max-content"}}/>}
 
 
+                </Row>
+                <IconButton style={{height: "fit-content", alignSelf: "center", paddingLeft: 20}} onClick={props.onRefresh}>
+                    <Refresh/>
+                </IconButton>
+                {props.endpoint.value !== undefined && <PaddedStatsButton endpoint={props.endpoint.value}/>}
             </Row>
-            <NoticableDivider style={{marginTop: -1}}/>
+
+            {/*<NoticableDivider style={{marginTop: -1}}/>*/}
+            {isPhone && <FilterConfigSelection row={false} config={props.filter} setConfig={props.setFilter}/>}
+            {isPhone && <TimeRangeSelector state={props.timeRange} row={true}/>}
         </Column>
-        <IconButton style={{height: "fit-content", alignSelf: "center", paddingRight: screen.isPhone? 20 : 50}} onClick={props.onRefresh}>
-            <Refresh/>
-        </IconButton>
 
 
 
-        {!screen.isPhone && <Fragment>
+
+        {!isPhone && <Fragment>
             <FilterConfigSelection row={true} config={props.filter} setConfig={props.setFilter}/>
             <ThemeSwitch themeState={props.theme}/>
         </Fragment>}
 
-        {screen.isPhone && <Fragment>
-            <FilterConfigSelection row={false} config={props.filter} setConfig={props.setFilter}/>
-            <TimeRangeSelector state={props.timeRange}/>
+        {/*{isPhone && <Fragment>*/}
+        {/*    <TimeRangeSelector state={props.timeRange}/>*/}
             {/*{props.endpoint.value !== undefined && <StatsButton endpoint={props.endpoint.value}/>}*/}
-        </Fragment> }
-        {props.endpoint.value !== undefined && <StatsButton endpoint={props.endpoint.value}/>}
+        {/*</Fragment> }*/}
+
 
         {/*{screen.isPhone && }*/}
         {/*</Column>*/}
         {/*{}*/}
     </Row>
 }
-//
-// const PaddedStatsButton = styled(StatsButton)`
-//   padding-left: 20px
-// `
 
-function StatsButton(props: {endpoint: string}) {
+
+const PaddedStatsButton = styled(StatsButton)`
+  padding-right:20px;
+`
+
+function StatsButton(props: {endpoint: string, className? : string}) {
     const navigate = useNavigate()
-    return <IconButton style = {{marginLeft: 20, height: "min-content", alignSelf: "center"}} onClick={() => navigate(`/logs/${props.endpoint}/stats`)}>
+    return <IconButton className = {props.className} style = {{marginLeft: 20, height: "min-content", alignSelf: "center"}} onClick={() => navigate(`/logs/${props.endpoint}/stats`)}>
         <ShowChart/>
     </IconButton>
 }
 
 
-export function TimeRangeSelector(props: { state: State<TimeRange>, className?: string, style?: CSSProperties }) {
+export function TimeRangeSelector(props: { state: State<TimeRange>, className?: string, style?: CSSProperties, row?: boolean }) {
     const timeRange = props.state.value
     const screen = useScreenSize()
-    return <Column style = {{padding: screen.isPhone ? 0 : 10, ...props.style}} className={props.className}>
-        <Row style = {{paddingBottom: 10}}>
+    const isRow = props.row ?? false
+    return <Column style = {{padding: screen.isPhone ? 0 : 10, flexDirection: isRow? "row": "column",  ...props.style}} className={props.className}>
+        <Row style = {{paddingBottom: isRow? 0 : 10}}>
             <TimeRangeText> Start</TimeRangeText>
             <DaySelection day={{
                 value: timeRange.startDay,
                 onChange: (value) => props.state.onChange({...timeRange, startDay: value})
             }}/>
         </Row>
-        <Row style = {{alignSelf: "end"}}>
+        <Row style = {{alignSelf: "end", paddingLeft: 5}}>
             <TimeRangeText style = {{marginRight: 3}}> End  </TimeRangeText>
             <DaySelection day={{
                 value: timeRange.endDay,
