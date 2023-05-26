@@ -1,5 +1,5 @@
 import React, {useState} from 'react'
-import {createTheme, CssBaseline, ThemeProvider} from "@mui/material";
+import {createTheme, CssBaseline, styled, Theme, ThemeOptions, ThemeProvider} from "@mui/material";
 import "../extensions/ExtensionsImpl"
 import "../utils-proposals/extensions/ExtensionsImpl"
 import {Dayjs} from "dayjs";
@@ -8,6 +8,16 @@ import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {BrowserRouter, Route, Routes, useParams} from "react-router-dom";
 import {AnalyticsPage} from "./AnalyticsPage";
 import {Logs} from "./Logs";
+import {MegaSearchBar, MegaSearchBarTest} from "./search/MegaSearchBar";
+import { Theme as MUITheme, ThemeOptions as MUIThemeOptions } from '@mui/material/styles';
+
+// import { PaletteOptions } from "@mui/material/styles/createPalette";
+//
+// declare module "@mui/material/styles/createPalette" {
+//     export interface PaletteOptions {
+//         secondaryBackground: string
+//     }
+// }
 
 //TODO: I need a rendering limit for very very large logs.
 
@@ -100,11 +110,32 @@ import {Logs} from "./Logs";
   }
 ]`
 
+const Test = styled("div")`
+  div:not(:last-child) {
+    border-bottom: 1px solid blue;
+  }
+`
+
 export function AppWrapper() {
+    // return <Test>
+    //     <div>Child 1</div>
+    //     <div>Child 2</div>
+    //     <div>Child 3</div>
+    //     <div>Child 4</div>
+    //     <div>Child 5</div>
+    //     <div>Child 6</div>
+    // </Test>
+    // return <MegaSearchBar/>
     const [isDark, setIsDark] = useState<boolean>(true)
+    //TODO: set body data-theme="dark"/"light" for search bar
     const darkTheme = createTheme({
+        custom: {
+            secondaryBackground: "rgb(65,64,64)",
+            secondaryBackgroundBorder: "rgb(103,103,103)",
+            secondaryBackgroundSeparator: "rgb(148,148,148)"
+        },
         palette: {
-            mode: isDark ? 'dark' : "light",
+            mode: isDark ? 'dark' : "light"
         },
     });
 
@@ -113,8 +144,9 @@ export function AppWrapper() {
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <CssBaseline/>
             <BrowserRouter>
+                <MegaSearchBarTest/>
                 {/*{analytics !== undefined && <AnalyticsGraph analytics={analytics}/>}*/}
-                <RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>
+                {/*<RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>*/}
             </BrowserRouter>
         </LocalizationProvider>
     </ThemeProvider>
@@ -161,8 +193,20 @@ export interface TimeRange {
     endDay: Dayjs
 }
 
-declare module '@emotion/react' {
-    // export interface Theme extends MaterialUiTheme {
-    //
-    // }
+declare module '@mui/material/styles' {
+    interface Theme {
+        custom: {
+            secondaryBackground: string,
+            secondaryBackgroundBorder: string,
+            secondaryBackgroundSeparator: string
+        }
+    }
+    // allow configuration using `createTheme`
+    interface ThemeOptions {
+        custom?: {
+            secondaryBackground?: string,
+            secondaryBackgroundBorder: string,
+            secondaryBackgroundSeparator: string
+        }
+    }
 }

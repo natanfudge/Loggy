@@ -11,3 +11,10 @@
     /*Remove annoying padding from dropdown*/
     margin-top: 0 !important;
 }
+
+.column div:not(:last-child) {
+    border-bottom: 1px solid blue;
+}
+
+
+
