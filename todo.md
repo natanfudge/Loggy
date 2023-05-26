@@ -1,0 +1,13 @@
+- Mega search bar.
+  - A reasonable default value is provided. (like from: now-day, to: now)
+  - Type text - will filter by text
+  - level: <level> - will filter by level being at least that value (level itself is autocompleted and the possible <level>s are autocompleted too)
+  - levelExact: <level> - same but will filter by level being exactly info for example. 
+  - <key>: <value> - will filter by logData key being equal to logData value. <key> and <value> are autocompleted based on available results.
+  - from: <date> - filter by start date
+  - to: <date> - filter by end date
+  - autocompelte dates. 
+  - query parts are seperated by spaces and will be interpreted as AND
+  - query parts can be seperated by or (case-insensitive) to be treated as OR.
+  - brackets can be used for or/and treatment. 
+  - Query is passed as-is to the server and parsed on the server only.
