@@ -3,7 +3,7 @@ import {CSSProperties, Fragment, useRef, useState} from "react";
 import {AutoComplete, Query, useAutoComplete} from "./Autocomplete";
 import {AutocompleteController, Completeable, Completion, syncCompletable} from "./AutocompleteController";
 import  "fudge-lib/dist/extensions/Extensions.js";
-import {autocompleteController} from "./Completables";
+import {autocompleteConfig, autocompleteController} from "./Completables";
 
 export function MegaSearchBarTest() {
     return <div style={{display: "flex", flexDirection: "column"}}>
@@ -27,7 +27,7 @@ export function MegaSearchBarTest() {
 
 
 export function MegaSearchBar(props: { className?: string }) {
-    const autocomplete = useAutoComplete();
+    const autocomplete = useAutoComplete(autocompleteConfig);
     // const [query, setQuery] = useState<Query>("")
     // const textAreaRef = useRef<HTMLInputElement>(null)
     // const caretPosition = AutoComplete.useCaretPosition(textAreaRef)

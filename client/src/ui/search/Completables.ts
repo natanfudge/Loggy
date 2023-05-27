@@ -1,4 +1,5 @@
 import {AutocompleteController, Completeable, syncCompletable} from "./AutocompleteController";
+import {AutoCompleteConfig} from "./Autocomplete";
 
 const levels = ["info", "warn", "error"]
 const levelCompleteable: Completeable = syncCompletable((text) => {
@@ -11,6 +12,6 @@ const levelCompleteable: Completeable = syncCompletable((text) => {
             newText: `level:${level}`
         }))
 })
-export const autocompleteController = new AutocompleteController([
+export const autocompleteConfig : AutoCompleteConfig = {completeables: [
     levelCompleteable
-])
+]}

@@ -1,5 +1,5 @@
 import {RefObject, useEffect, useRef, useState} from "react";
-import {AutocompleteController, Completion} from "./AutocompleteController";
+import {AutocompleteController, Completeable, Completion} from "./AutocompleteController";
 
 export type Query = string
 
@@ -9,42 +9,87 @@ export type Query = string
 export interface AutoComplete {
     anchor: number
     query: string
+
     setQuery(query: string): void
+
     completions: Completion[]
+
     complete(completion: Completion): void
+
     ref: RefObject<HTMLInputElement>
+}
+
+export interface AutoCompleteConfig {
+    completeables: Completeable[]
 }
 
 //TODO: I'm thinking maybe combining the controller + autocomplete abstractions. useAutoComplete will accept a () => AutocompleteConfig
 // object and base everything on that.
-export function useAutoComplete(controller: AutocompleteController): AutoComplete {
+
+const WidthPx = 300
+export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
     const [query, setQuery] = useState<Query>("")
     const textAreaRef = useRef<HTMLInputElement>(null)
     const caretPosition = AutoComplete.useCaretPosition(textAreaRef)
-    const results = controller.useResults(caretPosition, query)
+    const results = useResults()
 
-    const [count, setCount] = useState(0);
-    const [data, setData] = useState([]);
+    return {
+        anchor: anchor(),
+        query: query,
+        ref: textAreaRef,
+        setQuery: setQuery,
+        complete(completion: Completion) {
+            setQuery(completeWith(completion))
+            // TODO: set caret to correct position
+        },
+        completions: results
+    }
 
-    useEffect(() => {
-        // Some side effect or data fetching logic
-        // ...
+    /**
+     * Returns the new text for the query and sets the caret to the correct position
+     */
+    function completeWith(completion: Completion): string {
+        const start = query.slice(0, caretPosition.stringIndex).split(" ").dropLast(1).join(" ")
+        const end = query.slice(caretPosition.stringIndex).split(" ").drop(1).join(" ")
+        return start + completion.newText + end;
+    }
 
-        // Cleanup function for useEffect
-        return () => {
-            // Cleanup logic
-            // ...
-        };
-    }, []);
+    function anchor(): number {
+        if (caretPosition.absoluteX + WidthPx < window.innerWidth) return caretPosition.relativeX
+        // If the autocomplete will overflow place it on the left of the text
+        else return caretPosition.relativeX - WidthPx
+    }
 
-    // Other custom logic or helper functions
-    // ...
+    function useResults(): Completion[] {
+        const [results, setResults] = useState<Completion[]>([])
+        const relevantText = AutoComplete.relevantText(caretPosition, query)
 
-    return { count, data, setCount, setData };
+        useEffect(() => {
+            const resultsOfText: Completion[] = []
+            for (const completable of config.completeables) {
+                // Fetch the results matching the text
+                completable.options(relevantText).then(options => {
+                    if (!options.isEmpty()) {
+                        resultsOfText.push(...options)
+                    }
+                    setResults(resultsOfText)
+                }).catch(e => {
+                    console.error(e)
+                })
+            }
+            return () => {
+                // Cancel http requests and such that are needed to get some completion values
+                for (const completable of config.completeables) {
+                    completable.cancel(relevantText)
+                }
+            }
+
+        }, [relevantText])
+        return results
+    }
 }
 
 export namespace AutoComplete {
-    export const WidthPx = 300
 
     /**
      * Must be captured for usage by anchor()
@@ -87,36 +132,29 @@ export namespace AutoComplete {
     /**
      * Gets the x offset the autocomplete content should start from
      */
-    export function anchor(caretPosition: CaretPosition): number  {
+    export function anchor(caretPosition: CaretPosition): number {
         if (caretPosition.absoluteX + WidthPx < window.innerWidth) return caretPosition.relativeX
         // If the autocomplete will overflow place it on the left of the text
         else return caretPosition.relativeX - WidthPx
     }
 
-    /**
-     * Returns the new text for the query and sets the caret to the correct position
-     */
-    export function completeWith(completion: Completion, caret: CaretPosition, currentText: string): string {
-        const start = currentText.slice(0, caret.stringIndex).split(" ").dropLast(1).join(" ")
-        const end = currentText.slice(caret.stringIndex).split(" ").drop(1).join(" ")
-        return start + completion.newText + end;
-    }
 
-    /**
-     * Completes one string with another
-     * For example: level:i + info = level:info
-     * For example: level:o + info = level:info
-     */
-    function complete(start: string, end: string): string {
-        let startIndex: number = start.length - 1
-        for (; startIndex >= 0; startIndex--) {
-            const endIndex = start.length - 1 - startIndex
-            if (endIndex < 0) break;
-            if (start[startIndex] !== end[endIndex]) break;
-        }
 
-        return start.substring(0, startIndex - 1) + end;
-    }
+    // /**
+    //  * Completes one string with another
+    //  * For example: level:i + info = level:info
+    //  * For example: level:o + info = level:info
+    //  */
+    // function complete(start: string, end: string): string {
+    //     let startIndex: number = start.length - 1
+    //     for (; startIndex >= 0; startIndex--) {
+    //         const endIndex = start.length - 1 - startIndex
+    //         if (endIndex < 0) break;
+    //         if (start[startIndex] !== end[endIndex]) break;
+    //     }
+    //
+    //     return start.substring(0, startIndex - 1) + end;
+    // }
 
     export function relevantText(cursor: CaretPosition, text: string): string {
         return text.slice(0, cursor.stringIndex).split(" ").last()
