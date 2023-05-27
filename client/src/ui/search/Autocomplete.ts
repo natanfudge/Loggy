@@ -1,6 +1,47 @@
-import {RefObject, useEffect, useState} from "react";
+import {RefObject, useEffect, useRef, useState} from "react";
+import {AutocompleteController, Completion} from "./AutocompleteController";
 
 export type Query = string
+
+//TODO: 1. encapsulate the logic of all these autocomplete hooks into an interface
+//TODO: 2. make it so completeWith will set the caret position properly
+
+export interface AutoComplete {
+    anchor: number
+    query: string
+    setQuery(query: string): void
+    completions: Completion[]
+    complete(completion: Completion): void
+    ref: RefObject<HTMLInputElement>
+}
+
+//TODO: I'm thinking maybe combining the controller + autocomplete abstractions. useAutoComplete will accept a () => AutocompleteConfig
+// object and base everything on that.
+export function useAutoComplete(controller: AutocompleteController): AutoComplete {
+    const [query, setQuery] = useState<Query>("")
+    const textAreaRef = useRef<HTMLInputElement>(null)
+    const caretPosition = AutoComplete.useCaretPosition(textAreaRef)
+    const results = controller.useResults(caretPosition, query)
+
+    const [count, setCount] = useState(0);
+    const [data, setData] = useState([]);
+
+    useEffect(() => {
+        // Some side effect or data fetching logic
+        // ...
+
+        // Cleanup function for useEffect
+        return () => {
+            // Cleanup logic
+            // ...
+        };
+    }, []);
+
+    // Other custom logic or helper functions
+    // ...
+
+    return { count, data, setCount, setData };
+}
 
 export namespace AutoComplete {
     export const WidthPx = 300
@@ -9,14 +50,25 @@ export namespace AutoComplete {
      * Must be captured for usage by anchor()
      * @param inputRef ref to the text field the caret is placed in
      */
-    export function useCaretPosition(inputRef: RefObject<HTMLInputElement>): CursorPosition | undefined {
-        const [caretPosition, setCaretPosition] = useState<CursorPosition | undefined>(undefined);
+    export function useCaretPosition(inputRef: RefObject<HTMLInputElement>): CaretPosition {
+        const [caretPosition, setCaretPosition] = useState<CaretPosition>({
+            stringIndex: 0,
+            relativeX: 0,
+            absoluteX: 0
+        });
 
         useEffect(() => {
             const handleSelectionChange = (): void => {
                 if (inputRef.current !== null) {
-                    const {x} = getCursorXY(inputRef.current, inputRef.current.selectionStart ?? 0)
-                    setCaretPosition({absoluteX: x + inputRef.current.getBoundingClientRect().x, relativeX: x})
+                    const selectionIndex = inputRef.current.selectionStart ?? 0
+                    const {x} = getCursorXY(inputRef.current, selectionIndex)
+                    setCaretPosition(
+                        {
+                            absoluteX: x + inputRef.current.getBoundingClientRect().x,
+                            relativeX: x,
+                            stringIndex: selectionIndex
+                        }
+                    )
                 }
             };
 
@@ -35,11 +87,39 @@ export namespace AutoComplete {
     /**
      * Gets the x offset the autocomplete content should start from
      */
-    export function anchor(caretPosition: CursorPosition | undefined): number | undefined {
-        if (caretPosition === undefined) return 0
+    export function anchor(caretPosition: CaretPosition): number  {
         if (caretPosition.absoluteX + WidthPx < window.innerWidth) return caretPosition.relativeX
         // If the autocomplete will overflow place it on the left of the text
-        else return  caretPosition.relativeX - WidthPx
+        else return caretPosition.relativeX - WidthPx
+    }
+
+    /**
+     * Returns the new text for the query and sets the caret to the correct position
+     */
+    export function completeWith(completion: Completion, caret: CaretPosition, currentText: string): string {
+        const start = currentText.slice(0, caret.stringIndex).split(" ").dropLast(1).join(" ")
+        const end = currentText.slice(caret.stringIndex).split(" ").drop(1).join(" ")
+        return start + completion.newText + end;
+    }
+
+    /**
+     * Completes one string with another
+     * For example: level:i + info = level:info
+     * For example: level:o + info = level:info
+     */
+    function complete(start: string, end: string): string {
+        let startIndex: number = start.length - 1
+        for (; startIndex >= 0; startIndex--) {
+            const endIndex = start.length - 1 - startIndex
+            if (endIndex < 0) break;
+            if (start[startIndex] !== end[endIndex]) break;
+        }
+
+        return start.substring(0, startIndex - 1) + end;
+    }
+
+    export function relevantText(cursor: CaretPosition, text: string): string {
+        return text.slice(0, cursor.stringIndex).split(" ").last()
     }
 
 }
@@ -94,7 +174,8 @@ const getCursorXY = (input: HTMLInputElement, selectionPoint: number) => {
     }
 }
 
-interface CursorPosition {
+export interface CaretPosition {
+    stringIndex: number;
     relativeX: number;
     absoluteX: number;
 }
