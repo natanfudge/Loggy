@@ -17,6 +17,12 @@ export interface AutoComplete {
     complete(completion: Completion): void
 
     ref: RefObject<HTMLInputElement>
+
+    hide(): void
+
+    show(): void
+
+    // showCompletions(): void
 }
 
 
@@ -27,26 +33,68 @@ export const AutoCompleteWidthPx = 300
 
 export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
     const [query, setQuery] = useState<Query>("")
+    // Tracks whether ctrl+space was used to show completions
+    const [forceCompletions,setForceCompletions] = useState(false)
+    const [shown, setShown] = useState(false)
     const textAreaRef = useRef<HTMLInputElement>(null)
     const caretPosition = useCaretPosition()
     const results = useResults()
+    useForceCompleteShortcut();
 
     return {
         anchor: anchor(),
         query: query,
         ref: textAreaRef,
         setQuery: setQuery,
-        complete(completion: Completion) {
-            setQuery(completeWith(completion))
-            // TODO: set caret to correct position
+        complete: complete,
+        completions: results,
+        hide(){
+            setShown(false)
+            setForceCompletions(false)
         },
-        completions: results
+        show() {
+            setShown(true)
+            setForceCompletions(false)
+        }
     }
 
-    /**
-     * Must be captured for usage by anchor()
-     * @param inputRef ref to the text field the caret is placed in
-     */
+    function useForceCompleteShortcut() {
+        useEffect(() => {
+            const handleKeyPress = (event: KeyboardEvent) => {
+                // CTRL + Space: show completions now
+                if (textAreaRef.current === document.activeElement && event.ctrlKey && event.code === 'Space') {
+                    setForceCompletions(true)
+                } else if(event.code === 'Space') {
+                    // If the user inserts a space stop forcing completions
+                    setForceCompletions(false)
+                }
+            };
+
+            // Attach the event listener when the component mounts
+            document.addEventListener('keydown', handleKeyPress);
+
+            // Remove the event listener when the component unmounts
+            return () => {
+                document.removeEventListener('keydown', handleKeyPress);
+            };
+        }, []);
+    }
+
+    function complete(completion: Completion) {
+        const {newText, completionEndPosition} = completeWith(completion)
+        setQuery(newText)
+        setCaretPosition(completionEndPosition)
+        setForceCompletions(false)
+    }
+
+    function setCaretPosition(index: number) {
+        if (textAreaRef.current !== null) {
+            // textAreaRef.current.focus()
+            textAreaRef.current.selectionStart = index
+            textAreaRef.current.selectionEnd = index
+        }
+    }
+
     function useCaretPosition(): CaretPosition {
         const [caretPosition, setCaretPosition] = useState<CaretPosition>({
             stringIndex: 0,
@@ -85,10 +133,16 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
     /**
      * Returns the new text for the query and sets the caret to the correct position
      */
-    function completeWith(completion: Completion): string {
+    function completeWith(completion: Completion): { newText: string, completionEndPosition: number } {
         const start = query.slice(0, caretPosition.stringIndex).split(" ").dropLast(1).join(" ")
+        // Restore the space after the last word preceding the current word if there is one.
+        const actualStart = start === "" ? "" : start + " "
+        // Get all of the words after the current one
         const end = query.slice(caretPosition.stringIndex).split(" ").drop(1).join(" ")
-        return start + completion.newText + end;
+        return {
+            newText: actualStart + completion.newText + end,
+            completionEndPosition: actualStart.length + completion.newText.length
+        };
     }
 
     function anchor(): number {
@@ -104,8 +158,8 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
 
     function getStartOfWordIndex(): number {
         let i = caretPosition.stringIndex
-        for(; i >=0; i--) {
-            if(query[i] === " ") break
+        for (; i >= 0; i--) {
+            if (query[i] === " ") break
         }
         return i + 1
     }
@@ -134,7 +188,9 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
                 }
             }
 
-        }, [relevantText])
+        }, [relevantText, forceCompletions])
+
+        if (!shown || !forceCompletions && relevantText === "") return []
         return results
     }
 

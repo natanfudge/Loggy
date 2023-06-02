@@ -11,6 +11,9 @@ export const Column = styled.div`
   flex-direction: column;
 `
 
+export function isEmptySpace(char: string): boolean {
+    return /\s/.test(char) || char === ""
+}
 export function usePromise<T>(promise: Promise<NonNullable<T>> | T, deps: unknown[]): T | undefined {
     const [result, setResult] = useState<T | undefined>(undefined)
     useEffect(() => {

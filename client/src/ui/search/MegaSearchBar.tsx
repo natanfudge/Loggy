@@ -1,9 +1,14 @@
-import {styled, TextField, useAutocomplete} from "@mui/material";
-import {CSSProperties, Fragment, useRef, useState} from "react";
-import {AutoComplete, AutoCompleteWidthPx, Query, useAutoComplete} from "./Autocomplete";
-import  "fudge-lib/dist/extensions/Extensions.js";
+import {styled, TextField} from "@mui/material";
+import {CSSProperties, Fragment, MouseEventHandler, useState} from "react";
+import {AutoCompleteWidthPx, useAutoComplete} from "./Autocomplete";
+import "fudge-lib/dist/extensions/Extensions.js";
 import {autocompleteConfig} from "./Completables";
 import {Completion} from "./AutocompleteConfig";
+import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
+
+//TODO: style completion selection - Entire box selection
+//TODO: implement enter-to-complete
+// TODO: implement and style typed completion part - text of all completions
 
 export function MegaSearchBarTest() {
     return <div style={{display: "flex", flexDirection: "column"}}>
@@ -26,14 +31,16 @@ export function MegaSearchBar(props: { className?: string }) {
 
     return <div className={props.className} style={{position: "relative", alignSelf: "center", width: "100%"}}>
         <TextField inputRef={autocomplete.ref} style={{width: "100%"}} autoComplete={"off"} value={autocomplete.query}
-                   onChange={(e) => autocomplete.setQuery(e.target.value)}>
+                   onChange={(e) => autocomplete.setQuery(e.target.value)}
+                   onFocus={autocomplete.show} onBlur={autocomplete.hide} spellCheck={false}
+        >
 
         </TextField>
         {/*Position the autocomplete in the exact caret position*/}
-        {autocomplete.query !== "" && <OverlayedAutocompleteContent
+        <OverlayedAutocompleteContent
             items={autocomplete.completions}
             style={{left: autocomplete.anchor}}
-            onSelectItem={(completion) => autocomplete.complete(completion)}/>}
+            onSelectItem={(completion) => autocomplete.complete(completion)}/>
     </div>
 
 }
@@ -44,17 +51,65 @@ const OverlayedAutocompleteContent = styled(AutocompleteContent)`
   width: ${AutoCompleteWidthPx}px
 `
 
-export function AutocompleteContent(props: { className?: string, style: CSSProperties, items: Completion[], onSelectItem: (item: Completion) => void }) {
-    if(props.items.isEmpty()) {
+
+export function AutocompleteContent(props: {
+    className?: string,
+    style: CSSProperties,
+    items: Completion[],
+    onSelectItem: (item: Completion) => void
+}) {
+    if (props.items.isEmpty()) {
         return <Fragment/>
     }
+    return NonEmptyAutocompleteContent(props);
+}
+
+function NonEmptyAutocompleteContent(props: {
+    className?: string;
+    style: React.CSSProperties;
+    items: Completion[];
+    onSelectItem: (item: Completion) => void
+}) {
+    const [activeItemIndex, setActiveItemIndex] = useState<number | undefined>(undefined)
+
+    // Go down in selection when down is pressed
+    useKeyboardShortcut("ArrowDown", () => {
+        setActiveItemIndex(old => {
+            if (old === undefined) return 0
+            else if (old < props.items.length - 1) return old + 1
+            else return old
+        })
+    })
+
+    // Go up in selection when up is pressed
+    useKeyboardShortcut("ArrowUp", () => {
+        setActiveItemIndex(old => {
+            if (old === undefined) return props.items.length - 1
+            else if (old > 0) return old - 1
+            else return old
+        })
+    })
+
     return <AutocompleteOptions style={props.style} className={props.className + " column"}>
-        {props.items.map(item => <AutoCompleteItem key = {item.label} item = {item.label} onClick={() => props.onSelectItem(item)}/>)}
+        {props.items.map((item, i) => <AutoCompleteItem active={activeItemIndex === i} key={item.label}
+                                                        item={item.label}
+                                                        onMouseDown={(e) => {
+                                                            // Don't lose focus in the text field
+                                                            e.preventDefault()
+                                                            props.onSelectItem(item)
+                                                        }}/>)}
     </AutocompleteOptions>
 }
 
-function AutoCompleteItem(props: {className?: string, item: string, onClick: () => void}) {
-    return <span style = {{cursor: "pointer"}} onClick={props.onClick} >{props.item}</span>
+
+function AutoCompleteItem(props: {
+    className?: string,
+    item: string,
+    onMouseDown: MouseEventHandler<HTMLSpanElement>,
+    active: boolean
+}) {
+    return <span style={{cursor: "pointer", backgroundColor: props.active ? "blue" : undefined}}
+                 onMouseDown={props.onMouseDown}>{props.item}</span>
 }
 
 const AutocompleteOptions = styled("div")(
