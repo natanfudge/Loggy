@@ -1,17 +1,16 @@
-import {AutocompleteController, Completeable, syncCompletable} from "./AutocompleteController";
-import {AutoCompleteConfig} from "./Autocomplete";
+import {AutoCompleteConfig, Completeable, syncCompletable} from "./AutocompleteConfig";
 
 const levels = ["info", "warn", "error"]
+const levelCompletions = levels.map(level => `level:${level}`)
 const levelCompleteable: Completeable = syncCompletable((text) => {
-    if (!text.startsWith("level:")) return []
-    const relevantPart = text.removeBeforeFirstExclusive(":")
-
-    return levels.filter(level => level !== relevantPart && level.includes(relevantPart))
+    return levelCompletions.filter(level => level !== text && level.includes(text))
         .map(level => ({
             label: level,
-            newText: `level:${level}`
+            newText: level
         }))
 })
-export const autocompleteConfig : AutoCompleteConfig = {completeables: [
-    levelCompleteable
-]}
+export const autocompleteConfig: AutoCompleteConfig = {
+    completeables: [
+        levelCompleteable
+    ]
+}

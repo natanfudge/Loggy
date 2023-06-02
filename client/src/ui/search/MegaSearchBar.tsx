@@ -1,9 +1,9 @@
 import {styled, TextField, useAutocomplete} from "@mui/material";
 import {CSSProperties, Fragment, useRef, useState} from "react";
-import {AutoComplete, Query, useAutoComplete} from "./Autocomplete";
-import {AutocompleteController, Completeable, Completion, syncCompletable} from "./AutocompleteController";
+import {AutoComplete, AutoCompleteWidthPx, Query, useAutoComplete} from "./Autocomplete";
 import  "fudge-lib/dist/extensions/Extensions.js";
-import {autocompleteConfig, autocompleteController} from "./Completables";
+import {autocompleteConfig} from "./Completables";
+import {Completion} from "./AutocompleteConfig";
 
 export function MegaSearchBarTest() {
     return <div style={{display: "flex", flexDirection: "column"}}>
@@ -20,18 +20,9 @@ export function MegaSearchBarTest() {
     </div>
 }
 
-// const StyledMegaSearchBar = styled(MegaSearchBar)`
-//   padding: 10px 50px;
-// `
-
-
 
 export function MegaSearchBar(props: { className?: string }) {
     const autocomplete = useAutoComplete(autocompleteConfig);
-    // const [query, setQuery] = useState<Query>("")
-    // const textAreaRef = useRef<HTMLInputElement>(null)
-    // const caretPosition = AutoComplete.useCaretPosition(textAreaRef)
-    // const results = autocompleteController.useResults(caretPosition, query)
 
     return <div className={props.className} style={{position: "relative", alignSelf: "center", width: "100%"}}>
         <TextField inputRef={autocomplete.ref} style={{width: "100%"}} autoComplete={"off"} value={autocomplete.query}
@@ -50,7 +41,7 @@ export function MegaSearchBar(props: { className?: string }) {
 const OverlayedAutocompleteContent = styled(AutocompleteContent)`
   position: absolute;
   margin-top: -15px;
-  width: ${AutoComplete.WidthPx}px
+  width: ${AutoCompleteWidthPx}px
 `
 
 export function AutocompleteContent(props: { className?: string, style: CSSProperties, items: Completion[], onSelectItem: (item: Completion) => void }) {

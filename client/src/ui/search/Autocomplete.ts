@@ -1,5 +1,5 @@
 import {RefObject, useEffect, useRef, useState} from "react";
-import {AutocompleteController, Completeable, Completion} from "./AutocompleteController";
+import {AutoCompleteConfig, Completion} from "./AutocompleteConfig";
 
 export type Query = string
 
@@ -19,18 +19,16 @@ export interface AutoComplete {
     ref: RefObject<HTMLInputElement>
 }
 
-export interface AutoCompleteConfig {
-    completeables: Completeable[]
-}
 
 //TODO: I'm thinking maybe combining the controller + autocomplete abstractions. useAutoComplete will accept a () => AutocompleteConfig
 // object and base everything on that.
 
-const WidthPx = 300
+export const AutoCompleteWidthPx = 300
+
 export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
     const [query, setQuery] = useState<Query>("")
     const textAreaRef = useRef<HTMLInputElement>(null)
-    const caretPosition = AutoComplete.useCaretPosition(textAreaRef)
+    const caretPosition = useCaretPosition()
     const results = useResults()
 
     return {
@@ -46,6 +44,45 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
     }
 
     /**
+     * Must be captured for usage by anchor()
+     * @param inputRef ref to the text field the caret is placed in
+     */
+    function useCaretPosition(): CaretPosition {
+        const [caretPosition, setCaretPosition] = useState<CaretPosition>({
+            stringIndex: 0,
+            relativeX: 0,
+            absoluteX: 0
+        });
+
+        useEffect(() => {
+            const handleSelectionChange = (): void => {
+                if (textAreaRef.current !== null) {
+                    const selectionIndex = textAreaRef.current.selectionStart ?? 0
+                    const {x} = getCursorXY(textAreaRef.current, selectionIndex)
+                    setCaretPosition(
+                        {
+                            absoluteX: x + textAreaRef.current.getBoundingClientRect().x,
+                            relativeX: x,
+                            stringIndex: selectionIndex
+                        }
+                    )
+                }
+            };
+
+            document.addEventListener('selectionchange', handleSelectionChange);
+            document.addEventListener("input", handleSelectionChange)
+
+            return () => {
+                document.removeEventListener('selectionchange', handleSelectionChange);
+                document.removeEventListener('input', handleSelectionChange);
+            };
+        }, [textAreaRef]);
+
+        return caretPosition;
+    }
+
+
+    /**
      * Returns the new text for the query and sets the caret to the correct position
      */
     function completeWith(completion: Completion): string {
@@ -55,14 +92,27 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
     }
 
     function anchor(): number {
-        if (caretPosition.absoluteX + WidthPx < window.innerWidth) return caretPosition.relativeX
+        const input = textAreaRef.current
+        if (input === null) return 0
+
+        const startOfWordPosition = getCursorXY(input, getStartOfWordIndex()).x
+        // If the autocomplete will not overflow place it to the right of the text
+        if (caretPosition.absoluteX + AutoCompleteWidthPx < window.innerWidth) return startOfWordPosition
         // If the autocomplete will overflow place it on the left of the text
-        else return caretPosition.relativeX - WidthPx
+        else return startOfWordPosition - AutoCompleteWidthPx
+    }
+
+    function getStartOfWordIndex(): number {
+        let i = caretPosition.stringIndex
+        for(; i >=0; i--) {
+            if(query[i] === " ") break
+        }
+        return i + 1
     }
 
     function useResults(): Completion[] {
         const [results, setResults] = useState<Completion[]>([])
-        const relevantText = AutoComplete.relevantText(caretPosition, query)
+        const relevantText = relevantPartOf(query)
 
         useEffect(() => {
             const resultsOfText: Completion[] = []
@@ -87,57 +137,13 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
         }, [relevantText])
         return results
     }
+
+    function relevantPartOf(text: string): string {
+        return text.slice(0, caretPosition.stringIndex).split(" ").last()
+    }
 }
 
 export namespace AutoComplete {
-
-    /**
-     * Must be captured for usage by anchor()
-     * @param inputRef ref to the text field the caret is placed in
-     */
-    export function useCaretPosition(inputRef: RefObject<HTMLInputElement>): CaretPosition {
-        const [caretPosition, setCaretPosition] = useState<CaretPosition>({
-            stringIndex: 0,
-            relativeX: 0,
-            absoluteX: 0
-        });
-
-        useEffect(() => {
-            const handleSelectionChange = (): void => {
-                if (inputRef.current !== null) {
-                    const selectionIndex = inputRef.current.selectionStart ?? 0
-                    const {x} = getCursorXY(inputRef.current, selectionIndex)
-                    setCaretPosition(
-                        {
-                            absoluteX: x + inputRef.current.getBoundingClientRect().x,
-                            relativeX: x,
-                            stringIndex: selectionIndex
-                        }
-                    )
-                }
-            };
-
-            document.addEventListener('selectionchange', handleSelectionChange);
-            document.addEventListener("input", handleSelectionChange)
-
-            return () => {
-                document.removeEventListener('selectionchange', handleSelectionChange);
-                document.removeEventListener('input', handleSelectionChange);
-            };
-        }, [inputRef]);
-
-        return caretPosition;
-    }
-
-    /**
-     * Gets the x offset the autocomplete content should start from
-     */
-    export function anchor(caretPosition: CaretPosition): number {
-        if (caretPosition.absoluteX + WidthPx < window.innerWidth) return caretPosition.relativeX
-        // If the autocomplete will overflow place it on the left of the text
-        else return caretPosition.relativeX - WidthPx
-    }
-
 
 
     // /**
@@ -156,9 +162,6 @@ export namespace AutoComplete {
     //     return start.substring(0, startIndex - 1) + end;
     // }
 
-    export function relevantText(cursor: CaretPosition, text: string): string {
-        return text.slice(0, cursor.stringIndex).split(" ").last()
-    }
 
 }
 
