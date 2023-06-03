@@ -8,6 +8,8 @@ export interface AutoComplete {
 
     query: string
 
+    currentTypedWord: string
+
     setQuery(query: string): void
 
     completions: Completion[]
@@ -53,7 +55,8 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
         show() {
             setShown(true)
             setForceCompletions(false)
-        }
+        },
+        currentTypedWord: relevantPartOf(query)
     }
 
     function useForceCompleteShortcut() {

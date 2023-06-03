@@ -27,6 +27,8 @@ export function MegaSearchBarTest() {
 export function MegaSearchBar(props: { className?: string }) {
     const autocomplete = useAutoComplete(autocompleteConfig);
 
+    console.log(`Query: ${autocomplete.query}`)
+
 
     return <div className={props.className} style={{position: "relative", alignSelf: "center", width: "100%"}}>
         <TextField inputRef={autocomplete.ref} style={{width: "100%"}} autoComplete={"off"} value={autocomplete.query}
@@ -37,6 +39,7 @@ export function MegaSearchBar(props: { className?: string }) {
         </TextField>
         {/*Position the autocomplete in the exact caret position*/}
         <OverlayedAutocompleteContent
+            typedWord={autocomplete.currentTypedWord}
             items={autocomplete.completions}
             style={{left: autocomplete.anchor}}
             onSelectItem={(completion) => autocomplete.complete(completion)}/>
@@ -55,19 +58,21 @@ export function AutocompleteContent(props: {
     className?: string,
     style: CSSProperties,
     items: Completion[],
-    onSelectItem: (item: Completion) => void
+    onSelectItem: (item: Completion) => void,
+    typedWord: string
 }) {
     if (props.items.isEmpty()) {
         return <Fragment/>
     }
-    return NonEmptyAutocompleteContent(props);
+    return <NonEmptyAutocompleteContent {...props}/>
 }
 
 function NonEmptyAutocompleteContent(props: {
     className?: string;
     style: React.CSSProperties;
     items: Completion[];
-    onSelectItem: (item: Completion) => void
+    onSelectItem: (item: Completion) => void,
+    typedWord: string
 }) {
     const labels = props.items.map(i => i.label)
     const [activeItem, setActiveItem] = useState<string>(labels[0])
@@ -84,7 +89,7 @@ function NonEmptyAutocompleteContent(props: {
             if (index < props.items.length - 1) return labels[index + 1]
             else return old
         })
-    },[])
+    }, [])
 
     // Go up in selection when up is pressed
     useKeyboardShortcut("ArrowUp", () => {
@@ -93,17 +98,18 @@ function NonEmptyAutocompleteContent(props: {
             if (index > 0) return labels[index - 1]
             else return old
         })
-    },[])
+    }, [])
 
     useKeyboardShortcut("Enter", () => {
         const index = labels.indexOfOrThrow(activeItem)
         props.onSelectItem(props.items[index])
-    },[activeItem])
+    }, [activeItem])
 
     return <AutocompleteOptions style={props.style} className={props.className + " column"}>
-        {props.items.map((item, i) => <AutoCompleteItem active={activeItem === item.label} key={item.label}
+        {props.items.map((item, i) => <AutoCompleteItem typedWord={props.typedWord} active={activeItem === item.label}
+                                                        key={item.label}
                                                         item={item.label}
-                                                        onMouseDown={(e) => {
+                                                        onLeftClick={(e) => {
                                                             // Don't lose focus in the text field
                                                             e.preventDefault()
                                                             props.onSelectItem(item)
@@ -115,15 +121,40 @@ function NonEmptyAutocompleteContent(props: {
 function AutoCompleteItem(props: {
     className?: string,
     item: string,
-    onMouseDown: MouseEventHandler<HTMLSpanElement>,
-    active: boolean
+    onLeftClick: MouseEventHandler<HTMLSpanElement>,
+    active: boolean,
+    typedWord: string
 }) {
     const theme = useTheme()
+    const {before,typed,after} = breakDownItemIntoTypedAndNonTyped(props.item,props.typedWord)
+
     return <span style={{
         cursor: "pointer",
         backgroundColor: props.active ? theme.custom.selectedCompletionBackground : undefined
     }}
-                 onMouseDown={props.onMouseDown}>{props.item}</span>
+                 onMouseDown={(e) => {
+                     if(e.button === LeftClick) props.onLeftClick(e)
+                 }}>
+        {before}
+        {/*Highlight the typed value in blue*/}
+        <span style = {{color: theme.palette.primary.main, padding: 0}}>{typed}</span>
+        {after}
+    </span>
+}
+
+const LeftClick = 0
+
+/**
+ * For example, given completion item 'Hello', and typed 'el', it will return {before: 'H', typed: 'el', after: 'lo'}
+ * This is a generic solution designed to make it so no matter what logic the completables use to showing thing, the 'typed' part will always make sense.
+ * More improvements can be made to perhaps split into more parts in case the typed part is scattered through the word.
+ */
+function breakDownItemIntoTypedAndNonTyped(item: string, typedWord: string):
+    { before: string, typed: string, after: string } {
+    const index = item.indexOf(typedWord)
+    // TypedWord is not identified in item: just display everything normally
+    if (index === -1) return {before: item, typed: "", after: ""}
+    return {before: item.slice(0, index), typed: typedWord, after: item.slice(index + typedWord.length)}
 }
 
 const AutocompleteOptions = styled("div")(
