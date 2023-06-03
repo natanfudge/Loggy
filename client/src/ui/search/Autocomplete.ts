@@ -16,12 +16,16 @@ export interface AutoComplete {
 
     complete(completion: Completion): void
 
+    //TODO
+    isLoadingCompletions: boolean
+
     ref: RefObject<HTMLInputElement>
 
     show(): void
 
     hide(): void
 }
+
 
 export const AutoCompleteWidthPx = 300
 
@@ -167,13 +171,13 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
 
         useLayoutEffect(() => {
             //TODO: handle some form of loading indicator for async completables loading
-            const resultsOfText: Completion[] = []
+            let resultsOfText: Completion[] = []
             for (const completable of config.completeables) {
                 // Fetch the results matching the text
                 const options = completable.options(relevantText)
                 options.then(options => {
                     if (!options.isEmpty()) {
-                        resultsOfText.push(...options)
+                        resultsOfText = resultsOfText.concat(options)
                     }
                     setResults(resultsOfText)
                 }).catch(e => {
@@ -190,7 +194,8 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
         }, [relevantText, forceCompletions])
 
         if (!shown || (!forceCompletions && relevantText === "")) return []
-        return results
+        //TODO: distinct() call might fail if we have more fields in Completion
+        return results.distinct()
     }
 
     function relevantPartOf(text: string): string {

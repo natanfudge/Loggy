@@ -4,7 +4,7 @@ export function useKeyboardShortcut(code: string, callback: () => void, deps: un
     useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
             if (event.code === code){
-                // event.preventDefault()
+                event.preventDefault()
                 callback()
             }
         };

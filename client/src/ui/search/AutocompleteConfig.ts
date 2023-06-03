@@ -12,11 +12,14 @@ export interface Completion {
     newText: string
 }
 
+export function completionsEqual(completionA: Completion, completionB: Completion) : boolean {
+    return completionA.label === completionB.label && completionA.newText === completionB.newText
+}
+
 export interface Completeable {
     /**
      * Given the text, what completion options should be shown.
      */
-    //TODO: handle identical completion labels
     options: (text: string) => Promise<Completion[]>
     /**
      * Method that will cancel getting the options for [text]

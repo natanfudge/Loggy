@@ -3,10 +3,9 @@ import {CSSProperties, Fragment, MouseEventHandler, useEffect, useState} from "r
 import {AutoCompleteWidthPx, useAutoComplete} from "./Autocomplete";
 import "fudge-lib/dist/extensions/Extensions.js";
 import {autocompleteConfig} from "./Completables";
-import {Completion} from "./AutocompleteConfig";
+import {Completion, completionsEqual} from "./AutocompleteConfig";
 import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
 
-// TODO: implement and style typed completion part - text of all completions
 
 export function MegaSearchBarTest() {
     return <div style={{display: "flex", flexDirection: "column"}}>
@@ -27,7 +26,6 @@ export function MegaSearchBarTest() {
 export function MegaSearchBar(props: { className?: string }) {
     const autocomplete = useAutoComplete(autocompleteConfig);
 
-    console.log(`Query: ${autocomplete.query}`)
 
 
     return <div className={props.className} style={{position: "relative", alignSelf: "center", width: "100%"}}>
@@ -74,19 +72,23 @@ function NonEmptyAutocompleteContent(props: {
     onSelectItem: (item: Completion) => void,
     typedWord: string
 }) {
-    const labels = props.items.map(i => i.label)
-    const [activeItem, setActiveItem] = useState<string>(labels[0])
-    //TODO: handle identical labels
+    // const labels = props.items.map(i => i.label)
+    const items = props.items
+    const [activeItem, setActiveItem] = useState<Completion>(items[0])
+
+    function indexOf(completion: Completion): number {
+        return items.firstIndex(item =>completionsEqual(item,completion))
+    }
 
     useEffect(() => {
-        if (!labels.includes(activeItem)) setActiveItem(labels[0])
-    }, [labels])
+        if (items.none(item => completionsEqual(item,activeItem))) setActiveItem(items[0])
+    }, [items, activeItem])
 
     // Go down in selection when down is pressed
     useKeyboardShortcut("ArrowDown", () => {
         setActiveItem(old => {
-            const index = labels.indexOfOrThrow(old)
-            if (index < props.items.length - 1) return labels[index + 1]
+            const index = indexOf(old)
+            if (index < props.items.length - 1) return items[index + 1]
             else return old
         })
     }, [])
@@ -94,20 +96,21 @@ function NonEmptyAutocompleteContent(props: {
     // Go up in selection when up is pressed
     useKeyboardShortcut("ArrowUp", () => {
         setActiveItem(old => {
-            const index = labels.indexOfOrThrow(old)
-            if (index > 0) return labels[index - 1]
+            const index = indexOf(old)
+            if (index > 0) return items[index - 1]
             else return old
         })
     }, [])
 
     useKeyboardShortcut("Enter", () => {
-        const index = labels.indexOfOrThrow(activeItem)
+        const index = indexOf(activeItem)
         props.onSelectItem(props.items[index])
     }, [activeItem])
 
     return <AutocompleteOptions style={props.style} className={props.className + " column"}>
-        {props.items.map((item, i) => <AutoCompleteItem typedWord={props.typedWord} active={activeItem === item.label}
-                                                        key={item.label}
+        {props.items.map((item, i) => <AutoCompleteItem typedWord={props.typedWord}
+                                                        active={completionsEqual(activeItem,item)}
+                                                        key={item.label + item.newText}
                                                         item={item.label}
                                                         onLeftClick={(e) => {
                                                             // Don't lose focus in the text field
