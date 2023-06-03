@@ -112,11 +112,7 @@ import { Theme as MUITheme, ThemeOptions as MUIThemeOptions } from '@mui/materia
   }
 ]`
 
-const Test = styled("div")`
-  div:not(:last-child) {
-    border-bottom: 1px solid blue;
-  }
-`
+
 
 export function AppWrapper() {
     // return <Test>
@@ -134,7 +130,8 @@ export function AppWrapper() {
         custom: {
             secondaryBackground: "rgb(65,64,64)",
             secondaryBackgroundBorder: "rgb(103,103,103)",
-            secondaryBackgroundSeparator: "rgb(148,148,148)"
+            secondaryBackgroundSeparator: "rgb(148,148,148)",
+            selectedCompletionBackground: "rgb(73,84,119)"
         },
         palette: {
             mode: isDark ? 'dark' : "light"
@@ -195,20 +192,19 @@ export interface TimeRange {
     endDay: Dayjs
 }
 
+type CustomTheme = {
+    secondaryBackground: string,
+    secondaryBackgroundBorder: string,
+    secondaryBackgroundSeparator: string,
+    selectedCompletionBackground: string
+}
+
 declare module '@mui/material/styles' {
     interface Theme {
-        custom: {
-            secondaryBackground: string,
-            secondaryBackgroundBorder: string,
-            secondaryBackgroundSeparator: string
-        }
+        custom: CustomTheme
     }
     // allow configuration using `createTheme`
     interface ThemeOptions {
-        custom?: {
-            secondaryBackground?: string,
-            secondaryBackgroundBorder: string,
-            secondaryBackgroundSeparator: string
-        }
+        custom?: CustomTheme
     }
 }

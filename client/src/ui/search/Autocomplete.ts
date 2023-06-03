@@ -1,13 +1,11 @@
-import {RefObject, useEffect, useRef, useState} from "react";
+import {RefObject, useEffect, useLayoutEffect, useRef, useState} from "react";
 import {AutoCompleteConfig, Completion} from "./AutocompleteConfig";
 
 export type Query = string
 
-//TODO: 1. encapsulate the logic of all these autocomplete hooks into an interface
-//TODO: 2. make it so completeWith will set the caret position properly
-
 export interface AutoComplete {
     anchor: number
+
     query: string
 
     setQuery(query: string): void
@@ -18,26 +16,26 @@ export interface AutoComplete {
 
     ref: RefObject<HTMLInputElement>
 
-    hide(): void
-
     show(): void
 
-    // showCompletions(): void
+    hide(): void
 }
-
-
-//TODO: I'm thinking maybe combining the controller + autocomplete abstractions. useAutoComplete will accept a () => AutocompleteConfig
-// object and base everything on that.
 
 export const AutoCompleteWidthPx = 300
 
 export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
     const [query, setQuery] = useState<Query>("")
     // Tracks whether ctrl+space was used to show completions
-    const [forceCompletions,setForceCompletions] = useState(false)
+    const [forceCompletions, setForceCompletions] = useState(false)
     const [shown, setShown] = useState(false)
     const textAreaRef = useRef<HTMLInputElement>(null)
-    const caretPosition = useCaretPosition()
+    const [caretPosition, setCaretPosition] = useState<CaretPosition>({
+        stringIndex: 0,
+        relativeX: 0,
+        absoluteX: 0
+    });
+
+    useCaretPosition()
     const results = useResults()
     useForceCompleteShortcut();
 
@@ -48,7 +46,7 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
         setQuery: setQuery,
         complete: complete,
         completions: results,
-        hide(){
+        hide() {
             setShown(false)
             setForceCompletions(false)
         },
@@ -64,7 +62,7 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
                 // CTRL + Space: show completions now
                 if (textAreaRef.current === document.activeElement && event.ctrlKey && event.code === 'Space') {
                     setForceCompletions(true)
-                } else if(event.code === 'Space') {
+                } else if (event.code === 'Space') {
                     // If the user inserts a space stop forcing completions
                     setForceCompletions(false)
                 }
@@ -83,26 +81,22 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
     function complete(completion: Completion) {
         const {newText, completionEndPosition} = completeWith(completion)
         setQuery(newText)
-        setCaretPosition(completionEndPosition)
+        // Advance caret to the end of the completion
+        forceUpdateCaretPosition(completionEndPosition)
         setForceCompletions(false)
     }
 
-    function setCaretPosition(index: number) {
+    function forceUpdateCaretPosition(index: number) {
         if (textAreaRef.current !== null) {
-            // textAreaRef.current.focus()
             textAreaRef.current.selectionStart = index
             textAreaRef.current.selectionEnd = index
         }
+        // Also update our state to prevent visual jumping back and forth
+        setCaretPosition(old => ({...old, stringIndex: index}))
     }
 
     function useCaretPosition(): CaretPosition {
-        const [caretPosition, setCaretPosition] = useState<CaretPosition>({
-            stringIndex: 0,
-            relativeX: 0,
-            absoluteX: 0
-        });
-
-        useEffect(() => {
+        useLayoutEffect(() => {
             const handleSelectionChange = (): void => {
                 if (textAreaRef.current !== null) {
                     const selectionIndex = textAreaRef.current.selectionStart ?? 0
@@ -168,11 +162,13 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
         const [results, setResults] = useState<Completion[]>([])
         const relevantText = relevantPartOf(query)
 
-        useEffect(() => {
+        useLayoutEffect(() => {
+            //TODO: handle some form of loading indicator for async completables loading
             const resultsOfText: Completion[] = []
             for (const completable of config.completeables) {
                 // Fetch the results matching the text
-                completable.options(relevantText).then(options => {
+                const options = completable.options(relevantText)
+                options.then(options => {
                     if (!options.isEmpty()) {
                         resultsOfText.push(...options)
                     }
@@ -190,7 +186,7 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
 
         }, [relevantText, forceCompletions])
 
-        if (!shown || !forceCompletions && relevantText === "") return []
+        if (!shown || (!forceCompletions && relevantText === "")) return []
         return results
     }
 
@@ -199,27 +195,6 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
     }
 }
 
-export namespace AutoComplete {
-
-
-    // /**
-    //  * Completes one string with another
-    //  * For example: level:i + info = level:info
-    //  * For example: level:o + info = level:info
-    //  */
-    // function complete(start: string, end: string): string {
-    //     let startIndex: number = start.length - 1
-    //     for (; startIndex >= 0; startIndex--) {
-    //         const endIndex = start.length - 1 - startIndex
-    //         if (endIndex < 0) break;
-    //         if (start[startIndex] !== end[endIndex]) break;
-    //     }
-    //
-    //     return start.substring(0, startIndex - 1) + end;
-    // }
-
-
-}
 
 /////////// Magic function of hell that gets the position of the caret
 /**

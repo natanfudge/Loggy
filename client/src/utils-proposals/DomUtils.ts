@@ -1,6 +1,6 @@
 import {useEffect} from "react";
 
-export function useKeyboardShortcut(code: string, callback: () => void) {
+export function useKeyboardShortcut(code: string, callback: () => void, deps: unknown[]) {
     useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
             if (event.code === code){
@@ -17,5 +17,5 @@ export function useKeyboardShortcut(code: string, callback: () => void) {
         return () => {
             document.removeEventListener('keydown', handleKeyPress);
         };
-    }, [code]);
+    }, [code,...deps]);
 }

@@ -1,13 +1,11 @@
-import {styled, TextField} from "@mui/material";
-import {CSSProperties, Fragment, MouseEventHandler, useState} from "react";
+import {styled, TextField, useTheme} from "@mui/material";
+import {CSSProperties, Fragment, MouseEventHandler, useEffect, useState} from "react";
 import {AutoCompleteWidthPx, useAutoComplete} from "./Autocomplete";
 import "fudge-lib/dist/extensions/Extensions.js";
 import {autocompleteConfig} from "./Completables";
 import {Completion} from "./AutocompleteConfig";
 import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
 
-//TODO: style completion selection - Entire box selection
-//TODO: implement enter-to-complete
 // TODO: implement and style typed completion part - text of all completions
 
 export function MegaSearchBarTest() {
@@ -28,6 +26,7 @@ export function MegaSearchBarTest() {
 
 export function MegaSearchBar(props: { className?: string }) {
     const autocomplete = useAutoComplete(autocompleteConfig);
+
 
     return <div className={props.className} style={{position: "relative", alignSelf: "center", width: "100%"}}>
         <TextField inputRef={autocomplete.ref} style={{width: "100%"}} autoComplete={"off"} value={autocomplete.query}
@@ -70,28 +69,39 @@ function NonEmptyAutocompleteContent(props: {
     items: Completion[];
     onSelectItem: (item: Completion) => void
 }) {
-    const [activeItemIndex, setActiveItemIndex] = useState<number | undefined>(undefined)
+    const labels = props.items.map(i => i.label)
+    const [activeItem, setActiveItem] = useState<string>(labels[0])
+    //TODO: handle identical labels
+
+    useEffect(() => {
+        if (!labels.includes(activeItem)) setActiveItem(labels[0])
+    }, [labels])
 
     // Go down in selection when down is pressed
     useKeyboardShortcut("ArrowDown", () => {
-        setActiveItemIndex(old => {
-            if (old === undefined) return 0
-            else if (old < props.items.length - 1) return old + 1
+        setActiveItem(old => {
+            const index = labels.indexOfOrThrow(old)
+            if (index < props.items.length - 1) return labels[index + 1]
             else return old
         })
-    })
+    },[])
 
     // Go up in selection when up is pressed
     useKeyboardShortcut("ArrowUp", () => {
-        setActiveItemIndex(old => {
-            if (old === undefined) return props.items.length - 1
-            else if (old > 0) return old - 1
+        setActiveItem(old => {
+            const index = labels.indexOfOrThrow(old)
+            if (index > 0) return labels[index - 1]
             else return old
         })
-    })
+    },[])
+
+    useKeyboardShortcut("Enter", () => {
+        const index = labels.indexOfOrThrow(activeItem)
+        props.onSelectItem(props.items[index])
+    },[activeItem])
 
     return <AutocompleteOptions style={props.style} className={props.className + " column"}>
-        {props.items.map((item, i) => <AutoCompleteItem active={activeItemIndex === i} key={item.label}
+        {props.items.map((item, i) => <AutoCompleteItem active={activeItem === item.label} key={item.label}
                                                         item={item.label}
                                                         onMouseDown={(e) => {
                                                             // Don't lose focus in the text field
@@ -108,7 +118,11 @@ function AutoCompleteItem(props: {
     onMouseDown: MouseEventHandler<HTMLSpanElement>,
     active: boolean
 }) {
-    return <span style={{cursor: "pointer", backgroundColor: props.active ? "blue" : undefined}}
+    const theme = useTheme()
+    return <span style={{
+        cursor: "pointer",
+        backgroundColor: props.active ? theme.custom.selectedCompletionBackground : undefined
+    }}
                  onMouseDown={props.onMouseDown}>{props.item}</span>
 }
 

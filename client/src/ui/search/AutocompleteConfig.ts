@@ -16,12 +16,15 @@ export interface Completeable {
     /**
      * Given the text, what completion options should be shown.
      */
+    //TODO: handle identical completion labels
     options: (text: string) => Promise<Completion[]>
     /**
      * Method that will cancel getting the options for [text]
      */
     cancel: (text: string) => void
 }
+
+
 
 export function syncCompletable(options: (text: string) => Completion[]): Completeable {
     return {
@@ -35,4 +38,4 @@ export function syncCompletable(options: (text: string) => Completion[]): Comple
 }
 
 //TODO: async handling
-type MaybePromise<T> = T /*| Promise<T>*/
+type MaybePromise<T> = T | Promise<T>

@@ -6,6 +6,7 @@ declare global {
         last() : T
         first() : T
         dropLast(amount: number): Array<T>
+        indexOfOrThrow(item: T): number
     }
 }
 
