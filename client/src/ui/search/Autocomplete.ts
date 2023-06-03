@@ -16,8 +16,7 @@ export interface AutoComplete {
 
     complete(completion: Completion): void
 
-    //TODO
-    // isLoadingCompletions: boolean
+    isLoadingCompletions: boolean
 
     ref: RefObject<HTMLInputElement>
 
@@ -40,6 +39,7 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
         relativeX: 0,
         absoluteX: 0
     });
+    const [isLoadingCompletions, setIsLoadingCompletions] = useState(false)
 
     useCaretPosition()
     const results = useResults()
@@ -47,10 +47,10 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
 
     return {
         anchor: anchor(),
-        query: query,
+        query,
         ref: textAreaRef,
-        setQuery: setQuery,
-        complete: complete,
+        setQuery,
+        complete,
         completions: results,
         hide() {
             setShown(false)
@@ -60,7 +60,8 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
             setShown(true)
             setForceCompletions(false)
         },
-        currentTypedWord: relevantPartOf(query)
+        currentTypedWord: relevantPartOf(query),
+        isLoadingCompletions
     }
 
     function useForceCompleteShortcut() {
@@ -169,17 +170,19 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
         const [results, setResults] = useState<Completion[]>([])
         const relevantText = relevantPartOf(query)
 
-        useLayoutEffect(() => {
+        useEffect(() => {
             //TODO: handle some form of loading indicator for async completables loading
             let resultsOfText: Completion[] = []
             let canceled = false
-            for (const completable of config.completeables) {
-                // Fetch the results matching the text
-                const options = completable.options(relevantText)
-                options.then(options => {
-                    if(!canceled) {
-                        if (!options.isEmpty()) {
-                            resultsOfText = resultsOfText.concat(options)
+
+            const allCompletions = config.completeables.map(completable => completable.options(relevantText))
+
+            setIsLoadingCompletions(true)
+            for(const completionPromise of allCompletions) {
+                completionPromise.then(completions => {
+                    if (!canceled) {
+                        if (!completions.isEmpty()) {
+                            resultsOfText = resultsOfText.concat(completions)
                         }
                         setResults(resultsOfText)
                     }
@@ -187,6 +190,19 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
                     console.error(e)
                 })
             }
+
+
+            Promise.all(allCompletions).then(() => {
+                if(!canceled) {
+                    setIsLoadingCompletions(false)
+                }
+            }).catch(e => {
+                console.error(e)
+            })
+
+
+
+
             return () => {
                 canceled = true
                 // Cancel http requests and such that are needed to get some completion values

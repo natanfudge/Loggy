@@ -1,4 +1,4 @@
-import {styled, TextField, useTheme} from "@mui/material";
+import {CircularProgress, styled, TextField, useTheme} from "@mui/material";
 import {CSSProperties, Fragment, MouseEventHandler, useEffect, useState} from "react";
 import {AutoCompleteWidthPx, useAutoComplete} from "./Autocomplete";
 import "fudge-lib/dist/extensions/Extensions.js";
@@ -27,7 +27,6 @@ export function MegaSearchBar(props: { className?: string }) {
     const autocomplete = useAutoComplete(autocompleteConfig);
 
 
-
     return <div className={props.className} style={{position: "relative", alignSelf: "center", width: "100%"}}>
         <TextField inputRef={autocomplete.ref} style={{width: "100%"}} autoComplete={"off"} value={autocomplete.query}
                    onChange={(e) => autocomplete.setQuery(e.target.value)}
@@ -37,6 +36,7 @@ export function MegaSearchBar(props: { className?: string }) {
         </TextField>
         {/*Position the autocomplete in the exact caret position*/}
         <OverlayedAutocompleteContent
+            isLoading={autocomplete.isLoadingCompletions}
             typedWord={autocomplete.currentTypedWord}
             items={autocomplete.completions}
             style={{left: autocomplete.anchor}}
@@ -57,7 +57,8 @@ export function AutocompleteContent(props: {
     style: CSSProperties,
     items: Completion[],
     onSelectItem: (item: Completion) => void,
-    typedWord: string
+    typedWord: string,
+    isLoading: boolean
 }) {
     if (props.items.isEmpty()) {
         return <Fragment/>
@@ -65,58 +66,74 @@ export function AutocompleteContent(props: {
     return <NonEmptyAutocompleteContent {...props}/>
 }
 
+const MaxItems = 10
+
 function NonEmptyAutocompleteContent(props: {
     className?: string;
     style: React.CSSProperties;
     items: Completion[];
     onSelectItem: (item: Completion) => void,
-    typedWord: string
+    typedWord: string,
+    isLoading: boolean
 }) {
-    // const labels = props.items.map(i => i.label)
     const items = props.items
     const [activeItem, setActiveItem] = useState<Completion>(items[0])
+    // We show only part of the completions so they won't overflow out of the screen
+    const [firstVisibleIndex, setFirstVisibleIndex] = useState(0)
+    const lastVisibleIndex = Math.min(firstVisibleIndex + MaxItems - 1, items.length - 1)
 
     function indexOf(completion: Completion): number {
-        return items.firstIndex(item =>completionsEqual(item,completion))
+        return items.firstIndex(item => completionsEqual(item, completion))
     }
 
     useEffect(() => {
-        if (items.none(item => completionsEqual(item,activeItem))) setActiveItem(items[0])
+        if (items.none(item => completionsEqual(item, activeItem))) setActiveItem(items[0])
     }, [items, activeItem])
 
     // Go down in selection when down is pressed
     useKeyboardShortcut("ArrowDown", () => {
-        setActiveItem(old => {
-            const index = indexOf(old)
-            if (index < props.items.length - 1) return items[index + 1]
-            else return old
-        })
-    }, [])
+        const index = indexOf(activeItem)
+        // Wrap around when end is reached
+        const newIndex = index < items.length - 1 ? index + 1 : 0
+        // Move visible window down if edge has been reached
+        if (newIndex > lastVisibleIndex) setFirstVisibleIndex(oldStart => oldStart + 1)
+        // In case we have wrapped around to the start - set first visible item accordingly
+        else if (newIndex === 0) setFirstVisibleIndex(0)
+
+        setActiveItem(items.getOrThrow(newIndex))
+    }, [items, activeItem])
 
     // Go up in selection when up is pressed
     useKeyboardShortcut("ArrowUp", () => {
-        setActiveItem(old => {
-            const index = indexOf(old)
-            if (index > 0) return items[index - 1]
-            else return old
-        })
-    }, [])
+        const index = indexOf(activeItem)
+        // Wrap around when end is reached
+        const newIndex = index > 0 ? index - 1 : items.length - 1
+        // Move visible window up if edge has been reached
+        if (newIndex < firstVisibleIndex) setFirstVisibleIndex(oldStart => oldStart - 1)
+        // In case we have wrapped around to the end - set first visible item accordingly
+        else if (newIndex === items.length - 1) setFirstVisibleIndex(items.length - MaxItems)
+
+        setActiveItem(items.getOrThrow(newIndex))
+    }, [items, activeItem])
 
     useKeyboardShortcut("Enter", () => {
         const index = indexOf(activeItem)
-        props.onSelectItem(props.items[index])
-    }, [activeItem])
+        props.onSelectItem(items.getOrThrow(index))
+    }, [items, activeItem])
+
+    const visibleItems = items.filter((_, i) => i >= firstVisibleIndex && i <= lastVisibleIndex)
 
     return <AutocompleteOptions style={props.style} className={props.className + " column"}>
-        {props.items.map((item, i) => <AutoCompleteItem typedWord={props.typedWord}
-                                                        active={completionsEqual(activeItem,item)}
-                                                        key={item.label + item.newText}
-                                                        item={item.label}
-                                                        onLeftClick={(e) => {
-                                                            // Don't lose focus in the text field
-                                                            e.preventDefault()
-                                                            props.onSelectItem(item)
-                                                        }}/>)}
+        {visibleItems.map((item, i) => <AutoCompleteItem typedWord={props.typedWord}
+                                                         active={completionsEqual(activeItem, item)}
+                                                         key={item.label + item.newText}
+                                                         item={item.label}
+                                                         onLeftClick={(e) => {
+                                                             // Don't lose focus in the text field
+                                                             e.preventDefault()
+                                                             props.onSelectItem(item)
+                                                         }}/>)}
+        {props.isLoading && <CircularProgress style={{alignSelf: "center"}}/>}
     </AutocompleteOptions>
 }
 
@@ -129,18 +146,18 @@ function AutoCompleteItem(props: {
     typedWord: string
 }) {
     const theme = useTheme()
-    const {before,typed,after} = breakDownItemIntoTypedAndNonTyped(props.item,props.typedWord)
+    const {before, typed, after} = breakDownItemIntoTypedAndNonTyped(props.item, props.typedWord)
 
     return <span style={{
         cursor: "pointer",
         backgroundColor: props.active ? theme.custom.selectedCompletionBackground : undefined
     }}
                  onMouseDown={(e) => {
-                     if(e.button === LeftClick) props.onLeftClick(e)
+                     if (e.button === LeftClick) props.onLeftClick(e)
                  }}>
         {before}
         {/*Highlight the typed value in blue*/}
-        <span style = {{color: theme.palette.primary.main, padding: 0}}>{typed}</span>
+        <span style={{color: theme.palette.primary.main, padding: 0}}>{typed}</span>
         {after}
     </span>
 }

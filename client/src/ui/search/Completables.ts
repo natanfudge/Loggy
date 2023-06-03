@@ -14,9 +14,29 @@ const asyncResults = ["apple", "orange", "fruit", "basket", "evil", "demon"].map
 const asyncCompletable: Completeable ={
     async options(text: string): Promise<Completion[]> {
         await new Promise(resolve => {
-            setTimeout(resolve,2000)
+            setTimeout(resolve,1000)
         })
         return asyncResults.filter(level => level !== text && level.includes(text))
+            .map(level => ({
+                label: level,
+                newText: level + " "
+            }))
+    },
+    cancel() {
+
+    }
+}
+
+const manyResults: string[] = []
+for(let i = 0; i < 100; i ++) {
+    manyResults.push(String(i))
+}
+const manyResultsCompletable: Completeable ={
+    async options(text: string): Promise<Completion[]> {
+        await new Promise(resolve => {
+            setTimeout(resolve,3000)
+        })
+        return manyResults.filter(level => level !== text && level.includes(text))
             .map(level => ({
                 label: level,
                 newText: level + " "
@@ -31,6 +51,7 @@ const asyncCompletable: Completeable ={
 export const autocompleteConfig: AutoCompleteConfig = {
     completeables: [
         levelCompleteable,
-        asyncCompletable
+        asyncCompletable,
+        manyResultsCompletable
     ]
 }

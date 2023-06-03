@@ -3,6 +3,7 @@ export {}
 declare global {
 
     interface Array<T> {
+        getOrThrow(index: number): T
         last() : T
         first() : T
         firstIndex(predicate: (item: T) => boolean): number

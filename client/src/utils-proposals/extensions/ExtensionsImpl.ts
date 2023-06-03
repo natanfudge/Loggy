@@ -1,6 +1,11 @@
 import "./Extensions"
 import {HashSet} from "fudge-lib/dist/collections/hashmap/HashSet";
 
+Array.prototype.getOrThrow = function <T>(this: T[], index: number): T {
+    if (index < 0) throw new Error(`Index ${index} is negative`)
+    if (index >= this.length) throw new Error(`Index ${index} is out of bounds of array of size ${this.length}`)
+    return this[index]
+}
 Array.prototype.last = function <T>(this: T[]): T {
     return this[this.length - 1]
 }
