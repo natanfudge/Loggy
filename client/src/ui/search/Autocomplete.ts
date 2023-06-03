@@ -17,7 +17,7 @@ export interface AutoComplete {
     complete(completion: Completion): void
 
     //TODO
-    isLoadingCompletions: boolean
+    // isLoadingCompletions: boolean
 
     ref: RefObject<HTMLInputElement>
 
@@ -172,19 +172,23 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
         useLayoutEffect(() => {
             //TODO: handle some form of loading indicator for async completables loading
             let resultsOfText: Completion[] = []
+            let canceled = false
             for (const completable of config.completeables) {
                 // Fetch the results matching the text
                 const options = completable.options(relevantText)
                 options.then(options => {
-                    if (!options.isEmpty()) {
-                        resultsOfText = resultsOfText.concat(options)
+                    if(!canceled) {
+                        if (!options.isEmpty()) {
+                            resultsOfText = resultsOfText.concat(options)
+                        }
+                        setResults(resultsOfText)
                     }
-                    setResults(resultsOfText)
                 }).catch(e => {
                     console.error(e)
                 })
             }
             return () => {
+                canceled = true
                 // Cancel http requests and such that are needed to get some completion values
                 for (const completable of config.completeables) {
                     completable.cancel(relevantText)
