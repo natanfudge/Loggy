@@ -85,6 +85,16 @@ export interface State<T> {
     onChange: (value: T) => void
 }
 
+export function mapState<T,K>(old: State<T>, forward: (value: T) => K, backward: (value: K) => T): State<K> {
+    return {
+        value: forward(old.value),
+        onChange: (value) => {
+            old.onChange(backward(value))
+        }
+    }
+}
+
+
 export function usePassedState<T>(initial: T): State<T> {
     const [value, setValue] = useState(initial)
     return {value: value, onChange: setValue}

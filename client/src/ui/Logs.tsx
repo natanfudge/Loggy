@@ -11,15 +11,21 @@ import {ThemeState, TimeRange} from "./App";
 import dayjs from "dayjs";
 
 
+const initialFilter = `from:${Day.today().toString()} to:${Day.beforeDays(1).toString()} `
+
+const debugEndpoints = [DEBUG_ENDPOINT, "very long thing of hell"]
+
 export function Logs(props: { theme: ThemeState, endpoint: string | undefined }) {
     // Changed when a refresh is requested, to rerun getEndpoints()
     const [refreshMarker, setRefreshMarker] = useState(false)
-    const endpoints = props.endpoint === DEBUG_ENDPOINT ? [DEBUG_ENDPOINT, "very long thing of hell"] : usePromise(LoggingServer.getEndpoints(), [])
-    const [timeRange, setTimeRange] = useState<TimeRange>({startDay: dayjs(), endDay: dayjs()})
+    const endpoints = props.endpoint === DEBUG_ENDPOINT ? debugEndpoints : usePromise(LoggingServer.getEndpoints(), [])
+    const [filter,setFilter ] =useState(initialFilter)
+    console.log("Filter: " + filter)
+    // const [timeRange, setTimeRange] = useState<TimeRange>({startDay: dayjs(), endDay: dayjs()})
     const endpoint = props.endpoint ?? (endpoints !== undefined ? endpoints[0] : undefined)
     const navigate = useNavigate()
     const screen = useScreenSize()
-    const [filter, setFilter] = useState<FilterConfig>({info: true, warn: true, error: true})
+    // const [filter, setFilter] = useState<FilterConfig>({info: true, warn: true, error: true})
 
     if (endpoints !== undefined) {
         if (endpoints.length === 0) {
@@ -32,23 +38,36 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
             </Typography>
         }
     }
-    return <Row style={{justifyContent: "space-between"}}>
-        <Column style={{height: "100%"}} className="material-text">
+    return <Row /*style={{justifyContent: "space-between"}}*/>
+        <Column style={{height: "100%", width: "100%"}} className="material-text">
             <LogsTitle endpoints={endpoints}
-                       endpoint={{value: endpoint, onChange: (endpoint) => navigate("/logs/" + endpoint)}}
-                       timeRange={{value: timeRange, onChange: setTimeRange}} theme={props.theme}
+                       query={{
+                           value: {endpoint, filter},
+                           onChange: (value) => {
+                               if(value.endpoint !== endpoint) {
+                                   navigate("/logs/" + value.endpoint)
+                               }
+                               setFilter(value.filter)
+                           }
+                       }}
+                       // endpoint={{value: endpoint, onChange: (endpoint) => navigate("/logs/" + endpoint)}}
+                       // timeRange={{value: timeRange, onChange: setTimeRange}}
+                theme={props.theme}
                        onRefresh={() => {
                            LoggingServer.refreshLog()
                            setRefreshMarker(old => !old)
                        }}
-                       filter={filter}
-                       setFilter={setFilter}
+                       // filter={filter}
+                       // setFilter={setFilter}
             />
 
             {endpoint !== undefined ?
-                <Endpoint filter={filter} startDay={Day.ofDate(timeRange.startDay)}
-                          endDay={Day.ofDate(timeRange.endDay)}
-                          theme={props.theme} endpoint={endpoint} refreshMarker={refreshMarker}/>
+                <Endpoint query={{endpoint,filter}}
+                          // filter={filter} startDay={Day.ofDate(timeRange.startDay)}
+                          // endDay={Day.ofDate(timeRange.endDay)}
+                          theme={props.theme}
+                          // endpoint={endpoint}
+                          refreshMarker={refreshMarker}/>
                 : <CircularProgress/>
             }
 
@@ -59,6 +78,6 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
             </Fragment>}
 
         </Column>
-        {!screen.isPhone && <TimeRangeSelector state={{value: timeRange, onChange: setTimeRange}}/>}
+        {/*{!screen.isPhone && <TimeRangeSelector state={{value: timeRange, onChange: setTimeRange}}/>}*/}
     </Row>
 }

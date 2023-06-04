@@ -10,7 +10,7 @@ import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {BrowserRouter, Route, Routes, useParams} from "react-router-dom";
 import {AnalyticsPage} from "./AnalyticsPage";
 import {Logs} from "./Logs";
-import {MegaSearchBar, MegaSearchBarTest} from "./search/MegaSearchBar";
+import {MegaSearchBar} from "./search/MegaSearchBar";
 import { Theme as MUITheme, ThemeOptions as MUIThemeOptions } from '@mui/material/styles';
 
 // import { PaletteOptions } from "@mui/material/styles/createPalette";
@@ -143,9 +143,9 @@ export function AppWrapper() {
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <CssBaseline/>
             <BrowserRouter>
-                <MegaSearchBarTest/>
+                {/*<LoggySearchBarTest/>*/}
                 {/*{analytics !== undefined && <AnalyticsGraph analytics={analytics}/>}*/}
-                {/*<RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>*/}
+                <RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>
             </BrowserRouter>
         </LocalizationProvider>
     </ThemeProvider>

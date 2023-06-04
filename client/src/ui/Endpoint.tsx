@@ -1,6 +1,7 @@
 import {
     addAlphaToColor,
     Column,
+    mapState,
     millsecondTimeToString,
     Row,
     State,
@@ -39,7 +40,7 @@ import {
 } from "../core/Logs";
 import {ExpandMore, Refresh, ShowChart} from "@mui/icons-material";
 import {LongRightArrow} from "./LongRightArrow";
-import React, {CSSProperties, Fragment, useState} from "react";
+import React, {CSSProperties, Fragment, useCallback, useState} from "react";
 import {KeyValueTable} from "./KeyValueTable";
 import {ThemeState, TimeRange} from "./App";
 import {DesktopDatePicker} from "@mui/x-date-pickers";
@@ -48,21 +49,22 @@ import {Dropdown} from "./UiUtils";
 import {LoggingServer} from "../server/LoggingServer";
 import {useScreenSize} from "../utils/ScreenSize";
 import {Day} from "../core/Day";
-import {useNavigate, useNavigation} from "react-router-dom";
+import {useNavigate} from "react-router-dom";
+import {LoggySearchBar} from "./search/LoggySearchBar";
 
 
 export function Endpoint(props: {
+    query: LogsQuery,
     theme: ThemeState,
-    endpoint: string,
-    startDay: Day,
-    endDay: Day,
+    // endpoint: string,
+    // startDay: Day,
+    // endDay: Day,
     refreshMarker: boolean,
-    filter: FilterConfig
+    // filter: FilterConfig
 }) {
     const [page, setPage] = useState(0)
     const response = usePromise(
-        LoggingServer.getLogs(props.endpoint, props.startDay, props.endDay, page, props.filter),
-        [props.endpoint, props.startDay, props.endDay, props.refreshMarker, page, props.filter.warn, props.filter.info, props.filter.error]
+        LoggingServer.getLogs(props.query), [props.query.endpoint, props.query.filter]
     )
 
     if (response === undefined) {
@@ -74,7 +76,7 @@ export function Endpoint(props: {
             <List style={{maxHeight: "100%", overflow: "auto"}}>
                 <div style={{width: "fit-content"}}>
                     {response.logs
-                        .filter(log => shouldDisplayLog(log, props.filter))
+                        // .filter(log => shouldDisplayLog(log, props.filter))
                         .map((l, i) => <LogEventAccordion key={i} log={l}/>
                         )}
                 </div>
@@ -91,26 +93,34 @@ export function Endpoint(props: {
     }
 }
 
-function shouldDisplayLog(log: LogEvent, filter: FilterConfig): boolean {
-    if (hasErrorLogs(log)) return filter.error
-    if (hasWarningLogs(log)) return filter.warn
-    return filter.info
-}
+// function shouldDisplayLog(log: LogEvent, filter: FilterConfig): boolean {
+//     if (hasErrorLogs(log)) return filter.error
+//     if (hasWarningLogs(log)) return filter.warn
+//     return filter.info
+// }
 
 const NoticableDivider = styled(Divider)(({theme}) => ({
     backgroundColor: theme.palette.text.primary
 }));
 
+export interface LogsQuery {
+    filter: string,
+    endpoint: string | undefined
+}
+
 export function LogsTitle(props: {
     endpoints: string[] | undefined,
-    endpoint: State<string | undefined>,
+    query: State<LogsQuery>,
     onRefresh: () => void,
-    timeRange: State<TimeRange>,
-    theme: ThemeState,
-    filter: FilterConfig,
-    setFilter: (filter: FilterConfig) => void
+    theme: ThemeState
 }) {
     const isPhone = useScreenSize().isPhone
+    const query = props.query
+    const endpoint = query.value.endpoint
+    const onEndpointValueChange = useCallback((v: string) => query.onChange(({
+        filter: query.value.filter,
+        endpoint: v
+    })), [])
     return <Row style={{padding: 10, paddingLeft: isPhone ? undefined : 30}}>
 
         <Column style={{paddingLeft: isPhone ? 10 : undefined, alignSelf: "center"}}>
@@ -121,34 +131,36 @@ export function LogsTitle(props: {
                     </Typography>}
                     {/*When props.endpoints is defined, props.endpoint.value must also be defined*/}
                     {props.endpoints === undefined ? <CircularProgress/> :
-                        <Dropdown options={props.endpoints} value={props.endpoint.value!}
-                                  onValueChanged={props.endpoint.onChange}
-                                  style={{width: "max-content"}}/>}
+                        <MaxWidthDropdown options={props.endpoints} value={endpoint!}
+                                          onValueChanged={onEndpointValueChange}
+                        />}
 
 
                 </Row>
-                <IconButton style={{height: "fit-content", alignSelf: "center", paddingLeft: 20}} onClick={props.onRefresh}>
+                <IconButton style={{height: "fit-content", alignSelf: "center", paddingLeft: 20}}
+                            onClick={props.onRefresh}>
                     <Refresh/>
                 </IconButton>
-                {props.endpoint.value !== undefined && <PaddedStatsButton endpoint={props.endpoint.value}/>}
+                {endpoint !== undefined && <PaddedStatsButton endpoint={endpoint}/>}
             </Row>
 
             {/*<NoticableDivider style={{marginTop: -1}}/>*/}
-            {isPhone && <FilterConfigSelection row={false} config={props.filter} setConfig={props.setFilter}/>}
-            {isPhone && <TimeRangeSelector state={props.timeRange} row={true}/>}
+            {/*{isPhone && <FilterConfigSelection row={false} config={props.filter} setConfig={props.setFilter}/>}*/}
+            {/*{isPhone && <TimeRangeSelector state={props.timeRange} row={true}/>}*/}
         </Column>
 
 
-
+        <LoggySearchBar query={mapState(query, (q) => q.filter, (filter) => ({endpoint, filter}))}/>
 
         {!isPhone && <Fragment>
-            <FilterConfigSelection row={true} config={props.filter} setConfig={props.setFilter}/>
+
+            {/*<FilterConfigSelection row={true} config={props.filter} setConfig={props.setFilter}/>*/}
             <ThemeSwitch themeState={props.theme}/>
         </Fragment>}
 
         {/*{isPhone && <Fragment>*/}
         {/*    <TimeRangeSelector state={props.timeRange}/>*/}
-            {/*{props.endpoint.value !== undefined && <StatsButton endpoint={props.endpoint.value}/>}*/}
+        {/*{props.endpoint.value !== undefined && <StatsButton endpoint={props.endpoint.value}/>}*/}
         {/*</Fragment> }*/}
 
 
@@ -158,33 +170,44 @@ export function LogsTitle(props: {
     </Row>
 }
 
-
-const PaddedStatsButton = styled(StatsButton)`
-  padding-right:20px;
+const MaxWidthDropdown = styled(Dropdown)`
+  width: max-content;
 `
 
-function StatsButton(props: {endpoint: string, className? : string}) {
+
+const PaddedStatsButton = styled(StatsButton)`
+  padding-right: 20px;
+`
+
+function StatsButton(props: { endpoint: string, className?: string }) {
     const navigate = useNavigate()
-    return <IconButton className = {props.className} style = {{marginLeft: 20, height: "min-content", alignSelf: "center"}} onClick={() => navigate(`/logs/${props.endpoint}/stats`)}>
+    return <IconButton className={props.className} style={{marginLeft: 20, height: "min-content", alignSelf: "center"}}
+                       onClick={() => navigate(`/logs/${props.endpoint}/stats`)}>
         <ShowChart/>
     </IconButton>
 }
 
 
-export function TimeRangeSelector(props: { state: State<TimeRange>, className?: string, style?: CSSProperties, row?: boolean }) {
+export function TimeRangeSelector(props: {
+    state: State<TimeRange>,
+    className?: string,
+    style?: CSSProperties,
+    row?: boolean
+}) {
     const timeRange = props.state.value
     const screen = useScreenSize()
     const isRow = props.row ?? false
-    return <Column style = {{padding: screen.isPhone ? 0 : 10, flexDirection: isRow? "row": "column",  ...props.style}} className={props.className}>
-        <Row style = {{paddingBottom: isRow? 0 : 10}}>
+    return <Column style={{padding: screen.isPhone ? 0 : 10, flexDirection: isRow ? "row" : "column", ...props.style}}
+                   className={props.className}>
+        <Row style={{paddingBottom: isRow ? 0 : 10}}>
             <TimeRangeText> Start</TimeRangeText>
             <DaySelection day={{
                 value: timeRange.startDay,
                 onChange: (value) => props.state.onChange({...timeRange, startDay: value})
             }}/>
         </Row>
-        <Row style = {{alignSelf: "end", paddingLeft: 5}}>
-            <TimeRangeText style = {{marginRight: 3}}> End  </TimeRangeText>
+        <Row style={{alignSelf: "end", paddingLeft: 5}}>
+            <TimeRangeText style={{marginRight: 3}}> End </TimeRangeText>
             <DaySelection day={{
                 value: timeRange.endDay,
                 onChange: (value) => props.state.onChange({...timeRange, endDay: value})
@@ -213,10 +236,10 @@ function FilterConfigSelection({config, setConfig, row}: {
             label={phone ? "I" : "Info"}/>
         <FormControlLabel
             control={<Checkbox checked={config.warn} onChange={(e) => setConfig({...config, warn: e.target.checked})}/>}
-            label={phone? "W": "Warning"}/>
+            label={phone ? "W" : "Warning"}/>
         <FormControlLabel control={<Checkbox checked={config.error}
                                              onChange={(e) => setConfig({...config, error: e.target.checked})}/>}
-                          label={phone? "E": "Error"}/>
+                          label={phone ? "E" : "Error"}/>
     </FormGroup>
 }
 
@@ -238,8 +261,12 @@ export function DaySelection(props: { day: State<Dayjs> }) {
 }
 
 
-export function ThemeSwitch({themeState, className, style}: { themeState: ThemeState, className?: string, style?: CSSProperties }) {
-    return <ThemeBorder style ={style} className={className}>
+export function ThemeSwitch({themeState, className, style}: {
+    themeState: ThemeState,
+    className?: string,
+    style?: CSSProperties
+}) {
+    return <ThemeBorder style={style} className={className}>
         <Typography style={{alignSelf: "center"}}>
             {themeState.isDark ? "Dark" : "Light"}
         </Typography>
@@ -321,8 +348,9 @@ const durationArrowStyle = {height: "20px", width: "46px", marginLeft: 4, margin
 
 function LogEventContent({log}: { log: LogEvent }) {
     const screen = useScreenSize()
-    const otherPadding = screen.isPhone? 0: 30
-    return <Column style={{paddingLeft: otherPadding, paddingTop: 0, paddingBottom: otherPadding, paddingRight: otherPadding}}>
+    const otherPadding = screen.isPhone ? 0 : 30
+    return <Column
+        style={{paddingLeft: otherPadding, paddingTop: 0, paddingBottom: otherPadding, paddingRight: otherPadding}}>
         <LogLinesUi logs={log.logs}/>
         <LogErrorUi log={log}/>
     </Column>

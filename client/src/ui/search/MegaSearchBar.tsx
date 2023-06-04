@@ -3,28 +3,17 @@ import {CSSProperties, Fragment, MouseEventHandler, useEffect, useState} from "r
 import {AutoCompleteWidthPx, useAutoComplete} from "./Autocomplete";
 import "fudge-lib/dist/extensions/Extensions.js";
 import {autocompleteConfig} from "./Completables";
-import {Completion, completionsEqual} from "./AutocompleteConfig";
+import {AutoCompleteConfig, Completion, completionsEqual} from "./AutocompleteConfig";
 import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
+import {State, usePassedState} from "../../utils/Utils";
 
 
-export function MegaSearchBarTest() {
-    return <div style={{display: "flex", flexDirection: "column"}}>
-        <div style={{padding: "10px 200px"}}>
-            <MegaSearchBar/>
-        </div>
-
-        <div>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. A accusantium ad alias, architecto doloremque
-            doloribus, earum expedita fuga nisi optio perspiciatis quis rerum vitae. Assumenda cupiditate debitis
-            ducimus, est eveniet facere facilis illo molestiae nam nobis. Assumenda ducimus earum eligendi fugiat illum
-            iste libero, molestiae natus possimus recusandae vitae voluptatem.
-        </div>
-    </div>
-}
 
 
-export function MegaSearchBar(props: { className?: string }) {
-    const autocomplete = useAutoComplete(autocompleteConfig);
+export function MegaSearchBar(props: { className?: string, config: AutoCompleteConfig, query: State<string>}) {
+    const autocomplete = useAutoComplete(props.query.value, props.config, (submittedValue) => {
+        props.query.onChange(submittedValue);
+    });
 
 
     return <div className={props.className} style={{position: "relative", alignSelf: "center", width: "100%"}}>

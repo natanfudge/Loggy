@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "buildProf": "tsc && vite build --profile",
     "preview": "vite preview",
     "update-lib": "npm update fudge-lib"
   },

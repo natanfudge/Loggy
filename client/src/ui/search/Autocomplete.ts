@@ -1,5 +1,7 @@
 import {RefObject, useEffect, useLayoutEffect, useRef, useState} from "react";
 import {AutoCompleteConfig, Completion} from "./AutocompleteConfig";
+import {State} from "../../utils/Utils";
+import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
 
 export type Query = string
 
@@ -28,8 +30,9 @@ export interface AutoComplete {
 
 export const AutoCompleteWidthPx = 300
 
-export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
-    const [query, setQuery] = useState<Query>("")
+export function useAutoComplete(value: string, config: AutoCompleteConfig, onSubmit: (query: string) => void): AutoComplete {
+    const [query, setQuery] = useState<Query>(value)
+    // const [query, setQuery] = [value.value, value.onChange]
     // Tracks whether ctrl+space was used to show completions
     const [forceCompletions, setForceCompletions] = useState(false)
     const [shown, setShown] = useState(false)
@@ -43,7 +46,7 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
 
     useCaretPosition()
     const results = useResults()
-    useForceCompleteShortcut();
+    useShortcuts();
 
     return {
         anchor: anchor(),
@@ -54,6 +57,7 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
         completions: results,
         hide() {
             setShown(false)
+            onSubmit(query)
             setForceCompletions(false)
         },
         show() {
@@ -64,26 +68,21 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
         isLoadingCompletions
     }
 
-    function useForceCompleteShortcut() {
-        useEffect(() => {
-            const handleKeyPress = (event: KeyboardEvent) => {
-                // CTRL + Space: show completions now
-                if (textAreaRef.current === document.activeElement && event.ctrlKey && event.code === 'Space') {
-                    setForceCompletions(true)
-                } else if (event.code === 'Space') {
-                    // If the user inserts a space stop forcing completions
-                    setForceCompletions(false)
-                }
-            };
+    function useShortcuts() {
+        useKeyboardShortcut("Space", () => {
+            // CTRL + Space: show completions now
+            setForceCompletions(true)
+        },[],textAreaRef, true)
 
-            // Attach the event listener when the component mounts
-            document.addEventListener('keydown', handleKeyPress);
+        useKeyboardShortcut("Space", () => {
+            // If the user inserts a space stop forcing completions
+            setForceCompletions(false)
+            onSubmit(query)
+        },[],textAreaRef,false,true)
 
-            // Remove the event listener when the component unmounts
-            return () => {
-                document.removeEventListener('keydown', handleKeyPress);
-            };
-        }, []);
+        useKeyboardShortcut("Enter", () => {
+            onSubmit(query)
+        },[],textAreaRef)
     }
 
     function complete(completion: Completion) {
@@ -178,7 +177,7 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
             const allCompletions = config.completeables.map(completable => completable.options(relevantText))
 
             setIsLoadingCompletions(true)
-            for(const completionPromise of allCompletions) {
+            for (const completionPromise of allCompletions) {
                 completionPromise.then(completions => {
                     if (!canceled) {
                         if (!completions.isEmpty()) {
@@ -193,14 +192,12 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
 
 
             Promise.all(allCompletions).then(() => {
-                if(!canceled) {
+                if (!canceled) {
                     setIsLoadingCompletions(false)
                 }
             }).catch(e => {
                 console.error(e)
             })
-
-
 
 
             return () => {
@@ -231,6 +228,7 @@ export function useAutoComplete(config: AutoCompleteConfig): AutoComplete {
  * @param {object} input - the input element to obtain coordinates for
  * @param {number} selectionPoint - the selection point for the input
  */
+//TODO: this is really laggy, don't use this
 const getCursorXY = (input: HTMLInputElement, selectionPoint: number) => {
     const {
         offsetLeft: inputX,

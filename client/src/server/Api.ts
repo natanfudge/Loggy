@@ -4,7 +4,7 @@ import {Analytics, DayBreakdown} from "../ui/AnalyticsGraph";
 import {Day} from "../core/Day";
 import {LogEvent} from "../core/Logs";
 import {recordToArray} from "fudge-lib/dist/methods/Javascript";
-import {FilterConfig} from "../ui/Endpoint";
+import {FilterConfig, LogsQuery} from "../ui/Endpoint";
 
 export namespace LoggyApi {
     const origin = window.location.origin.startsWith("http://localhost")
@@ -65,15 +65,16 @@ export interface GetAnalyticsRequest {
     endDate: Dayjs
 }
 
-export interface GetLogsRequest {
-    endpoint: string
-    startDate: Dayjs
-    endDate: Dayjs
-    page: number,
-    allowInfo: boolean,
-    allowWarn: boolean,
-    allowError: boolean
-}
+type GetLogsRequest = LogsQuery
+// export interface GetLogsRequest {
+//     endpoint: string
+//     startDate: Dayjs
+//     endDate: Dayjs
+//     page: number,
+//     allowInfo: boolean,
+//     allowWarn: boolean,
+//     allowError: boolean
+// }
 
 // Map from day (unix timestamp) to breakdown
 export type GetAnalyticsResponse = Record<string, DayBreakdown>

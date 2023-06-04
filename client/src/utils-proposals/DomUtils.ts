@@ -1,10 +1,10 @@
-import {useEffect} from "react";
+import {RefObject, useEffect} from "react";
 
-export function useKeyboardShortcut(code: string, callback: () => void, deps: unknown[]) {
+export function useKeyboardShortcut(code: string, callback: () => void, deps: unknown[], target?: RefObject<HTMLElement>, ctrl?: boolean, preventDefault?: boolean) {
     useEffect(() => {
         const handleKeyPress = (event: KeyboardEvent) => {
-            if (event.code === code){
-                event.preventDefault()
+            if (event.code === code && (target === undefined || target?.current === document.activeElement) && (ctrl === undefined || event.ctrlKey === ctrl)) {
+                if (preventDefault === undefined || !preventDefault) event.preventDefault()
                 callback()
             }
         };
@@ -17,5 +17,5 @@ export function useKeyboardShortcut(code: string, callback: () => void, deps: un
         return () => {
             document.removeEventListener('keydown', handleKeyPress);
         };
-    }, [code,...deps]);
+    }, [code, ...deps]);
 }

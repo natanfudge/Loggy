@@ -1,16 +1,6 @@
 import dayjs, {Dayjs} from "dayjs";
 
-// export function dayJsToDay(dayjs: Dayjs): Day {
-//
-// }
 
-// export function startOfDay(day: Day): Dayjs {
-//     return dayjs({year: day.year, month: day.month - 1, day: day.day})
-// }
-
-// export function endOfDay(day: Day): Dayjs {
-//
-// }
 export class Day {
     // 1-indexed
     readonly day: number
@@ -18,15 +8,19 @@ export class Day {
     readonly month: number
     readonly year: number
 
-    // constructor(day: number, month: number, year: number) {
-    //     this.day = day;
-    //     this.month = month;
-    //     this.year = year;
-    // }
+
     constructor({day,month,year}:{day: number, month: number, year: number}) {
         this.day = day;
         this.month = month;
         this.year = year;
+    }
+
+    toString() : string {
+        return `${this.dayString()}/${this.monthString()}/${this.yearString()}`
+    }
+
+    yearString(): string {
+        return String(this.year).slice(2)
     }
 
     dayString(): string {
@@ -50,6 +44,13 @@ export class Day {
             month: utc.month() + 1,
             year: utc.year()
         })
+    }
+
+    public static today(): Day {
+        return this.ofDate(dayjs())
+    }
+    public static beforeDays(days: number): Day {
+        return this.ofDate(dayjs().subtract(days, 'days'))
     }
 
     public static ofUnixMs(unixMs: number): Day {

@@ -52,3 +52,4 @@ interface ExceptionElement {
 }
 
 type Severity = "Info" | "Warn" | "Error"
+export const AllSeverities = ["Info", "Warn", "Error"]
