@@ -65,7 +65,9 @@ export interface GetAnalyticsRequest {
     endDate: Dayjs
 }
 
-type GetLogsRequest = LogsQuery
+type GetLogsRequest = LogsQuery & {
+    page: number
+}
 // export interface GetLogsRequest {
 //     endpoint: string
 //     startDate: Dayjs

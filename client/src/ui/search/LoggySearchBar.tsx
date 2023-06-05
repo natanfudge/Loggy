@@ -1,18 +1,22 @@
-import {State, usePassedState} from "../../utils/Utils";
+import {State} from "../../utils/Utils";
 import {MegaSearchBar} from "./MegaSearchBar";
 import {AutoCompleteConfig, Completion, syncCompletable} from "./AutocompleteConfig";
 import {AllSeverities} from "../../core/Logs";
 import {Day} from "../../core/Day";
 import {styled} from "@mui/material";
+import styles from "./search.module.css"
 
-const allCompletions: Completion[] = AllSeverities.map(s => {
-    const label = `level:${s.toLowerCase()}`
-    return ({
-        label: label, newText: label + " "
-    });
-})
+
+const allLevelCompletions: Completion[] = AllSeverities.map(s => {
+    const atLeast = `level:${s.toLowerCase()}`
+    return {label: atLeast, newText: atLeast + " "}
+}).concat(AllSeverities.map(s => {
+    const exact = `levelExact:${s.toLowerCase()}`
+    return {label: exact, newText: exact + " "}
+}))
+
 const levelCompletable = syncCompletable(text => {
-    return allCompletions.filter(completion => completion.label.includes(text) && text !== completion.label)
+    return allLevelCompletions.filter(completion => completion.label.includes(text) && text !== completion.label)
 })
 
 
@@ -30,16 +34,16 @@ function dateCompletable(prefix: string) {
 const loggyCompletables = [levelCompletable, dateCompletable("from"), dateCompletable("to")]
 
 
-export function LoggySearchBar(props: {query: State<string>, endpoint: string, defaultValue: string}) {
-    const config : AutoCompleteConfig = {
+export function LoggySearchBar(props: { query: State<string>, endpoint: string, defaultValue: string }) {
+    const config: AutoCompleteConfig = {
         key: props.endpoint,
         completeables: loggyCompletables,
-        defaultValue:props.defaultValue
+        defaultValue: props.defaultValue
     }
-    return<StyledSearchBar config={config} query={props.query}/>
+    return <MegaSearchBar className={styles.loggySearchBar} config={config} query={props.query}/>
 }
 
-const StyledSearchBar = styled(MegaSearchBar)`
+const PaddedSearchBar = styled(MegaSearchBar)`
   padding-right: 30px;
   padding-left: 10px;
 `

@@ -53,8 +53,8 @@ internal sealed interface LogLine {
         }
     }
 
-    enum class Severity(level: Int) {
-        Verbose(0) ,Debug(1), Info(2), Warn(3), Error(4)
+    enum class Severity(val level: Int) {
+        Info(2), Warn(3), Error(4)
     }
 
     @SerialName("DetailLog")

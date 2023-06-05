@@ -24,7 +24,8 @@ internal typealias SerializableThrowable = List<SerializableThrowableElement>
 @Serializable
 internal data class SerializableThrowableElement(val className: String, val message: String, val stacktrace: String)
 
-@PublishedApi internal fun Throwable.toSerializable(): SerializableThrowable {
+@PublishedApi
+internal fun Throwable.toSerializable(): SerializableThrowable {
     val elements = mutableListOf<SerializableThrowableElement>()
     var current: Throwable? = this
     while (current != null) {
@@ -34,7 +35,7 @@ internal data class SerializableThrowableElement(val className: String, val mess
     return elements
 }
 
-private fun Throwable.selfToSerializable() : SerializableThrowableElement {
+private fun Throwable.selfToSerializable(): SerializableThrowableElement {
     return SerializableThrowableElement(this::class.qualifiedName!!, message ?: "", stackTraceToString())
 }
 
@@ -42,3 +43,16 @@ internal fun getResourceBytes(path: String): ByteArray? =
     FancyLogger::class.java.getResourceAsStream(path)?.readBytes()
 
 internal val GMTZoneId = ZoneId.of("GMT")
+
+internal fun <T> List<T>.splitBy(predicate: (T) -> Boolean): Pair<List<T>, List<T>> {
+    val matches = mutableListOf<T>()
+    val doesntMatch = mutableListOf<T>()
+    for (item in this) {
+        if (predicate(item)) {
+            matches.add(item)
+        } else {
+            doesntMatch.add(item)
+        }
+    }
+    return matches to doesntMatch
+}

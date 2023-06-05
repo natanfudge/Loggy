@@ -33,6 +33,7 @@ Array.prototype.indexOfOrThrow = function <T>(this: T[], item: T): number {
     if (index !== -1) return index
     else throw new Error(`Item '${JSON.stringify(item)}' is missing in array '${JSON.stringify(this)}'!`)
 }
+
 Array.prototype.distinct = function <T>(this: T[]): Array<T> {
     const newArray = []
     const existingTracker = HashSet.ofCapacity(this.length)
@@ -45,3 +46,21 @@ Array.prototype.distinct = function <T>(this: T[]): Array<T> {
     }
     return newArray
 }
+
+Array.prototype.sortedByString = function <T>(this: T[], map: (item: T) => string): Array<T> {
+    const sorted = [...this]
+    sorted.sort((a, b) => map(a).localeCompare(map(b)))
+    return sorted
+}
+
+// Array.prototype.splitBy = function<T>(this: T[], predicate: (item: T) => boolean) : [Array<T>,Array<T>] {
+//     const matches = []
+//     const doesntMatch = []
+//     for(const item of this){
+//         if(predicate(item)) {
+//             matches.push(item)
+//         } else {
+//             doesntMatch.push(item)
+//         }
+//     }
+// }

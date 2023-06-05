@@ -1,0 +1,10 @@
+@media (orientation: landscape) {
+    .loggySearchBar {
+        padding-right: 30px;
+        padding-left: 10px;
+    }
+}
+
+.loggySearchBar {
+
+}
