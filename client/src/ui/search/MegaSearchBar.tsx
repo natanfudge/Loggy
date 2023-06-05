@@ -17,18 +17,22 @@ export function MegaSearchBar(props: { className?: string, config: AutoCompleteC
 
 
     return <div className={props.className} style={{position: "relative", alignSelf: "center", width: "100%"}}>
-        <TextField inputRef={autocomplete.ref} style={{width: "100%"}} autoComplete={"off"} value={autocomplete.query}
+        <TextField inputRef={autocomplete.inputRef} style={{width: "100%"}} autoComplete={"off"} value={autocomplete.query}
                    onChange={(e) => autocomplete.setQuery(e.target.value)}
                    onFocus={autocomplete.show} onBlur={autocomplete.hide} spellCheck={false}
         >
-
         </TextField>
+
+        <span ref = {autocomplete.textHackRef} style = {{position: "fixed", top: 0, left: 0, visibility: "hidden"}}>
+            {autocomplete.query}
+        </span>
+
         {/*Position the autocomplete in the exact caret position*/}
         <OverlayedAutocompleteContent
             isLoading={autocomplete.isLoadingCompletions}
             typedWord={autocomplete.currentTypedWord}
             items={autocomplete.completions}
-            style={{left: autocomplete.anchor}}
+            style={{left: autocomplete.relativeXPosition}}
             onSelectItem={(completion) => autocomplete.complete(completion)}/>
     </div>
 

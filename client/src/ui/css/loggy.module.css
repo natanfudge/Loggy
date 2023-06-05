@@ -1,0 +1,12 @@
+.logsColumn {
+    height: 100%;
+    width: 100%;
+    /*justify-content: space-between;*/
+}
+
+.logsForText {
+    margin-right: 10px;
+    margin-bottom: 4px;
+    align-self: end;
+    width: max-content;
+}

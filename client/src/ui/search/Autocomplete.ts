@@ -1,12 +1,11 @@
-import {RefObject, useEffect, useLayoutEffect, useRef, useState} from "react";
+import {RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import {AutoCompleteConfig, Completion} from "./AutocompleteConfig";
-import {State} from "../../utils/Utils";
 import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
 
 export type Query = string
 
 export interface AutoComplete {
-    anchor: number
+    relativeXPosition: number
 
     query: string
 
@@ -19,24 +18,34 @@ export interface AutoComplete {
     complete(completion: Completion): void
 
     isLoadingCompletions: boolean
+    // Note: the padding and margin of the input field MUST BE STATIC!
+    // Note: don't change the font of the input field because we depend on the default with the textHackRef hack
+    inputRef: RefObject<HTMLInputElement>
 
-    ref: RefObject<HTMLInputElement>
+    /**
+     * This is a hack we use to get the coordinates of the caret given an index.
+     * We place an invisible span identical to the input field. Then when we want to get the relative position of text,
+     * we use a range to check the text. We can then apply the same values to our input field.
+     */
+    textHackRef: RefObject<HTMLSpanElement>
 
     show(): void
 
     hide(): void
 }
 
-
 export const AutoCompleteWidthPx = 300
 
+
 export function useAutoComplete(value: string, config: AutoCompleteConfig, onSubmit: (query: string) => void): AutoComplete {
+    //TODO: this gets deleted too easily... Maybe store it in cookies?
     const [query, setQuery] = useState<Query>(value)
     // const [query, setQuery] = [value.value, value.onChange]
     // Tracks whether ctrl+space was used to show completions
     const [forceCompletions, setForceCompletions] = useState(false)
     const [shown, setShown] = useState(false)
     const textAreaRef = useRef<HTMLInputElement>(null)
+    const textHackRef = useRef<HTMLSpanElement>(null)
     const [caretPosition, setCaretPosition] = useState<CaretPosition>({
         stringIndex: 0,
         relativeX: 0,
@@ -44,14 +53,19 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
     });
     const [isLoadingCompletions, setIsLoadingCompletions] = useState(false)
 
+    // Important note: we measure the padding and margin of the input field only once for positioning elements correctly.
+    const textAreaStyle = useMemo(() => {
+        return textAreaRef.current === null ? null : window.getComputedStyle(textAreaRef.current)
+    }, [textAreaRef.current])
+
     useCaretPosition()
     const results = useResults()
     useShortcuts();
 
     return {
-        anchor: anchor(),
+        relativeXPosition: anchor(),
         query,
-        ref: textAreaRef,
+        inputRef: textAreaRef,
         setQuery,
         complete,
         completions: results,
@@ -65,24 +79,26 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
             setForceCompletions(false)
         },
         currentTypedWord: relevantPartOf(query),
-        isLoadingCompletions
+        isLoadingCompletions,
+        textHackRef
     }
+
 
     function useShortcuts() {
         useKeyboardShortcut("Space", () => {
             // CTRL + Space: show completions now
             setForceCompletions(true)
-        },[],textAreaRef, true)
+        }, [], textAreaRef, true)
 
         useKeyboardShortcut("Space", () => {
             // If the user inserts a space stop forcing completions
             setForceCompletions(false)
             onSubmit(query)
-        },[],textAreaRef,false,true)
+        }, [], textAreaRef, false, true)
 
         useKeyboardShortcut("Enter", () => {
             onSubmit(query)
-        },[],textAreaRef)
+        }, [], textAreaRef)
     }
 
     function complete(completion: Completion) {
@@ -107,7 +123,7 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
             const handleSelectionChange = (): void => {
                 if (textAreaRef.current !== null) {
                     const selectionIndex = textAreaRef.current.selectionStart ?? 0
-                    const {x} = getCursorXY(textAreaRef.current, selectionIndex)
+                    const x = getRelativeTextX(selectionIndex)
                     setCaretPosition(
                         {
                             absoluteX: x + textAreaRef.current.getBoundingClientRect().x,
@@ -150,7 +166,7 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
         const input = textAreaRef.current
         if (input === null) return 0
 
-        const startOfWordPosition = getCursorXY(input, getStartOfWordIndex()).x
+        const startOfWordPosition = getRelativeTextX(getStartOfWordIndex())
         // If the autocomplete will not overflow place it to the right of the text
         if (caretPosition.absoluteX + AutoCompleteWidthPx < window.innerWidth) return startOfWordPosition
         // If the autocomplete will overflow place it on the left of the text
@@ -158,7 +174,7 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
     }
 
     function getStartOfWordIndex(): number {
-        let i = caretPosition.stringIndex
+        let i = caretPosition.stringIndex - 1
         for (; i >= 0; i--) {
             if (query[i] === " ") break
         }
@@ -170,7 +186,6 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
         const relevantText = relevantPartOf(query)
 
         useEffect(() => {
-            //TODO: handle some form of loading indicator for async completables loading
             let resultsOfText: Completion[] = []
             let canceled = false
 
@@ -218,7 +233,57 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
     function relevantPartOf(text: string): string {
         return text.slice(0, caretPosition.stringIndex).split(" ").last()
     }
+
+    // x: 177.2
+
+    function getRelativeTextX(caretIndex: number): number {
+        // if (input.selectionStart === null) return 0
+        if (textHackRef.current === null) return 0
+        if (textAreaStyle === null) return 0
+        // if(textAreaRef.current === null) return 0
+        const range = document.createRange()
+        const textNodes = textHackRef.current.childNodes[0]
+        range.setStart(textNodes, 0)
+        try {
+            // If the caret index is too big - just place at the end
+            range.setEnd(textNodes, caretIndex)
+        } catch (e) {
+            range.setEndAfter(textNodes)
+        }
+
+
+        const textWidth = range.getClientRects()[0].width
+        const paddingAndMargin = parseDistanceValue(textAreaStyle.paddingLeft) + parseDistanceValue(textAreaStyle.marginLeft)
+        return textWidth + paddingAndMargin
+    }
 }
+
+function parseDistanceValue(distanceString: string): number {
+    if (distanceString === "") return 0
+    else if (distanceString.endsWith("px")) return parseInt(distanceString.removeSuffix("px"))
+    else {
+        throw new Error(`Expected padding/margin ${distanceString} to only be px-based, not ${distanceString}!`)
+    }
+}
+
+
+// function textX(input: HTMLInputElement, position) {
+//     var inputStyle = window.getComputedStyle(input);
+//     var font = inputStyle.getPropertyValue("font");
+//     var fontSize = parseFloat(inputStyle.getPropertyValue("font-size"));
+//
+//     var dummyText = document.createElement("span");
+//     dummyText.textContent = input.value.substr(0, position);
+//     dummyText.style.font = font;
+//     dummyText.style.fontSize = fontSize + "px";
+//     dummyText.style.visibility = "hidden";
+//
+//     document.body.appendChild(dummyText);
+//     var textRect = dummyText.getBoundingClientRect();
+//     document.body.removeChild(dummyText);
+//
+//     return inputRect.left + textRect.width;
+// }
 
 
 /////////// Magic function of hell that gets the position of the caret
@@ -229,48 +294,48 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
  * @param {number} selectionPoint - the selection point for the input
  */
 //TODO: this is really laggy, don't use this
-const getCursorXY = (input: HTMLInputElement, selectionPoint: number) => {
-    const {
-        offsetLeft: inputX,
-        offsetTop: inputY,
-    } = input
-    // create a dummy element that will be a clone of our input
-    const div = document.createElement('div')
-    // get the computed style of the input and clone it onto the dummy element
-    const copyStyle = getComputedStyle(input)
-    for (const prop of copyStyle) {
-        // @ts-ignore
-        div.style[prop] = copyStyle[prop]
-    }
-    // we need a character that will replace whitespace when filling our dummy element if it's a single line <input/>
-    const swap = '.'
-    const inputValue = input.tagName === 'INPUT' ? input.value.replace(/ /g, swap) : input.value
-    // set the div content to that of the textarea up until selection
-    const textContent = inputValue.substr(0, selectionPoint)
-    // set the text content of the dummy element div
-    div.textContent = textContent
-    if (input.tagName === 'TEXTAREA') div.style.height = 'auto'
-    // if a single line input then the div needs to be single line and not break out like a text area
-    if (input.tagName === 'INPUT') div.style.width = 'auto'
-    // create a marker element to obtain caret position
-    const span = document.createElement('span')
-    // give the span the textContent of remaining content so that the recreated dummy element is as close as possible
-    span.textContent = inputValue.substr(selectionPoint) /*|| '.'*/
-    // append the span marker to the div
-    div.appendChild(span)
-    // append the dummy element to the body
-    document.body.appendChild(div)
-    // get the marker position, this is the caret position top and left relative to the input
-    const {offsetLeft: spanX, offsetTop: spanY} = span
-    // lastly, remove that dummy element
-    // NOTE:: can comment this out for debugging purposes if you want to see where that span is rendered
-    document.body.removeChild(div)
-    // return an object with the x and y of the caret. account for input positioning so that you don't need to wrap the input
-    return {
-        x: inputX + spanX,
-        y: inputY + spanY,
-    }
-}
+// const getCursorXY = (input: HTMLInputElement, selectionPoint: number) => {
+//     const {
+//         offsetLeft: inputX,
+//         offsetTop: inputY,
+//     } = input
+//     // create a dummy element that will be a clone of our input
+//     const div = document.createElement('div')
+//     // get the computed style of the input and clone it onto the dummy element
+//     const copyStyle = getComputedStyle(input)
+//     for (const prop of copyStyle) {
+//         // @ts-ignore
+//         div.style[prop] = copyStyle[prop]
+//     }
+//     // we need a character that will replace whitespace when filling our dummy element if it's a single line <input/>
+//     const swap = '.'
+//     const inputValue = input.tagName === 'INPUT' ? input.value.replace(/ /g, swap) : input.value
+//     // set the div content to that of the textarea up until selection
+//     const textContent = inputValue.substr(0, selectionPoint)
+//     // set the text content of the dummy element div
+//     div.textContent = textContent
+//     if (input.tagName === 'TEXTAREA') div.style.height = 'auto'
+//     // if a single line input then the div needs to be single line and not break out like a text area
+//     if (input.tagName === 'INPUT') div.style.width = 'auto'
+//     // create a marker element to obtain caret position
+//     const span = document.createElement('span')
+//     // give the span the textContent of remaining content so that the recreated dummy element is as close as possible
+//     span.textContent = inputValue.substr(selectionPoint) /*|| '.'*/
+//     // append the span marker to the div
+//     div.appendChild(span)
+//     // append the dummy element to the body
+//     document.body.appendChild(div)
+//     // get the marker position, this is the caret position top and left relative to the input
+//     const {offsetLeft: spanX, offsetTop: spanY} = span
+//     // lastly, remove that dummy element
+//     // NOTE:: can comment this out for debugging purposes if you want to see where that span is rendered
+//     document.body.removeChild(div)
+//     // return an object with the x and y of the caret. account for input positioning so that you don't need to wrap the input
+//     return {
+//         x: inputX + spanX,
+//         y: inputY + spanY,
+//     }
+// }
 
 export interface CaretPosition {
     stringIndex: number;

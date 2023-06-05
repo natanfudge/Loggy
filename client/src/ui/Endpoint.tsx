@@ -51,7 +51,7 @@ import {useScreenSize} from "../utils/ScreenSize";
 import {Day} from "../core/Day";
 import {useNavigate} from "react-router-dom";
 import {LoggySearchBar} from "./search/LoggySearchBar";
-
+import styles from "./css/loggy.module.css"
 
 export function Endpoint(props: {
     query: LogsQuery,
@@ -126,9 +126,9 @@ export function LogsTitle(props: {
         <Column style={{paddingLeft: isPhone ? 10 : undefined, alignSelf: "center"}}>
             <Row>
                 <Row style={{alignItems: "center"}}>
-                    {!isPhone && <Typography style={{marginRight: 10, marginBottom: 4, alignSelf: "end"}}>
+                    {!isPhone && <span className = {styles.logsForText}>
                         Logs for
-                    </Typography>}
+                    </span>}
                     {/*When props.endpoints is defined, props.endpoint.value must also be defined*/}
                     {props.endpoints === undefined ? <CircularProgress/> :
                         <MaxWidthDropdown options={props.endpoints} value={endpoint!}
