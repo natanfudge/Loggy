@@ -1,6 +1,7 @@
 import {RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import {AutoCompleteConfig, Completion} from "./AutocompleteConfig";
 import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
+import {usePersistentState} from "../../utils-proposals/collections/persistance/PersistantValue";
 
 export type Query = string
 
@@ -38,8 +39,7 @@ export const AutoCompleteWidthPx = 300
 
 
 export function useAutoComplete(value: string, config: AutoCompleteConfig, onSubmit: (query: string) => void): AutoComplete {
-    //TODO: this gets deleted too easily... Maybe store it in cookies?
-    const [query, setQuery] = useState<Query>(value)
+    const [query, setQuery] = usePersistentState(config.defaultValue, `autocomplete-${config.key}`)
     // const [query, setQuery] = [value.value, value.onChange]
     // Tracks whether ctrl+space was used to show completions
     const [forceCompletions, setForceCompletions] = useState(false)
@@ -94,11 +94,11 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
             // If the user inserts a space stop forcing completions
             setForceCompletions(false)
             onSubmit(query)
-        }, [], textAreaRef, false, true)
+        }, [], textAreaRef, false, false)
 
-        useKeyboardShortcut("Enter", () => {
-            onSubmit(query)
-        }, [], textAreaRef)
+        // useKeyboardShortcut("Enter", () => {
+        //     onSubmit(query)
+        // }, [], textAreaRef, false, false)
     }
 
     function complete(completion: Completion) {
@@ -107,6 +107,7 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
         // Advance caret to the end of the completion
         forceUpdateCaretPosition(completionEndPosition)
         setForceCompletions(false)
+        onSubmit(newText)
     }
 
     function forceUpdateCaretPosition(index: number) {
@@ -123,11 +124,11 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
             const handleSelectionChange = (): void => {
                 if (textAreaRef.current !== null) {
                     const selectionIndex = textAreaRef.current.selectionStart ?? 0
-                    const x = getRelativeTextX(selectionIndex)
+                    const {relative, absolute} = getTextX(selectionIndex)
                     setCaretPosition(
                         {
-                            absoluteX: x + textAreaRef.current.getBoundingClientRect().x,
-                            relativeX: x,
+                            absoluteX: absolute,
+                            relativeX: relative,
                             stringIndex: selectionIndex
                         }
                     )
@@ -166,11 +167,11 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
         const input = textAreaRef.current
         if (input === null) return 0
 
-        const startOfWordPosition = getRelativeTextX(getStartOfWordIndex())
+        const {relative, absolute} = getTextX(getStartOfWordIndex())
         // If the autocomplete will not overflow place it to the right of the text
-        if (caretPosition.absoluteX + AutoCompleteWidthPx < window.innerWidth) return startOfWordPosition
+        if (absolute + AutoCompleteWidthPx < window.innerWidth) return relative
         // If the autocomplete will overflow place it on the left of the text
-        else return startOfWordPosition - AutoCompleteWidthPx
+        else return relative - AutoCompleteWidthPx
     }
 
     function getStartOfWordIndex(): number {
@@ -236,13 +237,25 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
 
     // x: 177.2
 
+    function getTextX(caretIndex: number): { relative: number, absolute: number } {
+        if (textAreaRef.current === null) {
+            return {relative: 0, absolute: 0}
+        }
+        const relative = getRelativeTextX(caretIndex)
+        return {
+            relative,
+            absolute: relative + textAreaRef.current.getBoundingClientRect().x
+        }
+    }
+
     function getRelativeTextX(caretIndex: number): number {
-        // if (input.selectionStart === null) return 0
-        if (textHackRef.current === null) return 0
-        if (textAreaStyle === null) return 0
-        // if(textAreaRef.current === null) return 0
+        if (textHackRef.current === null || textAreaStyle === null) {
+            return 0
+        }
+
         const range = document.createRange()
         const textNodes = textHackRef.current.childNodes[0]
+        if (textNodes === undefined) return 0
         range.setStart(textNodes, 0)
         try {
             // If the caret index is too big - just place at the end

@@ -6,10 +6,15 @@ export const Dropdown = memo(DropdownImpl)
     useEffect(() => {
         if(!options.includes(value)) throw new Error(`Invalid dropdown value: ${value}. Possible values: ${options}.`)
     },[options,value])
+    //
+    // const onChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    //     onValueChanged(e.target.value)
+    // },[])
 
-    const onChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-        onValueChanged(e.target.value)
-    },[])
+
+     const onChange =    (e: React.ChangeEvent<HTMLSelectElement>) => {
+         onValueChanged(e.target.value)
+     }
 
     return <FormControl className={className}>
         <InputLabel variant="standard">

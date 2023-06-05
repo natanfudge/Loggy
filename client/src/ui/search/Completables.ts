@@ -46,12 +46,12 @@ const manyResultsCompletable: Completeable ={
 
     }
 }
-
-
-export const autocompleteConfig: AutoCompleteConfig = {
-    completeables: [
-        levelCompleteable,
-        asyncCompletable,
-        manyResultsCompletable
-    ]
-}
+//
+//
+// export const testAutocompleteConfig: AutoCompleteConfig = {
+//     completeables: [
+//         levelCompleteable,
+//         asyncCompletable,
+//         manyResultsCompletable
+//     ]
+// }

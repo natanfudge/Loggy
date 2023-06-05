@@ -2,19 +2,21 @@ import dayjs from "dayjs";
 import {SimplePromiseMemoryCache} from "../ui/SimplePromiseMemoryCache";
 import utc from 'dayjs/plugin/utc'
 import {unixMs} from "../utils/Utils";
-import {GetAnalyticsResponse, GetLogsResponse, LoggyApi, parseLogResponse} from "./Api";
+import {GetLogsResponse, LoggyApi, parseLogResponse} from "./Api";
 import objectSupport from "dayjs/plugin/objectSupport";
 import {Day} from "../core/Day";
 import {Analytics, DayBreakdown} from "../ui/AnalyticsGraph";
 import {PromiseMemoryCache} from "fudge-lib/dist/collections/PromiseMemoryCache"
 import {recordToArray} from "fudge-lib/dist/methods/Javascript";
-import {FilterConfig, LogsQuery} from "../ui/Endpoint";
+import {LogsQuery} from "../ui/Endpoint";
 
 dayjs.extend(utc)
 dayjs.extend(objectSupport);
 
 
 export const DEBUG_ENDPOINT = "debug"
+
+export const debugEndpoints = [DEBUG_ENDPOINT, "very long thing of hell"]
 
 export namespace LoggingServer {
 
@@ -27,7 +29,7 @@ export namespace LoggingServer {
 
 
     export async function getLogs(query: LogsQuery): Promise<GetLogsResponse> {
-        if(query.endpoint === DEBUG_ENDPOINT) return parseLogResponse(testLogResponse)
+        if (debugEndpoints.includes(query.endpoint ?? "")) return parseLogResponse(testLogResponse)
         else {
             return logsCache.get(encodeAsKey(query), () => LoggyApi.getLogs(query))
         }
@@ -66,8 +68,6 @@ export namespace LoggingServer {
     const analyticsCache = new PromiseMemoryCache<Analytics>()
 
 }
-
-
 
 
 // language=JSON

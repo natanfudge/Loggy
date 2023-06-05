@@ -2,13 +2,9 @@ import {CircularProgress, styled, TextField, useTheme} from "@mui/material";
 import {CSSProperties, Fragment, MouseEventHandler, useEffect, useState} from "react";
 import {AutoCompleteWidthPx, useAutoComplete} from "./Autocomplete";
 import "fudge-lib/dist/extensions/Extensions.js";
-import {autocompleteConfig} from "./Completables";
 import {AutoCompleteConfig, Completion, completionsEqual} from "./AutocompleteConfig";
 import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
 import {State, usePassedState} from "../../utils/Utils";
-
-
-
 
 export function MegaSearchBar(props: { className?: string, config: AutoCompleteConfig, query: State<string>}) {
     const autocomplete = useAutoComplete(props.query.value, props.config, (submittedValue) => {
@@ -41,18 +37,21 @@ export function MegaSearchBar(props: { className?: string, config: AutoCompleteC
 const OverlayedAutocompleteContent = styled(AutocompleteContent)`
   position: absolute;
   margin-top: -15px;
-  width: ${AutoCompleteWidthPx}px
+  width: ${AutoCompleteWidthPx}px;
+  z-index: 10000;
 `
 
-
-export function AutocompleteContent(props: {
+interface AutoCompleteContentProps {
     className?: string,
-    style: CSSProperties,
-    items: Completion[],
-    onSelectItem: (item: Completion) => void,
-    typedWord: string,
+    style: CSSProperties
+    items: Completion[]
+    onSelectItem: (item: Completion) => void
+    typedWord: string
     isLoading: boolean
-}) {
+}
+
+
+export function AutocompleteContent(props: AutoCompleteContentProps) {
     if (props.items.isEmpty()) {
         return <Fragment/>
     }
@@ -61,14 +60,7 @@ export function AutocompleteContent(props: {
 
 const MaxItems = 10
 
-function NonEmptyAutocompleteContent(props: {
-    className?: string;
-    style: React.CSSProperties;
-    items: Completion[];
-    onSelectItem: (item: Completion) => void,
-    typedWord: string,
-    isLoading: boolean
-}) {
+function NonEmptyAutocompleteContent(props: AutoCompleteContentProps) {
     const items = props.items
     const [activeItem, setActiveItem] = useState<Completion>(items[0])
     // We show only part of the completions so they won't overflow out of the screen
@@ -112,7 +104,7 @@ function NonEmptyAutocompleteContent(props: {
     useKeyboardShortcut("Enter", () => {
         const index = indexOf(activeItem)
         props.onSelectItem(items.getOrThrow(index))
-    }, [items, activeItem])
+    }, [items, activeItem], undefined,false,false)
 
     const visibleItems = items.filter((_, i) => i >= firstVisibleIndex && i <= lastVisibleIndex)
 

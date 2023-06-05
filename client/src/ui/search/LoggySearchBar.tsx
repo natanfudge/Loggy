@@ -27,12 +27,16 @@ function dateCompletable(prefix: string) {
     )
 }
 
-const loggyCompletables: AutoCompleteConfig = {
-    completeables: [levelCompletable, dateCompletable("from"), dateCompletable("to")]
-}
+const loggyCompletables = [levelCompletable, dateCompletable("from"), dateCompletable("to")]
 
-export function LoggySearchBar(props: {query: State<string>}) {
-    return<StyledSearchBar config={loggyCompletables} query={props.query}/>
+
+export function LoggySearchBar(props: {query: State<string>, endpoint: string, defaultValue: string}) {
+    const config : AutoCompleteConfig = {
+        key: props.endpoint,
+        completeables: loggyCompletables,
+        defaultValue:props.defaultValue
+    }
+    return<StyledSearchBar config={config} query={props.query}/>
 }
 
 const StyledSearchBar = styled(MegaSearchBar)`
