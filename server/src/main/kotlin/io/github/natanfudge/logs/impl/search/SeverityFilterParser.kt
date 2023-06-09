@@ -6,9 +6,9 @@ import io.github.natanfudge.logs.impl.splitBy
 private const val AtLeastSeverityFilter = "level:"
 private const val SeverityExactFilter = "levelExact:"
 
-internal fun List<String>.parseSeverityFilters(): Pair<List<Filter.Severity>, List<String>> {
+internal fun List<String>.parseSeverityFilters(): Pair<List<LogFilter.Severity>, List<String>> {
     val (severityStrings, nonSeverityFilters) = splitByIsSeverityFilter()
-    val severities = resolveSeverities(parseSeverities(severityStrings)).map { Filter.Severity(it) }
+    val severities = resolveSeverities(parseSeverities(severityStrings)).map { LogFilter.Severity(it) }
     return severities to nonSeverityFilters
 }
 

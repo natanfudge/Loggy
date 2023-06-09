@@ -25,17 +25,16 @@ internal val LogLine.isError get() = this is LogLine.Message.Error
 internal val LogLine.isWarning get() = this is LogLine.Message && severity == LogLine.Severity.Warn
 
 @Serializable
-@PublishedApi
-internal sealed interface LogLine {
+public  sealed interface LogLine {
     @Serializable
-    sealed interface Message : LogLine {
-        val message: String
-        val time: Instant
-        val severity: Severity
+    public sealed interface Message : LogLine {
+        public val message: String
+        public val time: Instant
+        public val severity: Severity
 
         @Serializable
         @SerialName("MessageLog")
-        data class Normal(
+        public data class Normal(
             override val message: String,
             override val time: Instant,
             override val severity: Severity
@@ -43,7 +42,7 @@ internal sealed interface LogLine {
 
         @Serializable
         @SerialName("ErrorLog")
-        data class Error(
+        public data class Error(
             override val message: String,
             override val time: Instant,
             val exception: SerializableThrowable
@@ -53,12 +52,12 @@ internal sealed interface LogLine {
         }
     }
 
-    enum class Severity(val level: Int) {
+    public enum class Severity(public val level: Int) {
         Info(2), Warn(3), Error(4)
     }
 
     @SerialName("DetailLog")
     @Serializable
-    data class Detail(val key: String, val value: String) : LogLine
+    public data class Detail(val key: String, val value: String) : LogLine
 }
 

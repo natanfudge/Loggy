@@ -19,10 +19,10 @@ internal object InstantSerializer : KSerializer<Instant> {
 }
 
 
-internal typealias SerializableThrowable = List<SerializableThrowableElement>
+public  typealias SerializableThrowable = List<SerializableThrowableElement>
 
 @Serializable
-internal data class SerializableThrowableElement(val className: String, val message: String, val stacktrace: String)
+public  data class SerializableThrowableElement(val className: String, val message: String, val stacktrace: String)
 
 @PublishedApi
 internal fun Throwable.toSerializable(): SerializableThrowable {

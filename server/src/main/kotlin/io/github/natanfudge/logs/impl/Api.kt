@@ -1,6 +1,5 @@
 package io.github.natanfudge.logs.impl
 
-import io.github.natanfudge.logs.impl.LogLine.Severity
 import io.github.natanfudge.logs.impl.analytics.Analytics
 import io.github.natanfudge.logs.impl.analytics.AnalyticsArchive
 import io.github.natanfudge.logs.impl.analytics.DayBreakdown
@@ -12,7 +11,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.util.pipeline.*
 import io.objectbox.Box
-import io.objectbox.query.QueryCondition
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
@@ -20,7 +18,6 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import java.time.Instant
 import java.time.ZonedDateTime
-import kotlin.math.ceil
 
 internal class Router(private val box: Box<LogEventEntity>, private val analyticsArchive: AnalyticsArchive) {
     context(Routing)
@@ -87,7 +84,7 @@ private fun Routing.endpoint(name: String, config: suspend PipelineContext<Unit,
 @Serializable
 internal data class GetLogsRequest(
     val endpoint: String,
-    val filter: String,
+    val query: String,
     val page: Int
 )
 
@@ -113,7 +110,7 @@ private val json = Json { encodeDefaults = true }
 
 
 @Serializable
-internal data class LogResponse(
-    val pageCount: Int,
-    val logs: List<LogEvent>
-)
+internal sealed interface LogResponse {
+    data class Success(val pageCount: Int, val logs: List<LogEvent>): LogResponse
+    data class SyntaxError(val error: String): LogResponse
+}

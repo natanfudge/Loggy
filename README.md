@@ -48,10 +48,10 @@ Everything is case-insensitive.
 ### Filter start/end time
 Only shows calls that happened later than a day (when using `from:`) or earlier than a day (when using `to:`), inclusive. Only a day may be specified (and not an hour). Specifying year and month is optional.
 #### Default
-Today 
+From today to today.
 #### Syntax
-`from:<day>/<month>/<year>`  
-`to:<day>/<month>/<year>`
+`from:<time>`  
+`to:<time>`
 #### Examples
 `from:20/12/2001`  
 `to:20/12`  
@@ -63,3 +63,33 @@ Today
 
 ### Filter by severity
 Only shows calls that have at least the severity specified (when using `level:`) or exactly the severity specified (when using `levelExact:`)
+#### Default
+At least `info`.
+#### Syntax
+`level:<severity>`  
+`levelExact:<severity>`
+#### Examples
+`level:info`  
+`levelExact:warn`  
+`leve:error`
+
+### Filter by key/value
+Only shows calls that have logged a data key with a certain data value.
+#### Default
+Show all.
+#### Syntax
+`<key>:<value>`
+#### Examples
+`id:200`  
+`fileName:dog.jpg`
+
+### Logical operators
+Logical operator may be used to AND/OR filters. (Although AND is the default for space-seperated filters). Parentheses may be used to disambiguate. Logical operators are not relevant for time range filtering.
+#### Syntax
+`<filter> OR <filter>`  
+`<filter> AND <filter>`   
+`(<filters>) OR (<filters>)`  
+`(<filters>) AND (<filters>)`  
+#### Examples
+`id:200 or level:info`  
+`fileName:dog.jpg and (levelExact:warn or levelExact:error)`

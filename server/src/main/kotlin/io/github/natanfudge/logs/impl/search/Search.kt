@@ -1,5 +1,7 @@
 package io.github.natanfudge.logs.impl.search
 
+import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.mapError
 import io.github.natanfudge.logs.impl.*
 import io.objectbox.Box
 import io.objectbox.query.QueryCondition
@@ -14,30 +16,26 @@ import kotlin.math.ceil
  */
 
 
-// TODO: document filter API
 
 private const val PageSize = 18
 internal fun Box<LogEventEntity>.getLogs(request: GetLogsRequest): LogResponse {
-    val fullSearchResults = search(parseLogQuery(request.filter), request.endpoint)
+    val parsedQuery = QueryParser.parseLogQuery(request.query).getOrElse { return LogResponse.SyntaxError(it) }
+    val fullSearchResults = search(parsedQuery, request.endpoint)
     val allPageCount = ceil(fullSearchResults.size.toDouble() / PageSize).toInt()
     // Return only PageSize items, and skip pages before the requested page
     val pageSearchResults = fullSearchResults.drop(request.page * PageSize).take(PageSize)
 
-    return LogResponse(pageCount = allPageCount, logs = pageSearchResults)
+    return LogResponse.Success(pageCount = allPageCount, logs = pageSearchResults)
 }
 
-private fun parseLogQuery(query: String): LogQuery {
-    val tokens = query.split(" ")
-    val (severityFilters, nonSeverityFilters) = tokens.parseSeverityFilters()
-    TODO()
-}
+
 
 private fun Box<LogEventEntity>.search(query: LogQuery, endpoint: String): List<LogEvent> {
     val inMemoryResults = query(getObjectboxQuery(query, endpoint)).build().use { it.find() }
     return inMemoryResults.searchInMemory(query.filters)
 }
 
-private fun List<LogEventEntity>.searchInMemory(filters: List<Filter>): List<LogEvent> {
+private fun List<LogEventEntity>.searchInMemory(filters: List<LogFilter>): List<LogEvent> {
     var predicate = { entity: LogEvent -> true }
     for (filter in filters) {
         val filterPredicate = filter.toPredicate()
@@ -56,27 +54,27 @@ private fun getObjectboxQuery(logQuery: LogQuery, endpoint: String): QueryCondit
         .and(LogEventEntity_.startTime.between(logQuery.startTime.toEpochMilli(), logQuery.endTime.toEpochMilli()))
 }
 
-private fun Filter.toPredicate(): (LogEvent) -> Boolean = when (this) {
-    is Filter.And -> {
+private fun LogFilter.toPredicate(): (LogEvent) -> Boolean = when (this) {
+    is LogFilter.And -> {
         val firstCondition = first.toPredicate()
         val secondCondition = second.toPredicate()
         ({ firstCondition(it) && secondCondition(it) })
     }
 
-    is Filter.Or -> {
+    is LogFilter.Or -> {
         val firstCondition = first.toPredicate()
         val secondCondition = second.toPredicate()
         ({ firstCondition(it) || secondCondition(it) })
     }
 
-    is Filter.Not -> {
+    is LogFilter.Not -> {
         val condition = filter.toPredicate()
         ({ !condition(it) })
     }
 
-    is Filter.KeyValue -> TODO()
-    is Filter.Severity -> TODO()
-    is Filter.Text -> TODO()
+    is LogFilter.KeyValue -> TODO()
+    is LogFilter.Severity -> TODO()
+    is LogFilter.Text -> TODO()
 }
 
 
@@ -86,13 +84,13 @@ private fun Filter.toPredicate(): (LogEvent) -> Boolean = when (this) {
 //   Then search for all usages and make them all conform
 
 
-internal sealed interface Filter {
-    data class Not(val filter: Filter) : Filter
-    data class Or(val first: Filter, val second: Filter) : Filter
-    data class And(val first: Filter, val second: Filter) : Filter
-    data class KeyValue(val key: String, val value: String) : Filter
-    data class Text(val text: String) : Filter
-    data class Severity(val severity: LogLine.Severity) : Filter
+public sealed interface LogFilter {
+    public data class Not(val filter: LogFilter) : LogFilter
+    public data class Or(val first: LogFilter, val second: LogFilter) : LogFilter
+    public data class And(val first: LogFilter, val second: LogFilter) : LogFilter
+    public data class KeyValue(val key: String, val value: String) : LogFilter
+    public data class Text(val text: String) : LogFilter
+    public data class Severity(val severity: LogLine.Severity) : LogFilter
 //    data class Time(val start: Instant, val end: Instant): Filter
 }
 
@@ -103,6 +101,6 @@ internal sealed interface Filter {
  * This could be optimized in the future to use indices for everything. It would require storing the logs differently though.
  */
 
-internal data class LogQuery(val startTime: Instant, val endTime: Instant, val filters: List<Filter>)
+public data class LogQuery(val startTime: Instant, val endTime: Instant, val filters: List<LogFilter>)
 
 
