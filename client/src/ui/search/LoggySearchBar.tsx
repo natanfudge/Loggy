@@ -7,7 +7,7 @@ import {styled} from "@mui/material";
 import styles from "./search.module.css"
 
 
-const allLevelCompletions: Completion[] = AllSeverities.map(s => {
+const allSeverities: Completion[] = AllSeverities.map(s => {
     const atLeast = `level:${s.toLowerCase()}`
     return {label: atLeast, newText: atLeast + " "}
 }).concat(AllSeverities.map(s => {
@@ -15,8 +15,8 @@ const allLevelCompletions: Completion[] = AllSeverities.map(s => {
     return {label: exact, newText: exact + " "}
 }))
 
-const levelCompletable = syncCompletable(text => {
-    return allLevelCompletions.filter(completion => completion.label.includes(text) && text !== completion.label)
+const severityCompletable = syncCompletable(text => {
+    return allSeverities.filter(completion => completion.label.includes(text) && text !== completion.label)
 })
 
 
@@ -31,7 +31,7 @@ function dateCompletable(prefix: string) {
     )
 }
 
-const loggyCompletables = [levelCompletable, dateCompletable("from"), dateCompletable("to")]
+const loggyCompletables = [severityCompletable, dateCompletable("from"), dateCompletable("to")]
 
 
 export function LoggySearchBar(props: { query: State<string>, endpoint: string, defaultValue: string }) {
