@@ -1,18 +1,26 @@
 package natanfudge.io
 
-import com.github.michaelbull.result.Err
-import io.github.natanfudge.logs.impl.search.QueryParser
-import io.github.natanfudge.logs.impl.search.QueryParser.QueryToken
+import com.github.michaelbull.result.Ok
+import io.github.natanfudge.logs.impl.search.*
+import io.github.natanfudge.logs.impl.search.QueryParser.parseLogQuery
 import org.junit.Test
+import strikt.api.Assertion
+import strikt.api.DescribeableBuilder
 import strikt.api.expectThat
 import strikt.assertions.isA
 import strikt.assertions.isEqualTo
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
+
+internal fun Instant.toGmtDateTime() = ZonedDateTime.ofInstant(this, GMTZoneId)
+internal val GMTZoneId = ZoneId.of("GMT")
 
 class QueryParseTest {
     @Test
     fun testTokenization() {
-        expectThat(QueryParser.tokenize("key:value and (foo or bar)"))
-            .isEqualTo(QueryParser.tokenize("key:value and ( foo or bar )"))
+        expectThat(QueryTokenizer.tokenize("key:value and (foo or bar)"))
+            .isEqualTo(QueryTokenizer.tokenize("key:value and ( foo or bar )"))
             .isEqualTo(
                 listOf(
                     QueryToken.KeyValue("key", "value"),
@@ -25,45 +33,63 @@ class QueryParseTest {
                 )
             )
     }
-    @Test
-    fun testValidateTime() {
-        val result1 = QueryParser.parseLogQuery("to:10/3 to:20/3")
-        val result2 = QueryParser.parseLogQuery("foo and to:10/3")
-        val result3 = QueryParser.parseLogQuery("to:10/3 and foo")
-        val result4 = QueryParser.parseLogQuery("(to:10/3)")
 
-        expectThat(result1)
-            .isA<Err<*>>()
-        expectThat(result2)
-            .isA<Err<*>>()
-        expectThat(result3)
-            .isA<Err<*>>()
-        expectThat(result4)
-            .isA<Err<*>>()
+    @Test
+    fun testDates() {
+        val today = Instant.now().toGmtDateTime()
+
+        parseLogQuery("")
+            .expectStartsSameDay(today)
+            .endIsAtSameDay(today)
+
+       parseLogQuery("from:today")
+            .expectStartsSameDay(today)
+            .endIsAtSameDay(today)
+
+
+        parseLogQuery("from:yesterday to:today   ")
+            .expectStartsSameDay(today.minusDays(1))
+            .endIsAtSameDay(today)
+
+        parseLogQuery("from:lastWeek")
+            .expectStartsSameDay(today.minusWeeks(1))
+
+        parseLogQuery("from:lastMonth")
+            .expectStartsSameDay(today.minusMonths(1))
+
+        parseLogQuery("from:5")
+            .expectStartsSameDay(today.withDayOfMonth(5))
+
+        parseLogQuery("from:5/6")
+            .expectStartsSameDay(today.withDayOfMonth(5).withMonth(6))
+
+        parseLogQuery("from:5/6/1990")
+            .expectStartsSameDay(today.withDayOfMonth(5).withMonth(6).withYear(1990))
 
     }
-    @Test
-    fun testValidateOperators() {
-        val result1 = QueryParser.parseLogQuery("and foo")
-        val result2 = QueryParser.parseLogQuery("bar or")
-        val result3 = QueryParser.parseLogQuery("foo and or bar")
 
-        expectThat(result1)
-            .isA<Err<*>>()
-        expectThat(result2)
-            .isA<Err<*>>()
-        expectThat(result3)
-            .isA<Err<*>>()
-
+    private fun LogParseResult.expectStartsSameDay(dateTime: ZonedDateTime): Assertion.Builder<LogParseResult> {
+        val expect = expectThat(this)
+        expect.isA<Ok<LogQuery>>()
+            .get { value.timeRange.start.toGmtDateTime() }
+            .isSameDayAs(dateTime)
+        return expect
     }
-    @Test
-    fun testValidateParentheses() {
-        val result1 = QueryParser.parseLogQuery("( foo")
-        val result2 = QueryParser.parseLogQuery("bar)")
-
-        expectThat(result1)
-            .isA<Err<*>>()
-        expectThat(result2)
-            .isA<Err<*>>()
+    private fun Assertion.Builder<LogParseResult>.endIsAtSameDay(dateTime: ZonedDateTime): Assertion.Builder<LogParseResult> {
+         isA<Ok<LogQuery>>()
+            .get { value.timeRange.end.toGmtDateTime() }
+            .isSameDayAs(dateTime)
+        return this
     }
+
+    private fun DescribeableBuilder<ZonedDateTime>.isSameDayAs(dateTime: ZonedDateTime) =
+        and {
+            get { year }.isEqualTo(dateTime.year)
+        }
+        .and {
+            get { monthValue }.isEqualTo(dateTime.monthValue)
+        }
+        .and {
+            get { dayOfMonth }.isEqualTo(dateTime.dayOfMonth)
+        }
 }

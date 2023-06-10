@@ -1,5 +1,8 @@
 package io.github.natanfudge.logs.impl
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
@@ -19,10 +22,10 @@ internal object InstantSerializer : KSerializer<Instant> {
 }
 
 
-public  typealias SerializableThrowable = List<SerializableThrowableElement>
+public typealias SerializableThrowable = List<SerializableThrowableElement>
 
 @Serializable
-public  data class SerializableThrowableElement(val className: String, val message: String, val stacktrace: String)
+public data class SerializableThrowableElement(val className: String, val message: String, val stacktrace: String)
 
 @PublishedApi
 internal fun Throwable.toSerializable(): SerializableThrowable {
@@ -62,10 +65,15 @@ internal fun <T> List<T>.splitBy(predicate: (T) -> Boolean): Pair<List<T>, List<
  */
 internal fun String.splitUpTo3(vararg delimiters: String): Triple<String, String?, String?>? {
     val split = split(*delimiters)
-    return when(split.size) {
+    return when (split.size) {
         1 -> Triple(split[0], null, null)
         2 -> Triple(split[0], split[1], null)
         3 -> Triple(split[0], split[1], split[2])
         else -> null
     }
+}
+
+internal inline fun <V, E> Result<V, E>.or(error: (Err<E>) -> V): V = when (this) {
+    is Err -> error(this)
+    is Ok -> value
 }

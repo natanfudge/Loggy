@@ -3,15 +3,9 @@ package io.github.natanfudge.logs.impl.search
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
-import com.github.michaelbull.result.getOrElse
 import io.github.natanfudge.logs.impl.*
-import io.github.natanfudge.logs.impl.endOfDayGmt
-import io.github.natanfudge.logs.impl.lastWeekGmt
-import io.github.natanfudge.logs.impl.splitBy
-import io.github.natanfudge.logs.impl.startOfDayGmt
-import io.github.natanfudge.logs.impl.yesterdayGmt
+import java.time.DateTimeException
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZonedDateTime
 
 // public for testing
@@ -28,7 +22,7 @@ public object QueryParser {
         val tokenized = QueryTokenizer.tokenize(query)
         QueryValidator.validateQuery(tokenized)?.let { return Err(it) }
 
-        val (timeRange, otherTokens) = tokenized.takeTimerangeFilter().getOrElse { return Err(it) }
+        val (timeRange, otherTokens) = tokenized.takeTimerangeFilter().or { return it }
 
         return Ok(LogQuery(timeRange, listOf()))
     }
@@ -44,51 +38,56 @@ public object QueryParser {
             defaultStartTime()
         } else {
             // We always match starting from the start of the specified day
-            parseTime(startDateToken).getOrElse { return Err(it) }.startOfDayGmt()
+            parseTime(startDateToken).or { return it }.startOfDay()
         }
         val endDate = if (endDateToken == null) {
             defaultEndTime()
         } else {
             // We always match up to the end of the specified day
-            parseTime(endDateToken).getOrElse { return Err(it) }.endOfDayGmt()
+            parseTime(endDateToken).or { return it }.endOfDay()
         }
 
-        return Ok(TimeRange(startDate, endDate) to timeIrrelevant)
+        if (startDate.isAfter(endDate)) {
+            return Err("Specified start date ${startDateToken?.value} can't come after specified end date ${endDateToken?.value}")
+        }
+
+        return Ok(TimeRange(startDate.toInstant(), endDate.toInstant()) to timeIrrelevant)
     }
 
 
-    private fun defaultStartTime() = Instant.now().startOfDayGmt()
-    private fun defaultEndTime() = Instant.now().endOfDayGmt()
+    private fun defaultStartTime() = nowGmt().startOfDay()
+    private fun defaultEndTime() = nowGmt().endOfDay()
 
 
-    private fun parseTime(token: QueryToken.KeyValue): Result<Instant, String> {
-        when(val time = token.value) {
-            "today" -> return Ok(Instant.now())
-            "yesterday" -> return Ok(yesterdayGmt())
-            "lastweek" -> return Ok(lastWeekGmt())
-            "lastmonth" -> return Ok(lastMonthGmt())
+    private fun parseTime(token: QueryToken.KeyValue): Result<ZonedDateTime, String> {
+        return when (val time = token.value) {
+            "today" -> Ok(nowGmt())
+            "yesterday" -> Ok(yesterdayGmt())
+            "lastweek" -> Ok(lastWeekGmt())
+            "lastmonth" -> Ok(lastMonthGmt())
             else -> {
-                val (dayString,monthString,yearString) = time.splitUpTo3("/", "-", "\\") ?: return Err("Invalid date string '${time}'")
-                val day = dayString.toIntOrNull() ?: return Err("Invalid day '${dayString}' in date '${time}'")
-                val month = monthString?.parseInt(tokenName = "month", time)?.getOrElse { return Err(it) } ?: defaultMonth()
-                val year = yearString?.parseInt(tokenName = "year", time)?.getOrElse { return Err(it) } ?: defaultYear()
+                val (dayString, monthString, yearString) = time.splitUpTo3("/", "-", "\\") ?: return Err("Invalid date string '${time}'")
+                val day = dayString.parseInt(tokenName = "day", time).or { return it }
+                val month = monthString?.parseInt(tokenName = "month", time)?.or { return it } ?: defaultMonth()
+                val year = yearString?.parseInt(tokenName = "year", time)?.or { return it } ?: defaultYear()
 
-
-                val actualMonth = monthString ?: Instant.now().toGmtDateTime().monthValue.toString()
-                val actualYear = yearString ?: Instant.now().toGmtDateTime().year.toString()
-
-                ZonedDateTime.of()
+                try {
+                    Ok(ZonedDateTime.of(year, month, day, 0, 0, 0, 0, GMTZoneId))
+                } catch (e: DateTimeException) {
+                    Err("Invalid date ${day}/${month}/${year}")
+                }
             }
         }
     }
 
-    private fun String.parseInt(tokenName: String, time: String): Result<Int,String> {
-        val value = toIntOrNull() ?: return Err("Invalid month '${tokenName}' in date '${time}'")
+    private fun String.parseInt(tokenName: String, time: String): Result<Int, String> {
+        val value = toIntOrNull() ?: return Err("Invalid $tokenName '${this}' in date '${time}'")
         return Ok(value)
     }
 
     // Default month - this month
     private fun defaultMonth() = Instant.now().toGmtDateTime().monthValue
+
     // Default year - this year
     private fun defaultYear() = Instant.now().toGmtDateTime().year
 
