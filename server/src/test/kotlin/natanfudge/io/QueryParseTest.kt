@@ -42,4 +42,28 @@ class QueryParseTest {
             .isA<Err<*>>()
 
     }
+    @Test
+    fun testValidateOperators() {
+        val result1 = QueryParser.parseLogQuery("and foo")
+        val result2 = QueryParser.parseLogQuery("bar or")
+        val result3 = QueryParser.parseLogQuery("foo and or bar")
+
+        expectThat(result1)
+            .isA<Err<*>>()
+        expectThat(result2)
+            .isA<Err<*>>()
+        expectThat(result3)
+            .isA<Err<*>>()
+
+    }
+    @Test
+    fun testValidateParentheses() {
+        val result1 = QueryParser.parseLogQuery("( foo")
+        val result2 = QueryParser.parseLogQuery("bar)")
+
+        expectThat(result1)
+            .isA<Err<*>>()
+        expectThat(result2)
+            .isA<Err<*>>()
+    }
 }

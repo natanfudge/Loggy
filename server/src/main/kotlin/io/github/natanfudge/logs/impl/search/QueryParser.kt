@@ -3,108 +3,94 @@ package io.github.natanfudge.logs.impl.search
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
-import org.jetbrains.annotations.TestOnly
+import com.github.michaelbull.result.getOrElse
+import io.github.natanfudge.logs.impl.*
+import io.github.natanfudge.logs.impl.endOfDayGmt
+import io.github.natanfudge.logs.impl.lastWeekGmt
+import io.github.natanfudge.logs.impl.splitBy
+import io.github.natanfudge.logs.impl.startOfDayGmt
+import io.github.natanfudge.logs.impl.yesterdayGmt
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZonedDateTime
 
+// public for testing
 public typealias LogParseResult = Result<LogQuery, String>
 
+// public for testing
 public object QueryParser {
 
+    public const val StartDateToken: String = "from"
+    public const val EndDateToken: String = "to"
+    private val allDateTokens = listOf(StartDateToken, EndDateToken)
+
     public fun parseLogQuery(query: String): LogParseResult {
-        val tokenized = tokenize(query)
-        validateQuery(tokenized)?.let { return Err(it) }
-        //TODO
-        return Ok(LogQuery(Instant.now(), Instant.now(), listOf()))
+        val tokenized = QueryTokenizer.tokenize(query)
+        QueryValidator.validateQuery(tokenized)?.let { return Err(it) }
+
+        val (timeRange, otherTokens) = tokenized.takeTimerangeFilter().getOrElse { return Err(it) }
+
+        return Ok(LogQuery(timeRange, listOf()))
     }
 
-    // Returns null if it is valid
-    private fun validateQuery(query: List<QueryToken>): String? {
-        validateOperators(query)?.let { return it }
-        validateTime(query, "to")?.let { return it }
-        validateTime(query, "from")?.let { return it }
-        return null
-    }
+    private fun List<QueryToken>.takeTimerangeFilter(): Result<Pair<TimeRange, List<QueryToken>>, String> {
+        val (timeRelevant, timeIrrelevant) = splitBy { it is QueryToken.KeyValue && it.key in allDateTokens }
+        // These are lists of size at most 1. May be empty if nothing was specified
+        val (startDateList, endDateList) = timeRelevant.map { it as QueryToken.KeyValue }.splitBy { it.key == StartDateToken }
+        val startDateToken = startDateList.getOrNull(0)
+        val endDateToken = endDateList.getOrNull(0)
 
-    private fun validateOperators(query: List<QueryToken>): String? {
-        return null
-        //TODO
-    }
-
-    //TODO: validate date itself later
-    private fun validateTime(query: List<QueryToken>, timeToken: String): String? {
-        fun isTimeToken(token: QueryToken) = token is QueryToken.KeyValue && token.key == timeToken
-
-        val index = query.indexOfFirst { isTimeToken(it) }
-        // If nothing was specified we have nothing to worry about
-        if (index == -1) return null
-        val lastIndex = query.indexOfLast { isTimeToken(it) }
-        if (index != lastIndex) return "'${timeToken}' was specified twice. It may only be specified once."
-        // Check logical operator before
-        if (index > 0 && query[index - 1] is QueryToken.Operator) {
-            return "'${timeToken}' cannot be used with the logical operator '${query[index - 1]}'."
+        val startDate = if (startDateToken == null) {
+            defaultStartTime()
+        } else {
+            // We always match starting from the start of the specified day
+            parseTime(startDateToken).getOrElse { return Err(it) }.startOfDayGmt()
         }
-        // Check logical operator after
-        if (index < query.size - 1 && query[index + 1] is QueryToken.Operator) {
-            return "'${timeToken}' cannot be used with the logical operator '${query[index + 1]}'."
+        val endDate = if (endDateToken == null) {
+            defaultEndTime()
+        } else {
+            // We always match up to the end of the specified day
+            parseTime(endDateToken).getOrElse { return Err(it) }.endOfDayGmt()
         }
 
-        // Check in parentheses
-        var openParenthesesCount = 0
-        for (token in query) {
-            if (token is QueryToken.Parentheses) {
-                when (token) {
-                    QueryToken.Parentheses.Opening -> openParenthesesCount++
-                    QueryToken.Parentheses.Closing -> openParenthesesCount--
-                }
-            } else if (isTimeToken(token)) {
-                if (openParenthesesCount > 0) {
-                    return "'${timeToken}' cannot be used inside of parentheses."
-                }
+        return Ok(TimeRange(startDate, endDate) to timeIrrelevant)
+    }
+
+
+    private fun defaultStartTime() = Instant.now().startOfDayGmt()
+    private fun defaultEndTime() = Instant.now().endOfDayGmt()
+
+
+    private fun parseTime(token: QueryToken.KeyValue): Result<Instant, String> {
+        when(val time = token.value) {
+            "today" -> return Ok(Instant.now())
+            "yesterday" -> return Ok(yesterdayGmt())
+            "lastweek" -> return Ok(lastWeekGmt())
+            "lastmonth" -> return Ok(lastMonthGmt())
+            else -> {
+                val (dayString,monthString,yearString) = time.splitUpTo3("/", "-", "\\") ?: return Err("Invalid date string '${time}'")
+                val day = dayString.toIntOrNull() ?: return Err("Invalid day '${dayString}' in date '${time}'")
+                val month = monthString?.parseInt(tokenName = "month", time)?.getOrElse { return Err(it) } ?: defaultMonth()
+                val year = yearString?.parseInt(tokenName = "year", time)?.getOrElse { return Err(it) } ?: defaultYear()
+
+
+                val actualMonth = monthString ?: Instant.now().toGmtDateTime().monthValue.toString()
+                val actualYear = yearString ?: Instant.now().toGmtDateTime().year.toString()
+
+                ZonedDateTime.of()
             }
         }
-        return null
     }
 
-
-    @TestOnly
-    public fun tokenize(query: String): List<QueryToken> {
-        val tokens = query.split(' ')
-            .flatMap {
-                when {
-                    // If it's just the parentheses keep it as is
-                    it.length == 1 -> listOf(it)
-                    // Add opening/closing parentheses as separate items when they are stuck to the front/end of query parts.
-                    it.startsWith('(') -> listOf("(", it.removePrefix("("))
-                    it.endsWith(')') -> listOf(it.removeSuffix(")"), ")")
-                    else -> listOf(it)
-                }
-            }.map {
-                when (it.lowercase()) {
-                    "(" -> QueryToken.Parentheses.Opening
-                    ")" -> QueryToken.Parentheses.Closing
-                    "and" -> QueryToken.Operator.And
-                    "or" -> QueryToken.Operator.Or
-                    else -> {
-                        if (it.contains(':')) QueryToken.KeyValue(it.substringBefore(':'), it.substringAfter(':'))
-                        else QueryToken.Raw(it)
-                    }
-                }
-            }
-
-        return tokens
+    private fun String.parseInt(tokenName: String, time: String): Result<Int,String> {
+        val value = toIntOrNull() ?: return Err("Invalid month '${tokenName}' in date '${time}'")
+        return Ok(value)
     }
 
-    public sealed interface QueryToken {
-        public enum class Operator : QueryToken {
-            Or, And
-        }
+    // Default month - this month
+    private fun defaultMonth() = Instant.now().toGmtDateTime().monthValue
+    // Default year - this year
+    private fun defaultYear() = Instant.now().toGmtDateTime().year
 
-        public enum class Parentheses : QueryToken {
-            Opening, Closing
-        }
-
-        public data class KeyValue(val key: String, val value: String) : QueryToken
-        public data class Raw(val text: String) : QueryToken
-    }
 }
 

@@ -1,7 +1,6 @@
 package io.github.natanfudge.logs.impl.search
 
 import com.github.michaelbull.result.getOrElse
-import com.github.michaelbull.result.mapError
 import io.github.natanfudge.logs.impl.*
 import io.objectbox.Box
 import io.objectbox.query.QueryCondition
@@ -16,7 +15,6 @@ import kotlin.math.ceil
  */
 
 
-
 private const val PageSize = 18
 internal fun Box<LogEventEntity>.getLogs(request: GetLogsRequest): LogResponse {
     val parsedQuery = QueryParser.parseLogQuery(request.query).getOrElse { return LogResponse.SyntaxError(it) }
@@ -29,20 +27,19 @@ internal fun Box<LogEventEntity>.getLogs(request: GetLogsRequest): LogResponse {
 }
 
 
-
 private fun Box<LogEventEntity>.search(query: LogQuery, endpoint: String): List<LogEvent> {
     val inMemoryResults = query(getObjectboxQuery(query, endpoint)).build().use { it.find() }
     return inMemoryResults.searchInMemory(query.filters)
 }
 
 private fun List<LogEventEntity>.searchInMemory(filters: List<LogFilter>): List<LogEvent> {
-    var predicate = { entity: LogEvent -> true }
-    for (filter in filters) {
-        val filterPredicate = filter.toPredicate()
-        predicate = { predicate(it) && filterPredicate(it) }
-    }
     val parsed = map { it.toLogEvent() }
-    return parsed.filter(predicate)
+    return parsed.filter {
+        for (filter in filters) {
+            if (!filter.toPredicate()(it)) return@filter false
+        }
+        true
+    }
 }
 
 
@@ -51,7 +48,7 @@ private fun List<LogEventEntity>.searchInMemory(filters: List<LogFilter>): List<
  */
 private fun getObjectboxQuery(logQuery: LogQuery, endpoint: String): QueryCondition<LogEventEntity> {
     return LogEventEntity_.name.equal(endpoint)
-        .and(LogEventEntity_.startTime.between(logQuery.startTime.toEpochMilli(), logQuery.endTime.toEpochMilli()))
+        .and(LogEventEntity_.startTime.between(logQuery.timeRange.start.toEpochMilli(), logQuery.timeRange.end.toEpochMilli()))
 }
 
 private fun LogFilter.toPredicate(): (LogEvent) -> Boolean = when (this) {
@@ -83,7 +80,7 @@ private fun LogFilter.toPredicate(): (LogEvent) -> Boolean = when (this) {
 // - Severity / Level
 //   Then search for all usages and make them all conform
 
-
+// public for tests
 public sealed interface LogFilter {
     public data class Not(val filter: LogFilter) : LogFilter
     public data class Or(val first: LogFilter, val second: LogFilter) : LogFilter
@@ -100,7 +97,8 @@ public sealed interface LogFilter {
  * - Then, we filter in-memory for the rest of the filters. Since start/end date should filter most things, this is not too bad.
  * This could be optimized in the future to use indices for everything. It would require storing the logs differently though.
  */
+// public for tests
+public data class LogQuery(val timeRange: TimeRange, val filters: List<LogFilter>)
 
-public data class LogQuery(val startTime: Instant, val endTime: Instant, val filters: List<LogFilter>)
-
-
+// public for tests
+public data class TimeRange(val start: Instant, val end: Instant)

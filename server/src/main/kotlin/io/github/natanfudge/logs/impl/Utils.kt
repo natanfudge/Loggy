@@ -56,3 +56,16 @@ internal fun <T> List<T>.splitBy(predicate: (T) -> Boolean): Pair<List<T>, List<
     }
     return matches to doesntMatch
 }
+
+/**
+ * Returns null if more than 3 parts or this is empty string
+ */
+internal fun String.splitUpTo3(vararg delimiters: String): Triple<String, String?, String?>? {
+    val split = split(*delimiters)
+    return when(split.size) {
+        1 -> Triple(split[0], null, null)
+        2 -> Triple(split[0], split[1], null)
+        3 -> Triple(split[0], split[1], split[2])
+        else -> null
+    }
+}
