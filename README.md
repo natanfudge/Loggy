@@ -64,7 +64,7 @@ From today to today.
 ### Filter by severity
 Only shows calls that have at least the severity specified (when using `level:`) or exactly the severity specified (when using `levelExact:`)
 #### Default
-At least `info`.
+Show all severities
 #### Syntax
 `level:<severity>`  
 `levelExact:<severity>`

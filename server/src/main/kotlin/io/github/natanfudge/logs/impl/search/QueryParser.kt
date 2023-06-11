@@ -26,27 +26,37 @@ public object QueryParser {
 
             val (timeRange, otherTokens) = tokenized.takeTimeRangeFilter().or { return it }
 
-            return Ok(LogQuery(timeRange, listOf()))
+            return Ok(LogQuery(timeRange, parseOtherFilters(otherTokens)))
         } catch (e: Exception) {
             throw io.ktor.http.parsing.ParseException("Failed to parse query: $query", e)
         }
 
     }
 
-//    private fun parseOtherFilters(tokens: List<QueryToken>): List<LogFilter> {
-//        val filters = mutableListOf<LogFilter>()
-//
-//        // True if there's currently an 'and'
-//        var unclosedExpression = false
-//        for (token in tokens) {
-//
-//        }
-//    }
+    private fun parseOtherFilters(tokens: List<QueryToken>): List<LogFilter> {
+        val folded = foldFilters(tokens)
+        return folded.map { it.parse() }
+    }
+
+    private fun FoldedToken.parse(): LogFilter = when (this) {
+        is FoldedToken.Binary -> {
+            val constructor = if (operator == Operator.And) LogFilter::And else LogFilter::Or
+            constructor(left.parse(), right.parse())
+        }
+
+        FoldedToken.None -> LogFilter.None
+        is FoldedToken.Not -> LogFilter.Not(folded.parse())
+        is FoldedToken.Single -> when (value) {
+            // Is not severity - it's just a normal key/value filter
+            is QueryToken.KeyValue -> SeverityFilterParser.parseSeverity(value.key, value.value) ?: LogFilter.KeyValue(value.key, value.value)
+            is QueryToken.Raw -> LogFilter.Text(value.text)
+        }
+    }
 
     //TODO: make internal
     public sealed interface FoldedToken {
         public object None : FoldedToken
-        public data class Single(val value: QueryToken) : FoldedToken {
+        public data class Single(val value: QueryToken.WithContent) : FoldedToken {
             override fun toString(): String {
                 return value.toString()
             }
@@ -101,9 +111,9 @@ public object QueryParser {
     // Returns the folded token and how many tokens is composes
     private fun foldFiltersImpl(tokens: List<QueryToken>): Pair<FoldedToken, Int> {
         if (tokens.isEmpty()) return FoldedToken.None to 0
-        if (tokens.size == 1) return FoldedToken.Single(tokens[0]) to 1
+        if (tokens.size == 1) return FoldedToken.Single(tokens[0] as QueryToken.WithContent) to 1
 
-        val (firstOperand, firstOperandTokenCount) = when (tokens[0]) {
+        val (firstOperand, firstOperandTokenCount) = when (val firstToken = tokens[0]) {
             Operator.Not -> {
                 // Not: fold the not together with whatever it is applied to
                 val (operand, operandLength) = foldFiltersImpl(tokens.subList(1, tokens.size))
@@ -127,15 +137,15 @@ public object QueryParser {
                 folded to tokenCount + 2
             }
             // Normal operand
-            else -> {
+            is QueryToken.WithContent -> {
                 val nextToken = tokens[1]
                 if (nextToken is Operator && nextToken != Operator.Not) {
                     // And/Or: fold the current operand together with whatever comes after the operator.
                     val (operand, operandLength) = foldFiltersImpl(tokens.subList(2, tokens.size))
-                    FoldedToken.Binary(nextToken, FoldedToken.Single(tokens[0]), operand) to operandLength + 2
+                    FoldedToken.Binary(nextToken, FoldedToken.Single(firstToken), operand) to operandLength + 2
                 } else {
                     // No operand after - just a single token to be AND'd
-                    FoldedToken.Single(tokens[0]) to 1
+                    FoldedToken.Single(firstToken) to 1
                 }
             }
         }

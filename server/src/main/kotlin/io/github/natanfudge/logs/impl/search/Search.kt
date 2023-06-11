@@ -72,6 +72,7 @@ private fun LogFilter.toPredicate(): (LogEvent) -> Boolean = when (this) {
     is LogFilter.KeyValue -> TODO()
     is LogFilter.Severity -> TODO()
     is LogFilter.Text -> TODO()
+    LogFilter.None -> ({ true })
 }
 
 
@@ -87,7 +88,10 @@ public sealed interface LogFilter {
     public data class And(val first: LogFilter, val second: LogFilter) : LogFilter
     public data class KeyValue(val key: String, val value: String) : LogFilter
     public data class Text(val text: String) : LogFilter
-    public data class Severity(val severity: LogLine.Severity) : LogFilter
+    // If not exact then at least
+    public data class Severity(val severity: LogLine.Severity, val exact: Boolean) : LogFilter
+
+    public object None : LogFilter
 //    data class Time(val start: Instant, val end: Instant): Filter
 }
 

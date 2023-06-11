@@ -2,6 +2,7 @@ package natanfudge.io
 
 import com.github.michaelbull.result.Err
 import io.github.natanfudge.logs.impl.search.QueryParser
+import io.github.natanfudge.logs.impl.search.QueryParser.parseLogQuery
 import io.github.natanfudge.logs.impl.search.QueryToken
 import io.github.natanfudge.logs.impl.search.QueryTokenizer
 import org.junit.Test
@@ -14,10 +15,10 @@ class QueryValidationTest {
 
     @Test
     fun testValidateTime() {
-        val result1 = QueryParser.parseLogQuery("to:10/3 to:20/3")
-        val result2 = QueryParser.parseLogQuery("foo and to:10/3")
-        val result3 = QueryParser.parseLogQuery("to:10/3 and foo")
-        val result4 = QueryParser.parseLogQuery("(to:10/3)")
+        val result1 = parseLogQuery("to:10/3 to:20/3")
+        val result2 = parseLogQuery("foo and to:10/3")
+        val result3 = parseLogQuery("to:10/3 and foo")
+        val result4 = parseLogQuery("(to:10/3)")
 
         expectThat(result1)
             .isA<Err<*>>()
@@ -32,12 +33,12 @@ class QueryValidationTest {
 
     @Test
     fun testValidateOperators() {
-        val result1 = QueryParser.parseLogQuery("and foo")
-        val result2 = QueryParser.parseLogQuery("bar or")
-        val result3 = QueryParser.parseLogQuery("foo and or bar")
-        val result4 = QueryParser.parseLogQuery("foo not not bad")
-        val result5 = QueryParser.parseLogQuery("foo not")
-        val result6 = QueryParser.parseLogQuery("foo not and bar")
+        val result1 = parseLogQuery("and foo")
+        val result2 = parseLogQuery("bar or")
+        val result3 = parseLogQuery("foo and or bar")
+        val result4 = parseLogQuery("foo not not bad")
+        val result5 = parseLogQuery("foo not")
+        val result6 = parseLogQuery("foo not and bar")
 
         println(result1)
         println(result2)
@@ -63,9 +64,9 @@ class QueryValidationTest {
 
     @Test
     fun testValidateParentheses() {
-        val result1 = QueryParser.parseLogQuery("( foo")
-        val result2 = QueryParser.parseLogQuery("bar)")
-        val result3 = QueryParser.parseLogQuery("(foo or k:v) bar) baz")
+        val result1 = parseLogQuery("( foo")
+        val result2 = parseLogQuery("bar)")
+        val result3 = parseLogQuery("(foo or k:v) bar) baz")
 
         expectThat(result1)
             .isA<Err<*>>()
@@ -77,15 +78,15 @@ class QueryValidationTest {
 
     @Test
     fun testValidateDateContent() {
-        val result1 = QueryParser.parseLogQuery("from:1/2/3/4")
-        val result2 = QueryParser.parseLogQuery("from:1/")
-        val result3 = QueryParser.parseLogQuery("from:foo")
-        val result4 = QueryParser.parseLogQuery("from:1/bar")
-        val result5 = QueryParser.parseLogQuery("from:2/3/baz")
-        val result6 = QueryParser.parseLogQuery("from:2/3/1990/")
-        val result7 = QueryParser.parseLogQuery("from:2/30/1990")
-        val result8 = QueryParser.parseLogQuery("from:40/3/1990")
-        val result9 = QueryParser.parseLogQuery("from:20/3/1990 to:19/3/1990")
+        val result1 = parseLogQuery("from:1/2/3/4")
+        val result2 = parseLogQuery("from:1/")
+        val result3 = parseLogQuery("from:foo")
+        val result4 = parseLogQuery("from:1/bar")
+        val result5 = parseLogQuery("from:2/3/baz")
+        val result6 = parseLogQuery("from:2/3/1990/")
+        val result7 = parseLogQuery("from:2/30/1990")
+        val result8 = parseLogQuery("from:40/3/1990")
+        val result9 = parseLogQuery("from:20/3/1990 to:19/3/1990")
 
 
         expectThat(result1)
@@ -107,5 +108,13 @@ class QueryValidationTest {
         expectThat(result9)
             .isA<Err<*>>()
 
+    }
+
+    @Test
+    fun testValidateSeverity() {
+        val result = parseLogQuery("level:amar")
+        println(result)
+
+        expectThat(result).isA<Err<*>>()
     }
 }

@@ -63,15 +63,17 @@ public sealed interface QueryToken {
         Or, And, Not
     }
 
+    public sealed interface WithContent: QueryToken
+
     public enum class Parentheses : QueryToken {
         Opening, Closing
     }
 
-    public data class KeyValue(val key: String, val value: String) : QueryToken {
+    public data class KeyValue(val key: String, val value: String) : WithContent {
         override fun toString(): String = "$key:$value"
     }
 
-    public data class Raw(val text: String) : QueryToken {
+    public data class Raw(val text: String) : WithContent {
         override fun toString(): String = text
     }
 }
