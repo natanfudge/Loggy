@@ -84,12 +84,14 @@ Show all.
 `fileName:dog.jpg`
 
 ### Logical operators
-Logical operator may be used to AND/OR filters. (Although AND is the default for space-seperated filters). Parentheses may be used to disambiguate. Logical operators are not relevant for time range filtering.
+Logical operator may be used to AND/OR/NOT filters. (Although AND is the default for space-seperated filters). Parentheses may be used to disambiguate. Logical operators are not relevant for time range filtering.
 #### Syntax
 `<filter> OR <filter>`  
 `<filter> AND <filter>`   
 `(<filters>) OR (<filters>)`  
 `(<filters>) AND (<filters>)`  
+`NOT <filter>`
+`NOT (<filter> OR <filter>)`
 #### Examples
 `id:200 or level:info`  
-`fileName:dog.jpg and (levelExact:warn or levelExact:error)`
+`fileName:dog.jpg and not (levelExact:warn or levelExact:error)`

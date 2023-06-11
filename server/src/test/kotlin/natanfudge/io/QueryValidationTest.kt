@@ -35,12 +35,28 @@ class QueryValidationTest {
         val result1 = QueryParser.parseLogQuery("and foo")
         val result2 = QueryParser.parseLogQuery("bar or")
         val result3 = QueryParser.parseLogQuery("foo and or bar")
+        val result4 = QueryParser.parseLogQuery("foo not not bad")
+        val result5 = QueryParser.parseLogQuery("foo not")
+        val result6 = QueryParser.parseLogQuery("foo not and bar")
+
+        println(result1)
+        println(result2)
+        println(result3)
+        println(result4)
+        println(result5)
+        println(result6)
 
         expectThat(result1)
             .isA<Err<*>>()
         expectThat(result2)
             .isA<Err<*>>()
         expectThat(result3)
+            .isA<Err<*>>()
+        expectThat(result4)
+            .isA<Err<*>>()
+        expectThat(result5)
+            .isA<Err<*>>()
+        expectThat(result6)
             .isA<Err<*>>()
 
     }
@@ -49,10 +65,13 @@ class QueryValidationTest {
     fun testValidateParentheses() {
         val result1 = QueryParser.parseLogQuery("( foo")
         val result2 = QueryParser.parseLogQuery("bar)")
+        val result3 = QueryParser.parseLogQuery("(foo or k:v) bar) baz")
 
         expectThat(result1)
             .isA<Err<*>>()
         expectThat(result2)
+            .isA<Err<*>>()
+        expectThat(result3)
             .isA<Err<*>>()
     }
 

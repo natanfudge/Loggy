@@ -19,6 +19,10 @@ internal val GMTZoneId = ZoneId.of("GMT")
 class QueryParseTest {
     @Test
     fun testTokenization() {
+        expectThat(QueryTokenizer.tokenize(""))
+            .isEqualTo(listOf())
+        expectThat(QueryTokenizer.tokenize(" "))
+            .isEqualTo(listOf())
         expectThat(QueryTokenizer.tokenize("key:value and (foo or bar)"))
             .isEqualTo(QueryTokenizer.tokenize("key:value and ( foo or bar )"))
             .isEqualTo(
@@ -32,6 +36,37 @@ class QueryParseTest {
                     QueryToken.Parentheses.Closing,
                 )
             )
+        expectThat(QueryTokenizer.tokenize("key:value   and (foo  or bar)"))
+            .isEqualTo(QueryTokenizer.tokenize("key:value and ( foo or bar )"))
+            .isEqualTo(
+                listOf(
+                    QueryToken.KeyValue("key", "value"),
+                    QueryToken.Operator.And,
+                    QueryToken.Parentheses.Opening,
+                    QueryToken.Raw("foo"),
+                    QueryToken.Operator.Or,
+                    QueryToken.Raw("bar"),
+                    QueryToken.Parentheses.Closing,
+                )
+            )
+
+        expectThat(QueryTokenizer.tokenize("((foo or k:v) bar) baz"))
+            .isEqualTo(QueryTokenizer.tokenize("( ( foo or k:v ) bar ) baz"))
+            .isEqualTo(
+                listOf(
+                    QueryToken.Parentheses.Opening,
+                    QueryToken.Parentheses.Opening,
+                    QueryToken.Raw("foo"),
+                    QueryToken.Operator.Or,
+                    QueryToken.KeyValue("k","v"),
+                    QueryToken.Parentheses.Closing,
+                    QueryToken.Raw("bar"),
+                    QueryToken.Parentheses.Closing,
+                    QueryToken.Raw("baz")
+                )
+            )
+
+//        ((foo or k:v) bar) baz
     }
 
     @Test

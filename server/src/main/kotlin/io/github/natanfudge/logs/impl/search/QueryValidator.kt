@@ -13,11 +13,18 @@ internal object QueryValidator {
     private fun validateOperators(query: List<QueryToken>): String? {
         for ((i, token) in query.withIndex()) {
             if (token is QueryToken.Operator) {
-                when {
-                    i == 0 -> return "Logical operator '${token}' doesn't have an operand to the left"
-                    i == query.size - 1 -> return "Logical operator '${token} doesn't have an operand to the right"
-                    query[i - 1] is QueryToken.Operator -> return "Logical operators '${query[i - 1]}' and '${token}' can't be placed next to each other"
+                if (token == QueryToken.Operator.Not) {
+                    // The not operator doesn't need an operand to the left, and having 'and not' and 'or not' is valid.
+                    if (i == query.size - 1) return "Logical operator '${token} doesn't have an operand to the right"
+                    else if (i > 0 && query[i - 1] == QueryToken.Operator.Not) return "'not not' is not valid. "
+                } else {
+                    when {
+                        i == 0 -> return "Logical operator '${token}' doesn't have an operand to the left"
+                        i == query.size - 1 -> return "Logical operator '${token} doesn't have an operand to the right"
+                        query[i - 1] is QueryToken.Operator -> return "Logical operators '${query[i - 1]}' and '${token}' can't be placed next to each other (in that order)"
+                    }
                 }
+
             }
         }
         return null
@@ -25,10 +32,14 @@ internal object QueryValidator {
 
     private fun validateParentheses(query: List<QueryToken>): String? {
         var openParenthesesCount = 0
-        for (token in query) {
+        for ((i, token) in query.withIndex()) {
             if (token is QueryToken.Parentheses) {
                 when (token) {
-                    QueryToken.Parentheses.Opening -> openParenthesesCount++
+                    QueryToken.Parentheses.Opening -> {
+//                        if(i == 0 || query[i - 1] !is QueryToken.Operator) return ""
+                        openParenthesesCount++
+                    }
+
                     QueryToken.Parentheses.Closing -> {
                         if (openParenthesesCount == 0) return "Too many closing parentheses"
                         openParenthesesCount--

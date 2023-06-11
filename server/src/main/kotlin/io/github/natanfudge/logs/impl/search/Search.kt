@@ -96,6 +96,8 @@ public sealed interface LogFilter {
  * - First, we use objectbox directly to filter by start and end date. (This is why start/end time is seperate here)
  * - Then, we filter in-memory for the rest of the filters. Since start/end date should filter most things, this is not too bad.
  * This could be optimized in the future to use indices for everything. It would require storing the logs differently though.
+ *
+ * In [filters] we use a list of AND'd filters instead of one big recursive LogFilter.And for easier debugging.
  */
 // public for tests
 public data class LogQuery(val timeRange: TimeRange, val filters: List<LogFilter>)
