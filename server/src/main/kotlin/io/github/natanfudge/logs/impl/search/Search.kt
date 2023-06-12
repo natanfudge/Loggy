@@ -4,6 +4,7 @@ import com.github.michaelbull.result.getOrElse
 import io.github.natanfudge.logs.impl.*
 import io.objectbox.Box
 import io.objectbox.query.QueryCondition
+import org.jetbrains.annotations.TestOnly
 import java.time.Instant
 import kotlin.math.ceil
 
@@ -29,12 +30,12 @@ internal fun Box<LogEventEntity>.getLogs(request: GetLogsRequest): LogResponse {
 
 private fun Box<LogEventEntity>.search(query: LogQuery, endpoint: String): List<LogEvent> {
     val inMemoryResults = query(getObjectboxQuery(query, endpoint)).build().use { it.find() }
-    return inMemoryResults.searchInMemory(query.filters)
+    return inMemoryResults.map { it.toLogEvent() }.searchInMemory(query.filters)
 }
 
-private fun List<LogEventEntity>.searchInMemory(filters: List<LogFilter>): List<LogEvent> {
-    val parsed = map { it.toLogEvent() }
-    return parsed.filter {
+@TestOnly
+public fun List<LogEvent>.searchInMemory(filters: List<LogFilter>): List<LogEvent> {
+    return filter {
         for (filter in filters) {
             if (!filter.toPredicate()(it)) return@filter false
         }
@@ -69,17 +70,31 @@ private fun LogFilter.toPredicate(): (LogEvent) -> Boolean = when (this) {
         ({ !condition(it) })
     }
 
-    is LogFilter.KeyValue -> TODO()
-    is LogFilter.Severity -> TODO()
-    is LogFilter.Text -> TODO()
+    is LogFilter.KeyValue -> ({ logEvent ->
+        logEvent.logs.any { it is LogLine.Detail && it.key == key && it.value == value }
+    })
+
+    is LogFilter.Severity -> ({ logEvent ->
+        logEvent.logs.any {
+            // Default severity: info
+            val level = if (it is LogLine.Message) it.severity else LogLine.Severity.Info
+            if (exact) level == severity else level.level >= severity.level
+        }
+    })
+
+    is LogFilter.Text -> ({ logEvent ->
+        logEvent.logs.any {
+            when (it) {
+                // Search for the text in the key/value for details
+                is LogLine.Detail -> it.key.contains(text, ignoreCase = true) || it.value.contains(text, ignoreCase = true)
+                // Search for the text in the message contents for messages
+                is LogLine.Message -> it.message.contains(text, ignoreCase = true)
+            }
+        }
+    })
+
     LogFilter.None -> ({ true })
 }
-
-
-//TODO: Rework and properly define this terminology:
-// - Query / Filter / Search
-// - Severity / Level
-//   Then search for all usages and make them all conform
 
 // public for tests
 public sealed interface LogFilter {
@@ -88,11 +103,13 @@ public sealed interface LogFilter {
     public data class And(val first: LogFilter, val second: LogFilter) : LogFilter
     public data class KeyValue(val key: String, val value: String) : LogFilter
     public data class Text(val text: String) : LogFilter
-    // If not exact then at least
+
+    /**
+    If not [exact] then at least
+     */
     public data class Severity(val severity: LogLine.Severity, val exact: Boolean) : LogFilter
 
     public object None : LogFilter
-//    data class Time(val start: Instant, val end: Instant): Filter
 }
 
 /**

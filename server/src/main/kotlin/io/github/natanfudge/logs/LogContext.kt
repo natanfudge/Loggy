@@ -3,6 +3,7 @@ package io.github.natanfudge.logs
 import io.github.natanfudge.logs.impl.LogEvent
 import io.github.natanfudge.logs.impl.LogLine
 import io.github.natanfudge.logs.impl.toSerializable
+import org.jetbrains.annotations.TestOnly
 import java.time.Instant
 
 public class LogContext(private val name: String, private val startTime: Instant) {
@@ -29,4 +30,7 @@ public class LogContext(private val name: String, private val startTime: Instant
     internal fun buildLog(): LogEvent = LogEvent(
         name, startTime = startTime, endTime = Instant.now(), logDetails
     )
+
+    @Suppress("FunctionName")
+    @TestOnly public fun __test_buildLog(): LogEvent = buildLog()
 }

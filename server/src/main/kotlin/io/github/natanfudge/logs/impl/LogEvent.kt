@@ -8,9 +8,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import java.time.Instant
 
-
+// public for tests
 @Serializable
-internal data class LogEvent(val name: String, val startTime: Instant, val endTime: Instant, val logs: List<LogLine>)
+public data class LogEvent(val name: String, val startTime: Instant, val endTime: Instant, val logs: List<LogLine>)
 
 internal fun LogEvent.getSeverity(): LogLine.Severity {
     if (logs.any { it.isError }) return LogLine.Severity.Error

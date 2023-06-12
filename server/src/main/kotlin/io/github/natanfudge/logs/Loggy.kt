@@ -11,6 +11,10 @@ public interface Loggy {
     public companion object {
         /**
          * Created once at the top level
+         * [logToConsole]: If true, startCall calls will print to console in a pretty format upon exiting.
+         * [logsDir]: The directory to store the data for the logs in
+         * [credentials]: Username and password for accessing the logs interface.
+         * You may define anything you want as the credentials, and whatever you choose will be the username/password in the GUI.
          */
         public fun create(
             logToConsole: Boolean,

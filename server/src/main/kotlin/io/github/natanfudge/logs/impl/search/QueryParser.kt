@@ -53,7 +53,6 @@ public object QueryParser {
         }
     }
 
-    //TODO: make internal
     public sealed interface FoldedToken {
         public object None : FoldedToken
         public data class Single(val value: QueryToken.WithContent) : FoldedToken {
