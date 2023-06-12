@@ -1,10 +1,9 @@
 import dayjs, {Dayjs} from "dayjs";
 import {isDayJs, unixMs} from "../utils/Utils";
-import {Analytics, DayBreakdown} from "../ui/AnalyticsGraph";
-import {Day} from "../core/Day";
+import {DayBreakdown} from "../ui/AnalyticsGraph";
 import {LogEvent} from "../core/Logs";
 import {recordToArray} from "fudge-lib/dist/methods/Javascript";
-import {FilterConfig, LogsQuery} from "../ui/Endpoint";
+import {LogsQuery} from "../ui/Endpoint";
 
 export namespace LoggyApi {
     const origin = window.location.origin.startsWith("http://localhost")
@@ -16,18 +15,19 @@ export namespace LoggyApi {
     }
 
     export async function getLogs(request: GetLogsRequest): Promise<GetLogsResponse> {
+        console.log("Gettings new logs with request", request)
         const logs = await makeRequest("logs", request)
         return parseLogResponse(logs)
     }
 
     export async function getAnalytics(request: GetAnalyticsRequest): Promise<GetAnalyticsResponse> {
-        const analytics = request.endpoint === "debug"? testAnalyticsResponse : await makeRequest("analytics", request)
+        const analytics = request.endpoint === "debug" ? testAnalyticsResponse : await makeRequest("analytics", request)
         return JSON.parse(analytics)
     }
 
     async function makeRequest(endpoint: string, request: object | undefined): Promise<string> {
-        const response =  (await fetch(`${origin}/__log_viewer__/${endpoint}${encodeObjectToUrl(request)}`))
-        if(response.ok) {
+        const response = (await fetch(`${origin}/__log_viewer__/${endpoint}${encodeObjectToUrl(request)}`))
+        if (response.ok) {
             return response.text()
         } else {
             throw new Error(`Error making request: ${await response.text()}, code: ${response.status}`)
@@ -65,7 +65,7 @@ export interface GetAnalyticsRequest {
     endDate: Dayjs
 }
 
-type GetLogsRequest = LogsQuery & {
+export type GetLogsRequest = LogsQuery & {
     page: number
 }
 // export interface GetLogsRequest {
@@ -81,7 +81,17 @@ type GetLogsRequest = LogsQuery & {
 // Map from day (unix timestamp) to breakdown
 export type GetAnalyticsResponse = Record<string, DayBreakdown>
 
-export interface GetLogsResponse {
+export function isLogsResponseSuccess(response: GetLogsResponse): response is GetLogsResponseSuccess {
+    return "logs" in response
+}
+
+export type GetLogsResponse = GetLogsResponseSuccess | GetLogsResponseSyntaxError
+
+export interface GetLogsResponseSyntaxError {
+    error: string
+}
+
+export interface GetLogsResponseSuccess {
     pageCount: number,
     logs: LogEvent[]
 }

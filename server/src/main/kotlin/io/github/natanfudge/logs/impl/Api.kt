@@ -38,6 +38,7 @@ internal class Router(private val box: Box<LogEventEntity>, private val analytic
                 }
 
             val response = box.getLogs(request)
+            println("Returning $response for request $request")
             call.respondText(json.encodeToString(LogResponse.serializer(), response))
         }
         endpoint("analytics") {
@@ -111,6 +112,8 @@ private val json = Json { encodeDefaults = true }
 
 @Serializable
 internal sealed interface LogResponse {
+    @Serializable
     data class Success(val pageCount: Int, val logs: List<LogEvent>): LogResponse
+    @Serializable
     data class SyntaxError(val error: String): LogResponse
 }

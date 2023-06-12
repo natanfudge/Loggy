@@ -52,6 +52,13 @@ class SearchTest {
             logData("age") { 26 }
             logInfo { "Amar" }
             logData("Brain") { "big" }
+        },
+        builtLog("7") {
+            logData("amEr") {27}
+        },
+        builtLog("8") {
+            logInfo { "inf" }
+            logError(NullPointerException("")) {"amar"}
         }
 
     )
@@ -63,16 +70,19 @@ class SearchTest {
             "hello".assertResultsAre(0, 1)
             "amir".assertResultsAre()
 
-            "level:warn".assertResultsAre(2, 3)
+            "level:warn".assertResultsAre(2, 3, 8)
             "levelExact:warn".assertResultsAre(2)
 
             "age:25".assertResultsAre(5)
 
-            "keepo123 or level:warn".assertResultsAre(0, 2, 3)
+            "keepo123 or level:warn".assertResultsAre(0, 2, 3, 8)
             "age:25 or levelExact:warn".assertResultsAre(2, 5)
 
             "(keepo123 or level:warn) and (age:25 or levelExact:warn)".assertResultsAre(2)
             "age:25 or age:26".assertResultsAre(5, 6)
+            "amer:27".assertResultsAre(7)
+
+            "levelExact:info".assertResultsAre(0,1,4,5,6,7)
         }
 
         println("Did queries in $time ms")

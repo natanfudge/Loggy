@@ -21,10 +21,10 @@ export function LogsTitle(props: {
     const query = props.query
     const endpoint = query.value.endpoint
     const onEndpointValueChange = useCallback((v: string) => query.onChange(({
-        filter: query.value.filter,
+        query: query.value.query,
         endpoint: v
-    })), [query.value.filter])
-    const filterState = mapState(query, (q) => q.filter, (filter) => ({endpoint, filter}))
+    })), [query.value.query])
+    const filterState = mapState(query, (q) => q.query, (filter) => ({endpoint, query: filter}))
     return <Row style={{padding: 10, paddingLeft: isPhone ? undefined : 30}}>
 
         <Column style={{paddingLeft: isPhone ? 10 : undefined, alignSelf: "center", width: isPhone?  "100%": undefined}}>

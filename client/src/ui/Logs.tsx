@@ -27,8 +27,9 @@ function getInitialDayFilterStrings(): { start: string, end: string } {
 }
 
 function getInitialDayFilterString() {
-    const {start, end} = getInitialDayFilterStrings()
-    return `from:${start} to:${end} `
+    return ""
+    // const {start, end} = getInitialDayFilterStrings()
+    // return `from:${start} to:${end} `
 }
 
 
@@ -42,7 +43,7 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
     const screen = useScreenSize()
     const onQueryChange = useCallback((value: LogsQuery) => {
          navigate("/logs/" +( value.endpoint ?? ""))
-        setFilter(value.filter)
+        setFilter(value.query)
     }, [endpoint])
 
     if (endpoints !== undefined) {
@@ -60,7 +61,7 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
         className={styles.logsColumn}>
         <LogsTitle endpoints={endpoints}
                    query={{
-                       value: {endpoint, filter},
+                       value: {endpoint, query: filter},
                        onChange: onQueryChange
                    }}
             // endpoint={{value: endpoint, onChange: (endpoint) => navigate("/logs/" + endpoint)}}
@@ -75,7 +76,7 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
         />
 
         {endpoint !== undefined ?
-            <Endpoint query={{endpoint, filter}}
+            <Endpoint query={{endpoint, query: filter}}
                 // filter={filter} startDay={Day.ofDate(timeRange.startDay)}
                 // endDay={Day.ofDate(timeRange.endDay)}
                       theme={props.theme}

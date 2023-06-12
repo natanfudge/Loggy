@@ -49,6 +49,7 @@ import {LoggingServer} from "../server/LoggingServer";
 import {useScreenSize} from "../utils/ScreenSize";
 import {Day} from "../core/Day";
 import {useNavigate} from "react-router-dom";
+import {isLogsResponseSuccess} from "../server/Api";
 
 export function Endpoint(props: {
     query: LogsQuery,
@@ -60,18 +61,20 @@ export function Endpoint(props: {
     // filter: FilterConfig
 }) {
     const [page, setPage] = useState(0)
+    console.log(`Query: ${props.query.query}`)
     const response = usePromise(
-        LoggingServer.getLogs(props.query), [props.query.endpoint, props.query.filter]
+        LoggingServer.getLogs({...props.query, page}), [props.query.endpoint, props.query.query]
     )
-
+    const isPhone = useScreenSize().isPhone
+    // style =
     if (response === undefined) {
         return <Typography>
             <CircularProgress/>
         </Typography>
-    } else {
+    } else if(isLogsResponseSuccess(response)){
         return <Fragment>
             <List style={{maxHeight: "100%", overflow: "auto"}}>
-                <div style={{width: "fit-content"}}>
+                <div style={{minWidth: isPhone? "100%": 450, width: isPhone? undefined: "fit-content"}}>
                     {response.logs
                         // .filter(log => shouldDisplayLog(log, props.filter))
                         .map((l, i) => <LogEventAccordion key={i} log={l}/>
@@ -87,6 +90,10 @@ export function Endpoint(props: {
                 />
             }
         </Fragment>
+    } else {
+        return <Fragment>
+            Error in query
+        </Fragment>
     }
 }
 
@@ -101,7 +108,7 @@ const NoticableDivider = styled(Divider)(({theme}) => ({
 }));
 
 export interface LogsQuery {
-    filter: string,
+    query: string,
     endpoint: string | undefined
 }
 
@@ -216,7 +223,7 @@ function LogEventAccordion({log}: { log: LogEvent }) {
     const textColor = errored ? theme.palette.error.main : warned ? theme.palette.warning.main : theme.palette.text.primary
     const [expanded, setExpanded] = useState(false);
 
-    return <Accordion expanded={expanded} onChange={(e, newValue) => setExpanded(newValue)}>
+    return <Accordion  expanded={expanded} onChange={(e, newValue) => setExpanded(newValue)}>
         <LogEventSummary expandIcon={<ExpandMore/>} style={{color: textColor}}>
             <LogEventSummaryText log={log} expanded={expanded} textColor={textColor} errored={errored} warned={warned}/>
         </LogEventSummary>

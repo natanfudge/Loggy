@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import {SimplePromiseMemoryCache} from "../ui/SimplePromiseMemoryCache";
 import utc from 'dayjs/plugin/utc'
 import {unixMs} from "../utils/Utils";
-import {GetLogsResponse, LoggyApi, parseLogResponse} from "./Api";
+import {GetLogsRequest, GetLogsResponse, LoggyApi, parseLogResponse} from "./Api";
 import objectSupport from "dayjs/plugin/objectSupport";
 import {Day} from "../core/Day";
 import {Analytics, DayBreakdown} from "../ui/AnalyticsGraph";
@@ -28,10 +28,11 @@ export namespace LoggingServer {
     const endpointCache = new SimplePromiseMemoryCache<string[]>()
 
 
-    export async function getLogs(query: LogsQuery): Promise<GetLogsResponse> {
+    export async function getLogs(query: GetLogsRequest): Promise<GetLogsResponse> {
         if (debugEndpoints.includes(query.endpoint ?? "")) return parseLogResponse(testLogResponse)
         else {
-            return logsCache.get(encodeAsKey(query), () => LoggyApi.getLogs(query))
+            console.log(`Getting logs with key ${encodeAsKey(query)} and query`, query)
+            return logsCache.get(encodeAsKey(query.query, query.endpoint, query.page), () => LoggyApi.getLogs(query))
         }
         // const startDate = startDay.start()
         // const endDate = endDay.end()

@@ -4,22 +4,23 @@ import {AutoCompleteWidthPx, useAutoComplete} from "./Autocomplete";
 import "fudge-lib/dist/extensions/Extensions.js";
 import {AutoCompleteConfig, Completion, completionsEqual} from "./AutocompleteConfig";
 import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
-import {State, usePassedState} from "../../utils/Utils";
+import {State} from "../../utils/Utils";
 
-export function MegaSearchBar(props: { className?: string, config: AutoCompleteConfig, query: State<string>}) {
+export function MegaSearchBar(props: { className?: string, config: AutoCompleteConfig, query: State<string> }) {
     const autocomplete = useAutoComplete(props.query.value, props.config, (submittedValue) => {
         props.query.onChange(submittedValue);
     });
 
 
     return <div className={props.className} style={{position: "relative", alignSelf: "center", width: "100%"}}>
-        <TextField inputRef={autocomplete.inputRef} style={{width: "100%"}} autoComplete={"off"} value={autocomplete.query}
+        <TextField inputRef={autocomplete.inputRef} style={{width: "100%"}} autoComplete={"off"}
+                   value={autocomplete.query}
                    onChange={(e) => autocomplete.setQuery(e.target.value)}
                    onFocus={autocomplete.show} onBlur={autocomplete.hide} spellCheck={false}
         >
         </TextField>
 
-        <span ref = {autocomplete.textHackRef} style = {{position: "fixed", top: 0, left: 0, visibility: "hidden"}}>
+        <span ref={autocomplete.textHackRef} style={{position: "fixed", top: 0, left: 0, visibility: "hidden"}}>
             {autocomplete.query}
         </span>
 
@@ -76,35 +77,42 @@ function NonEmptyAutocompleteContent(props: AutoCompleteContentProps) {
     }, [items, activeItem])
 
     // Go down in selection when down is pressed
-    useKeyboardShortcut("ArrowDown", () => {
-        const index = indexOf(activeItem)
-        // Wrap around when end is reached
-        const newIndex = index < items.length - 1 ? index + 1 : 0
-        // Move visible window down if edge has been reached
-        if (newIndex > lastVisibleIndex) setFirstVisibleIndex(oldStart => oldStart + 1)
-        // In case we have wrapped around to the start - set first visible item accordingly
-        else if (newIndex === 0) setFirstVisibleIndex(0)
+    useKeyboardShortcut({
+        code: "ArrowDown", callback: () => {
+            const index = indexOf(activeItem)
+            // Wrap around when end is reached
+            const newIndex = index < items.length - 1 ? index + 1 : 0
+            // Move visible window down if edge has been reached
+            if (newIndex > lastVisibleIndex) setFirstVisibleIndex(oldStart => oldStart + 1)
+            // In case we have wrapped around to the start - set first visible item accordingly
+            else if (newIndex === 0) setFirstVisibleIndex(0)
 
-        setActiveItem(items.getOrThrow(newIndex))
+            setActiveItem(items.getOrThrow(newIndex))
+        }
     }, [items, activeItem])
 
     // Go up in selection when up is pressed
-    useKeyboardShortcut("ArrowUp", () => {
-        const index = indexOf(activeItem)
-        // Wrap around when end is reached
-        const newIndex = index > 0 ? index - 1 : items.length - 1
-        // Move visible window up if edge has been reached
-        if (newIndex < firstVisibleIndex) setFirstVisibleIndex(oldStart => oldStart - 1)
-        // In case we have wrapped around to the end - set first visible item accordingly
-        else if (newIndex === items.length - 1) setFirstVisibleIndex(items.length - MaxItems)
+    useKeyboardShortcut({
+        code: "ArrowUp", callback: () => {
+            const index = indexOf(activeItem)
+            // Wrap around when end is reached
+            const newIndex = index > 0 ? index - 1 : items.length - 1
+            // Move visible window up if edge has been reached
+            if (newIndex < firstVisibleIndex) setFirstVisibleIndex(oldStart => oldStart - 1)
+            // In case we have wrapped around to the end - set first visible item accordingly
+            else if (newIndex === items.length - 1) setFirstVisibleIndex(items.length - MaxItems)
 
-        setActiveItem(items.getOrThrow(newIndex))
+            setActiveItem(items.getOrThrow(newIndex))
+        }
     }, [items, activeItem])
 
-    useKeyboardShortcut("Enter", () => {
-        const index = indexOf(activeItem)
-        props.onSelectItem(items.getOrThrow(index))
-    }, [items, activeItem], undefined,false,false)
+    useKeyboardShortcut({
+        code: "Enter", callback: () => {
+            console.log("Complete Enter")
+            const index = indexOf(activeItem)
+            props.onSelectItem(items.getOrThrow(index))
+        }
+    }, [items, activeItem])
 
     const visibleItems = items.filter((_, i) => i >= firstVisibleIndex && i <= lastVisibleIndex)
 

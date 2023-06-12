@@ -37,6 +37,11 @@ export interface AutoComplete {
 
 export const AutoCompleteWidthPx = 300
 
+//TODO: Finding search results is buggy and bad.
+// 2. When switching between endpoints it uses the query of the old endpoint instead of the new one
+// 3. Results seem to not update sometimes
+// 4. When we do a hot reload / refresh it starts from the empty query instead of the current one
+// 5. First time i press enter the query is just gone
 
 export function useAutoComplete(value: string, config: AutoCompleteConfig, onSubmit: (query: string) => void): AutoComplete {
     const [query, setQuery] = usePersistentState(config.defaultValue, `autocomplete-${config.key}`)
@@ -85,20 +90,27 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
 
 
     function useShortcuts() {
-        useKeyboardShortcut("Space", () => {
-            // CTRL + Space: show completions now
-            setForceCompletions(true)
-        }, [], textAreaRef, true)
+        useKeyboardShortcut({
+            code: "Space", callback: () => {
+                // CTRL + Space: show completions now
+                setForceCompletions(true)
+            }, target: textAreaRef, ctrl: true
+        })
 
-        useKeyboardShortcut("Space", () => {
-            // If the user inserts a space stop forcing completions
-            setForceCompletions(false)
-            onSubmit(query)
-        }, [], textAreaRef, false, false)
+        useKeyboardShortcut({
+            code: "Space", callback: () => {
+                // If the user inserts a space stop forcing completions
+                setForceCompletions(false)
+                onSubmit(query)
+            }, target: textAreaRef, preventDefault: false
+        }, [query])
 
-        // useKeyboardShortcut("Enter", () => {
-        //     onSubmit(query)
-        // }, [], textAreaRef, false, false)
+        useKeyboardShortcut({
+            code: "Enter", callback: () => {
+                console.log("Submit enter")
+                onSubmit(query)
+            }, target: textAreaRef,
+        })
     }
 
     function complete(completion: Completion) {
@@ -264,8 +276,9 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
             range.setEndAfter(textNodes)
         }
 
-
-        const textWidth = range.getClientRects()[0].width
+        const rect = range.getClientRects()[0]
+        if (rect === undefined) return 0;
+        const textWidth = rect.width
         const paddingAndMargin = parseDistanceValue(textAreaStyle.paddingLeft) + parseDistanceValue(textAreaStyle.marginLeft)
         return textWidth + paddingAndMargin
     }

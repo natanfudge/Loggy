@@ -71,15 +71,12 @@ private fun LogFilter.toPredicate(): (LogEvent) -> Boolean = when (this) {
     }
 
     is LogFilter.KeyValue -> ({ logEvent ->
-        logEvent.logs.any { it is LogLine.Detail && it.key == key && it.value == value }
+        logEvent.logs.any { it is LogLine.Detail && it.key.equals(key, ignoreCase = true) && it.value.equals(value, ignoreCase = true)}
     })
 
     is LogFilter.Severity -> ({ logEvent ->
-        logEvent.logs.any {
-            // Default severity: info
-            val level = if (it is LogLine.Message) it.severity else LogLine.Severity.Info
-            if (exact) level == severity else level.level >= severity.level
-        }
+        val logEventSeverity = logEvent.getSeverity()
+        if (exact) logEventSeverity == this.severity else logEventSeverity.level >= this.severity.level
     })
 
     is LogFilter.Text -> ({ logEvent ->
