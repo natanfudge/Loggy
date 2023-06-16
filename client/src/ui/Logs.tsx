@@ -9,6 +9,7 @@ import {useNavigate} from "react-router-dom";
 import {ThemeState} from "./App";
 import styles from "./css/loggy.module.css"
 import {LogsTitle} from "./LogsTitle";
+import {usePersistentState} from "../utils-proposals/collections/persistance/PersistantValue";
 
 export const initialFilter = getInitialDayFilterString()
 
@@ -37,13 +38,13 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
     // Changed when a refresh is requested, to rerun getEndpoints()
     const [refreshMarker, setRefreshMarker] = useState(false)
     const endpoints = debugEndpoints.includes(props.endpoint ?? "") ? debugEndpoints : usePromise(LoggingServer.getEndpoints(), [])
-    const [filter, setFilter] = useState(initialFilter)
     const endpoint = props.endpoint ?? (endpoints !== undefined ? endpoints[0] : undefined)
+    const [queryString, setQueryString] = usePersistentState(initialFilter, `query-string-${endpoint}`)
     const navigate = useNavigate()
     const screen = useScreenSize()
     const onQueryChange = useCallback((value: LogsQuery) => {
-         navigate("/logs/" +( value.endpoint ?? ""))
-        setFilter(value.query)
+        navigate("/logs/" + (value.endpoint ?? ""))
+        if (value.endpoint === endpoint) setQueryString(value.query)
     }, [endpoint])
 
     if (endpoints !== undefined) {
@@ -61,7 +62,7 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
         className={styles.logsColumn}>
         <LogsTitle endpoints={endpoints}
                    query={{
-                       value: {endpoint, query: filter},
+                       value: {endpoint, query: queryString},
                        onChange: onQueryChange
                    }}
             // endpoint={{value: endpoint, onChange: (endpoint) => navigate("/logs/" + endpoint)}}
@@ -76,7 +77,7 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
         />
 
         {endpoint !== undefined ?
-            <Endpoint query={{endpoint, query: filter}}
+            <Endpoint query={{endpoint, query: queryString}}
                 // filter={filter} startDay={Day.ofDate(timeRange.startDay)}
                 // endDay={Day.ofDate(timeRange.endDay)}
                       theme={props.theme}

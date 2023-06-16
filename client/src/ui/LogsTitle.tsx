@@ -20,10 +20,12 @@ export function LogsTitle(props: {
     const isPhone = useScreenSize().isPhone
     const query = props.query
     const endpoint = query.value.endpoint
+    const queryString = query.value.query
     const onEndpointValueChange = useCallback((v: string) => query.onChange(({
-        query: query.value.query,
+        query: queryString,
         endpoint: v
-    })), [query.value.query])
+    })), [queryString])
+
     const filterState = mapState(query, (q) => q.query, (filter) => ({endpoint, query: filter}))
     return <Row style={{padding: 10, paddingLeft: isPhone ? undefined : 30}}>
 
@@ -47,7 +49,7 @@ export function LogsTitle(props: {
                 </IconButton>
                 {endpoint !== undefined && <PaddedStatsButton endpoint={endpoint}/>}
             </Row>
-            {isPhone && <LoggySearchBar defaultValue={initialFilter} endpoint={endpoint ?? ""} query={filterState}/>}
+            {isPhone && <LoggySearchBar query={filterState}/>}
             {/*<NoticableDivider style={{marginTop: -1}}/>*/}
             {/*{isPhone && <FilterConfigSelection row={false} config={props.filter} setConfig={props.setFilter}/>}*/}
             {/*{isPhone && <TimeRangeSelector state={props.timeRange} row={true}/>}*/}
@@ -58,7 +60,7 @@ export function LogsTitle(props: {
 
 
         {!isPhone && <Fragment>
-            <LoggySearchBar defaultValue={initialFilter} endpoint={endpoint ?? ""} query={filterState}/>
+            <LoggySearchBar query={filterState}/>
             {/*<FilterConfigSelection row={true} config={props.filter} setConfig={props.setFilter}/>*/}
             <ThemeSwitch themeState={props.theme}/>
         </Fragment>}

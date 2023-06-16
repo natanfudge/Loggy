@@ -34,13 +34,13 @@ function dateCompletable(prefix: string) {
 const loggyCompletables = [severityCompletable, dateCompletable("from"), dateCompletable("to")]
 
 
-export function LoggySearchBar(props: { query: State<string>, endpoint: string, defaultValue: string }) {
+export function LoggySearchBar(props: { query: State<string>}) {
     const config: AutoCompleteConfig = {
-        key: props.endpoint,
+        // key: props.endpoint,
         completeables: loggyCompletables,
-        defaultValue: props.defaultValue
+        defaultValue: props.query.value
     }
-    return <MegaSearchBar className={styles.loggySearchBar} config={config} query={props.query}/>
+    return <MegaSearchBar className={styles.loggySearchBar} config={config} onSubmit={(value) => props.query.onChange(value)}/>
 }
 
 const PaddedSearchBar = styled(MegaSearchBar)`

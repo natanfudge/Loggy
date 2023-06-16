@@ -31,7 +31,6 @@ export namespace LoggingServer {
     export async function getLogs(query: GetLogsRequest): Promise<GetLogsResponse> {
         if (debugEndpoints.includes(query.endpoint ?? "")) return parseLogResponse(testLogResponse)
         else {
-            console.log(`Getting logs with key ${encodeAsKey(query)} and query`, query)
             return logsCache.get(encodeAsKey(query.query, query.endpoint, query.page), () => LoggyApi.getLogs(query))
         }
         // const startDate = startDay.start()

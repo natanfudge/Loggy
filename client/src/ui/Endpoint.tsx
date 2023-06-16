@@ -61,7 +61,6 @@ export function Endpoint(props: {
     // filter: FilterConfig
 }) {
     const [page, setPage] = useState(0)
-    console.log(`Query: ${props.query.query}`)
     const response = usePromise(
         LoggingServer.getLogs({...props.query, page}), [props.query.endpoint, props.query.query]
     )

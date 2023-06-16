@@ -38,14 +38,17 @@ export interface AutoComplete {
 export const AutoCompleteWidthPx = 300
 
 //TODO: Finding search results is buggy and bad.
-// 2. When switching between endpoints it uses the query of the old endpoint instead of the new one
-// 3. Results seem to not update sometimes
-// 4. When we do a hot reload / refresh it starts from the empty query instead of the current one
+// 2. When I autocomplete it just removes all results instead of searching
+// 3. pressing ctrl+space doens't show completions
 // 5. First time i press enter the query is just gone
+// 6. expand from/to autocompletion
+//7. add indicator that search was not submitted
 
-export function useAutoComplete(value: string, config: AutoCompleteConfig, onSubmit: (query: string) => void): AutoComplete {
-    const [query, setQuery] = usePersistentState(config.defaultValue, `autocomplete-${config.key}`)
-    // const [query, setQuery] = [value.value, value.onChange]
+export function useAutoComplete(config: AutoCompleteConfig, onSubmit: (query: string) => void): AutoComplete {
+    // we hold a separate state, because a new value is submitted only sometimes, and we need to take care of every single character change
+    // This value is aware of every character change, the input value and onSubmit is only aware of submission changes (Enter pressed, lost focus, etc)
+    const [query, setQuery] = useState(config.defaultValue)
+
     // Tracks whether ctrl+space was used to show completions
     const [forceCompletions, setForceCompletions] = useState(false)
     const [shown, setShown] = useState(false)
@@ -107,7 +110,6 @@ export function useAutoComplete(value: string, config: AutoCompleteConfig, onSub
 
         useKeyboardShortcut({
             code: "Enter", callback: () => {
-                console.log("Submit enter")
                 onSubmit(query)
             }, target: textAreaRef,
         })

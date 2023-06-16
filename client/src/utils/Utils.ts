@@ -51,7 +51,6 @@ export function timeToString(date: Dayjs): string {
 }
 
 export function simpleTimeToString(date: Dayjs): string {
-    // console.log("Date: " + typeof date)
     return `${twoChars(date.hour())}:${twoChars(date.minute())}`
 }
 

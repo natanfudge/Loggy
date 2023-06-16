@@ -6,7 +6,7 @@ export function useKeyboardShortcut(config: KeyboardShortcutConfig, deps?: unkno
         return () => {
             shortcut.unregister()
         }
-    }, [...Object.keys(config), ...(deps ?? [])])
+    }, [...Object.values(config), ...(deps ?? [])])
 
 
 }
@@ -17,6 +17,7 @@ export function useKeyboardShortcut(config: KeyboardShortcutConfig, deps?: unkno
 export function initKeyboardShortcuts() {
     const handleKeyPress = (event: KeyboardEvent) => {
         const shortcuts = keyboardShortcuts[event.code]
+        if (shortcuts === undefined) return
         shortcuts.sort((shortcut1, shortcut2) => {
             // Without the minus it will be lowest priority comes first. With minus it's highest priority comes first.
             return -((shortcut1.config.priority ?? 0) - (shortcut2.config.priority ?? 0));

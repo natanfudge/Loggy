@@ -1,9 +1,5 @@
 export interface AutoCompleteConfig {
     completeables: Completeable[]
-    /**
-     * The query will be saved according to the key. Use different keys to store the query for different scenarios.
-     */
-    key: string
 
     defaultValue: string
 }

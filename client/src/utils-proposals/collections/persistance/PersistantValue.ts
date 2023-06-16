@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useLayoutEffect, useState} from "react";
 
 export class PersistentValue {
     private readonly key: string
@@ -6,6 +6,7 @@ export class PersistentValue {
     constructor(key: string) {
         this.key = key;
     }
+    //TODO: consider making in-memory cache
 
     getValue(): string | null {
         return localStorage.getItem(this.key)
@@ -19,9 +20,10 @@ export class PersistentValue {
 export function usePersistentState(defaultValue: string, key: string): [string, (value: string) => void] {
     const persistent = new PersistentValue(key)
     const [value, setValue] = useState(persistent.getValue() ?? defaultValue)
-    useEffect(() => {
-        setValue(persistent.getValue() ?? defaultValue)
-    }, [key])
+    // useLayoutEffect(() => {
+    //     setValue(persistent.getValue() ?? defaultValue)
+    // }, [key, defaultValue])
+
     return [value, (newValue) => {
         setValue(newValue)
         persistent.setValue(newValue)

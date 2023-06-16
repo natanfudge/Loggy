@@ -160,7 +160,7 @@ export interface ThemeState {
 
 function RoutedApp(props: { theme: ThemeState }) {
     return <Routes>
-        <Route path="/logs/" element={<Logs theme={props.theme} endpoint={undefined}/>}/>
+        <Route path="/logs/" element={<Logs key = {undefined} theme={props.theme} endpoint={undefined}/>}/>
         <Route path="/logs/:endpoint" element={<RoutedLogs theme={props.theme}/>}/>
         <Route path="/logs/:endpoint/stats" element={<RoutedAnalytics theme={props.theme}/>}/>
         <Route path="*" element={"Nothing Here"}/>
@@ -178,7 +178,7 @@ function Page({Content}: { Content: React.FC<PageContents> }) {
 }
 
 function RoutedLogs(props: { theme: ThemeState }) {
-    return <Page Content={({endpoint}) => <Logs theme={props.theme} endpoint={endpoint}/>}/>
+    return <Page Content={({endpoint}) => <Logs key = {endpoint} theme={props.theme} endpoint={endpoint}/>}/>
 }
 
 function RoutedAnalytics(props: {theme: ThemeState}) {

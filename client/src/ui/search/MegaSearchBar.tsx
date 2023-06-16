@@ -6,9 +6,15 @@ import {AutoCompleteConfig, Completion, completionsEqual} from "./AutocompleteCo
 import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
 import {State} from "../../utils/Utils";
 
-export function MegaSearchBar(props: { className?: string, config: AutoCompleteConfig, query: State<string> }) {
-    const autocomplete = useAutoComplete(props.query.value, props.config, (submittedValue) => {
-        props.query.onChange(submittedValue);
+interface MegaSearchBarProps {
+    className? :string,
+    config: AutoCompleteConfig,
+    onSubmit: (query: string) => void
+}
+
+export function MegaSearchBar(props: MegaSearchBarProps) {
+    const autocomplete = useAutoComplete(props.config, (submittedValue) => {
+        props.onSubmit(submittedValue)
     });
 
 
@@ -108,7 +114,6 @@ function NonEmptyAutocompleteContent(props: AutoCompleteContentProps) {
 
     useKeyboardShortcut({
         code: "Enter", callback: () => {
-            console.log("Complete Enter")
             const index = indexOf(activeItem)
             props.onSelectItem(items.getOrThrow(index))
         }

@@ -61,8 +61,6 @@ function analyticsToDatasets(analytics: Analytics, theme: Theme): ChartData<"lin
     const dayToBreakdown = StaticHashMapFromPairArray(daysSorted)
     const allDays = daysBetween(daysSorted.first()[0], daysSorted.last()[0])
 
-    // console.log("Days: " + JSON.stringify(allDays))
-
     const labels = allDays.map(day => day.dateString())
 
     // This accounts for days with no data as well, giving them the value of 0.

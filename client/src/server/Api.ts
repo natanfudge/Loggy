@@ -15,7 +15,6 @@ export namespace LoggyApi {
     }
 
     export async function getLogs(request: GetLogsRequest): Promise<GetLogsResponse> {
-        console.log("Gettings new logs with request", request)
         const logs = await makeRequest("logs", request)
         return parseLogResponse(logs)
     }
