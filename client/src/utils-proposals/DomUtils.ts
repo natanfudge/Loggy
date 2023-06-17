@@ -22,18 +22,23 @@ export function initKeyboardShortcuts() {
             // Without the minus it will be lowest priority comes first. With minus it's highest priority comes first.
             return -((shortcut1.config.priority ?? 0) - (shortcut2.config.priority ?? 0));
         })
+        let firstShortcut = true;
         // Runs the high priority shortcuts first
         for (const shortcut of shortcuts) {
+            // Ignore a shortcut if it was overridden (a higher priority shortcut was run before)
+            if (!firstShortcut && shortcut.config.overrideable === true) continue
             const config = shortcut.config
+            const requiresCtrl = config.ctrl === true
             if (
                 // Require requested target
                 (config.target === undefined || config.target?.current === document.activeElement)
-                // Require control if requested
-                && (config.ctrl === undefined || event.ctrlKey)
+                // Require control if requested (if ctrl is not required and ctrl is pressed, the hotkey is not fired)
+                && (requiresCtrl === event.ctrlKey)
             ) {
                 if (config.preventDefault === undefined || config.preventDefault) event.preventDefault()
                 config.callback()
             }
+            firstShortcut = false
         }
         // const sorted = shortcuts.length === 1? shortcuts: shortcuts.sor
         // if (event.code === code && (target === undefined || target?.current === document.activeElement) && (ctrl === undefined || event.ctrlKey === ctrl)) {
@@ -71,7 +76,11 @@ interface KeyboardShortcutConfig {
     /**
      * If true, what normally happens when pressing this shortcut will not occur.
      */
-    preventDefault?: boolean
+    preventDefault?: boolean,
+    /**
+     * If true and there are other hotkeys with the same key with a higher priority, a click won't trigger.
+     */
+    overrideable?: boolean
 }
 
 class KeyboardShortcut {

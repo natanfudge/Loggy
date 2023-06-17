@@ -1,7 +1,6 @@
 import {RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import {AutoCompleteConfig, Completion} from "./AutocompleteConfig";
 import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
-import {usePersistentState} from "../../utils-proposals/collections/persistance/PersistantValue";
 
 export type Query = string
 
@@ -38,11 +37,11 @@ export interface AutoComplete {
 export const AutoCompleteWidthPx = 300
 
 //TODO: Finding search results is buggy and bad.
-// 2. When I autocomplete it just removes all results instead of searching
-// 3. pressing ctrl+space doens't show completions
-// 5. First time i press enter the query is just gone
-// 6. expand from/to autocompletion
-//7. add indicator that search was not submitted
+// 1. pager is not working
+// 2. seems like it's ordering by reverse order - we need to show latest first
+// 3. add indicator that search was not submitted
+// 4. if we type from:lastw instead of from:lastW the completion character-based progress thing just gives up and doesn't mark up any character.
+//   it should also allow a different case when marking up completed characters.
 
 export function useAutoComplete(config: AutoCompleteConfig, onSubmit: (query: string) => void): AutoComplete {
     // we hold a separate state, because a new value is submitted only sometimes, and we need to take care of every single character change
@@ -95,6 +94,7 @@ export function useAutoComplete(config: AutoCompleteConfig, onSubmit: (query: st
     function useShortcuts() {
         useKeyboardShortcut({
             code: "Space", callback: () => {
+                console.log("Forced true")
                 // CTRL + Space: show completions now
                 setForceCompletions(true)
             }, target: textAreaRef, ctrl: true
@@ -109,6 +109,10 @@ export function useAutoComplete(config: AutoCompleteConfig, onSubmit: (query: st
         }, [query])
 
         useKeyboardShortcut({
+            // Make sure this doesn't run when we autocomplete (using the same key - enter)
+            priority: -1,
+            overrideable: true,
+            // Enter: submit text. Only relevant when we are not autocompleting something.
             code: "Enter", callback: () => {
                 onSubmit(query)
             }, target: textAreaRef,
@@ -118,6 +122,7 @@ export function useAutoComplete(config: AutoCompleteConfig, onSubmit: (query: st
     function complete(completion: Completion) {
         const {newText, completionEndPosition} = completeWith(completion)
         setQuery(newText)
+        console.log(`Complete newText = ${newText}`)
         // Advance caret to the end of the completion
         forceUpdateCaretPosition(completionEndPosition)
         setForceCompletions(false)

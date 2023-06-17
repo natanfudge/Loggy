@@ -112,6 +112,7 @@ function NonEmptyAutocompleteContent(props: AutoCompleteContentProps) {
         }
     }, [items, activeItem])
 
+    // Complete with selected item when enter is pressed
     useKeyboardShortcut({
         code: "Enter", callback: () => {
             const index = indexOf(activeItem)

@@ -23,6 +23,7 @@ class QueryParseTest {
         "level:info".assertParse(Severity(LogLine.Severity.Info, exact = false))
         "amar".assertParse(Text("amar"))
         "from:lastweek to:yesterday".assertParse(from = nowGmt().startOfDay().minusWeeks(1), to = nowGmt().endOfDay().minusDays(1))
+        "from:1/1/23".assertParse(from = ZonedDateTime.of(2023,1,1,0,0,0,0, GMTZoneId))
         "one and two".assertParse(Text("one"), Text("two"))
         "one or two".assertParse(Or(Text("one"), Text("two")))
         "not two".assertParse(Not(Text("two")))

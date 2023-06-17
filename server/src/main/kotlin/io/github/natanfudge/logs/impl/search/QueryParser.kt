@@ -215,9 +215,11 @@ public object QueryParser {
                 val day = dayString.parseInt(tokenName = "day", time).or { return it }
                 val month = monthString?.parseInt(tokenName = "month", time)?.or { return it } ?: defaultMonth()
                 val year = yearString?.parseInt(tokenName = "year", time)?.or { return it } ?: defaultYear()
+                // Allow typing years of the sort '23' to mean 2023
+                val actualYear = if (year < 1000) year + 2000 else year
 
                 try {
-                    Ok(ZonedDateTime.of(year, month, day, 0, 0, 0, 0, GMTZoneId))
+                    Ok(ZonedDateTime.of(actualYear, month, day, 0, 0, 0, 0, GMTZoneId))
                 } catch (e: DateTimeException) {
                     Err("Invalid date ${day}/${month}/${year}")
                 }
