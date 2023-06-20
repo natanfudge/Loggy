@@ -1,12 +1,13 @@
-import {State} from "../../utils/Utils";
 import {MegaSearchBar} from "./MegaSearchBar";
 import {AutoCompleteConfig, Completion, syncCompletable} from "./AutocompleteConfig";
 import {AllSeverities} from "../../core/Logs";
 import {styled} from "@mui/material";
 import styles from "./search.module.css"
+import {State} from "fudge-lib/dist/state/State";
 
 const AllDateOptions = [
     "today",
+    "yesterday",
     "lastWeek",
     "lastMonth"
 ]
@@ -81,7 +82,7 @@ export function LoggySearchBar(props: { query: State<string> }) {
         defaultValue: props.query.value
     }
     return <MegaSearchBar className={styles.loggySearchBar} config={config}
-                          onSubmit={(value) => props.query.onChange(value)}/>
+                          onSubmit={(value) => props.query.setValue(value)}/>
 }
 
 const PaddedSearchBar = styled(MegaSearchBar)`
@@ -89,18 +90,3 @@ const PaddedSearchBar = styled(MegaSearchBar)`
   padding-left: 10px;
 `
 
-// export function LoggySearchBarTest() {
-//     const query = usePassedState("level:info ")
-//     return <div style={{display: "flex", flexDirection: "column"}}>
-//         <div style={{padding: "10px 200px"}}>
-//             <MegaSearchBar config={loggyCompletables} query={query}/>
-//         </div>
-//
-//         <div>
-//             Lorem ipsum dolor sit amet, consectetur adipisicing elit. A accusantium ad alias, architecto doloremque
-//             doloribus, earum expedita fuga nisi optio perspiciatis quis rerum vitae. Assumenda cupiditate debitis
-//             ducimus, est eveniet facere facilis illo molestiae nam nobis. Assumenda ducimus earum eligendi fugiat illum
-//             iste libero, molestiae natus possimus recusandae vitae voluptatem.
-//         </div>
-//     </div>
-// }

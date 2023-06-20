@@ -4,7 +4,6 @@ import {AutoCompleteWidthPx, useAutoComplete} from "./Autocomplete";
 import "fudge-lib/dist/extensions/Extensions.js";
 import {AutoCompleteConfig, Completion, completionsEqual} from "./AutocompleteConfig";
 import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
-import {State} from "../../utils/Utils";
 
 interface MegaSearchBarProps {
     className? :string,

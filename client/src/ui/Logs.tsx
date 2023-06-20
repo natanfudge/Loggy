@@ -1,6 +1,6 @@
 import {CircularProgress, Typography} from "@mui/material";
-import {Fragment, useCallback, useState} from "react";
-import {Endpoint, LogsQuery, ThemeSwitch} from "./Endpoint";
+import {Fragment, useState} from "react";
+import {Endpoint, ThemeSwitch} from "./Endpoint";
 import {Day} from "../core/Day";
 import {debugEndpoints, LoggingServer} from "../server/LoggingServer";
 import {Column, usePromise} from "../utils/Utils";
@@ -9,7 +9,8 @@ import {useNavigate} from "react-router-dom";
 import {ThemeState} from "./App";
 import styles from "./css/loggy.module.css"
 import {LogsTitle} from "./LogsTitle";
-import {usePersistentState} from "../utils-proposals/collections/persistance/PersistantValue";
+import {usePersistentState} from "fudge-lib/dist/state/PersistentState";
+import {useStateObject} from "fudge-lib/dist/state/State";
 
 export const initialFilter = getInitialDayFilterString()
 
@@ -35,17 +36,15 @@ function getInitialDayFilterString() {
 
 
 export function Logs(props: { theme: ThemeState, endpoint: string | undefined }) {
-    // Changed when a refresh is requested, to rerun getEndpoints()
-    const [refreshMarker, setRefreshMarker] = useState(false)
-    const endpoints = debugEndpoints.includes(props.endpoint ?? "") ? debugEndpoints : usePromise(LoggingServer.getEndpoints(), [])
-    const endpoint = props.endpoint ?? (endpoints !== undefined ? endpoints[0] : undefined)
-    const [queryString, setQueryString] = usePersistentState(initialFilter, `query-string-${endpoint}`)
     const navigate = useNavigate()
     const screen = useScreenSize()
-    const onQueryChange = useCallback((value: LogsQuery) => {
-        navigate("/logs/" + (value.endpoint ?? ""))
-        if (value.endpoint === endpoint) setQueryString(value.query)
-    }, [endpoint])
+    const [refreshMarker, setRefreshMarker] = useState(false) // Changed when a refresh is requested, to rerun getEndpoints()
+    const page = useStateObject(0)
+    const endpoints = useEndpoints(props.endpoint)
+    const endpoint = activeEndpoint(props.endpoint, endpoints)
+    const query = usePersistentState(`query-string-${endpoint}`, initialFilter)
+    const endpointQuery = query.mapType(q => ({query: q, endpoint}), eq => eq.query)
+        .onSet(({endpoint}) => navigate("/logs/" + (endpoint ?? "")))
 
     if (endpoints !== undefined) {
         if (endpoints.length === 0) {
@@ -58,30 +57,19 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
             </Typography>
         }
     }
-    return <Column /*style={{height: "100%", width: "100%", justifyContent: "space-between"}} */
-        className={styles.logsColumn}>
+    return <Column className={styles.logsColumn}>
         <LogsTitle endpoints={endpoints}
-                   query={{
-                       value: {endpoint, query: queryString},
-                       onChange: onQueryChange
-                   }}
-            // endpoint={{value: endpoint, onChange: (endpoint) => navigate("/logs/" + endpoint)}}
-            // timeRange={{value: timeRange, onChange: setTimeRange}}
+                   endpointQuery={endpointQuery}
                    theme={props.theme}
                    onRefresh={() => {
-                       LoggingServer.refreshLog()
+                       LoggingServer.refreshLog({page: page.value, ...endpointQuery.value})
                        setRefreshMarker(old => !old)
                    }}
-            // filter={filter}
-            // setFilter={setFilter}
         />
 
         {endpoint !== undefined ?
-            <Endpoint query={{endpoint, query: queryString}}
-                // filter={filter} startDay={Day.ofDate(timeRange.startDay)}
-                // endDay={Day.ofDate(timeRange.endDay)}
+            <Endpoint page={page} eQuery={endpointQuery.value}
                       theme={props.theme}
-                // endpoint={endpoint}
                       refreshMarker={refreshMarker}/>
             : <CircularProgress/>
         }
@@ -93,6 +81,12 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
         </Fragment>}
 
     </Column>
-    {/*{!screen.isPhone && <TimeRangeSelector state={{value: timeRange, onChange: setTimeRange}}/>}*/
-    }
+}
+
+function useEndpoints(endpoint: string | undefined) {
+    return debugEndpoints.includes(endpoint ?? "") ? debugEndpoints : usePromise(LoggingServer.getEndpoints(), []);
+}
+
+function activeEndpoint(endpoint: string | undefined, endpoints: string[] | undefined) {
+    return endpoint ?? (endpoints !== undefined ? endpoints[0] : undefined);
 }

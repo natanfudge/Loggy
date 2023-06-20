@@ -1,19 +1,20 @@
-import React, {useEffect, useState} from "react";
+import {useEffect, useState} from "react";
 import styled from "@emotion/styled";
 import {Dayjs} from "dayjs";
 
 export const Row = styled.div`
-    display: flex;
+  display: flex;
   flex-direction: row;
 `
 export const Column = styled.div`
-    display: flex;
+  display: flex;
   flex-direction: column;
 `
 
 export function isEmptySpace(char: string): boolean {
     return /\s/.test(char) || char === ""
 }
+
 export function usePromise<T>(promise: Promise<NonNullable<T>> | T, deps: unknown[]): T | undefined {
     const [result, setResult] = useState<T | undefined>(undefined)
     useEffect(() => {
@@ -79,25 +80,25 @@ export function addAlphaToColor(color: string, alpha: number): string {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-export interface State<T> {
-    value: T
-    onChange: (value: T) => void
-}
-
-export function mapState<T,K>(old: State<T>, forward: (value: T) => K, backward: (value: K) => T): State<K> {
-    return {
-        value: forward(old.value),
-        onChange: (value) => {
-            old.onChange(backward(value))
-        }
-    }
-}
-
-
-export function usePassedState<T>(initial: T): State<T> {
-    const [value, setValue] = useState(initial)
-    return {value: value, onChange: setValue}
-}
+// export interface State<T> {
+//     value: T
+//     onChange: (value: T) => void
+// }
+//
+// export function mapState<T,K>(old: State<T>, forward: (value: T) => K, backward: (value: K) => T): State<K> {
+//     return {
+//         value: forward(old.value),
+//         onChange: (value) => {
+//             old.onChange(backward(value))
+//         }
+//     }
+// }
+//
+//
+// export function usePassedState<T>(initial: T): State<T> {
+//     const [value, setValue] = useState(initial)
+//     return {value: value, onChange: setValue}
+// }
 
 export function isDayJs(obj: unknown): obj is Dayjs {
     return obj !== null && typeof obj === "object" && "millisecond" in obj;

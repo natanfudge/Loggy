@@ -1,13 +1,4 @@
-import {
-    addAlphaToColor,
-    Column,
-    millsecondTimeToString,
-    Row,
-    State,
-    timeToString,
-    unixMs,
-    usePromise
-} from "../utils/Utils";
+import {addAlphaToColor, Column, millsecondTimeToString, Row, timeToString, unixMs, usePromise} from "../utils/Utils";
 import {
     Accordion,
     AccordionDetails,
@@ -17,7 +8,6 @@ import {
     Divider,
     FormControlLabel,
     FormGroup,
-    IconButton,
     List,
     Pagination,
     styled,
@@ -37,43 +27,41 @@ import {
     LogLine,
     MessageLog
 } from "../core/Logs";
-import {ExpandMore, ShowChart} from "@mui/icons-material";
+import {ExpandMore} from "@mui/icons-material";
 import {LongRightArrow} from "./LongRightArrow";
 import React, {CSSProperties, Fragment, useState} from "react";
 import {KeyValueTable} from "./KeyValueTable";
 import {ThemeState, TimeRange} from "./App";
 import {DesktopDatePicker} from "@mui/x-date-pickers";
 import {Dayjs} from "dayjs";
-import {Dropdown} from "./UiUtils";
 import {LoggingServer} from "../server/LoggingServer";
 import {useScreenSize} from "../utils/ScreenSize";
 import {Day} from "../core/Day";
-import {useNavigate} from "react-router-dom";
 import {isLogsResponseSuccess} from "../server/Api";
+import {State} from "fudge-lib/dist/state/State";
 
 export function Endpoint(props: {
-    query: LogsQuery,
+    page: State<number>,
+    eQuery: EndpointQuery,
     theme: ThemeState,
-    // endpoint: string,
-    // startDay: Day,
-    // endDay: Day,
     refreshMarker: boolean,
-    // filter: FilterConfig
 }) {
-    const [page, setPage] = useState(0)
+    const [page, setPage] = props.page.destruct()
+    // const [page, setPage] = useState(0)
     const response = usePromise(
-        LoggingServer.getLogs({...props.query, page}), [props.query.endpoint, props.query.query]
+        LoggingServer.getLogs({...props.eQuery, page}), [props.eQuery.endpoint, props.eQuery.query]
     )
     const isPhone = useScreenSize().isPhone
-    // style =
+
     if (response === undefined) {
         return <Typography>
             <CircularProgress/>
         </Typography>
-    } else if(isLogsResponseSuccess(response)){
+    } else if (isLogsResponseSuccess(response)) {
+        // console.log(`Time of first log in endpoint is ${response.logs[0].startTime}`)
         return <Fragment>
             <List style={{maxHeight: "100%", overflow: "auto"}}>
-                <div style={{minWidth: isPhone? "100%": 450, width: isPhone? undefined: "fit-content"}}>
+                <div style={{minWidth: isPhone ? "100%" : 450, width: isPhone ? undefined : "fit-content"}}>
                     {response.logs
                         // .filter(log => shouldDisplayLog(log, props.filter))
                         .map((l, i) => <LogEventAccordion key={i} log={l}/>
@@ -106,41 +94,30 @@ const NoticableDivider = styled(Divider)(({theme}) => ({
     backgroundColor: theme.palette.text.primary
 }));
 
-export interface LogsQuery {
+export interface EndpointQuery {
     query: string,
     endpoint: string | undefined
 }
 
 
-
-
-
-
-
+//TODO: test this in AnalyticsPage
 export function TimeRangeSelector(props: {
     state: State<TimeRange>,
     className?: string,
     style?: CSSProperties,
     row?: boolean
 }) {
-    const timeRange = props.state.value
     const screen = useScreenSize()
     const isRow = props.row ?? false
     return <Column style={{padding: screen.isPhone ? 0 : 10, flexDirection: isRow ? "row" : "column", ...props.style}}
                    className={props.className}>
         <Row style={{paddingBottom: isRow ? 0 : 10}}>
             <TimeRangeText> Start</TimeRangeText>
-            <DaySelection day={{
-                value: timeRange.startDay,
-                onChange: (value) => props.state.onChange({...timeRange, startDay: value})
-            }}/>
+            <DaySelection day={props.state.field("startDay")}/>
         </Row>
         <Row style={{alignSelf: "end", paddingLeft: 5}}>
             <TimeRangeText style={{marginRight: 3}}> End </TimeRangeText>
-            <DaySelection day={{
-                value: timeRange.endDay,
-                onChange: (value) => props.state.onChange({...timeRange, endDay: value})
-            }}/>
+            <DaySelection day={props.state.field("endDay")}/>
         </Row>
     </Column>;
 }
@@ -182,7 +159,7 @@ export interface FilterConfig {
 export function DaySelection(props: { day: State<Dayjs> }) {
     return <DesktopDatePicker inputFormat={"DD/MM/YY"}
                               onChange={(value => {
-                                  if (value !== null) props.day.onChange(value)
+                                  if (value !== null) props.day.setValue(value)
                               })}
                               value={props.day.value}
                               renderInput={(params) => <TextField {...params}
@@ -222,7 +199,7 @@ function LogEventAccordion({log}: { log: LogEvent }) {
     const textColor = errored ? theme.palette.error.main : warned ? theme.palette.warning.main : theme.palette.text.primary
     const [expanded, setExpanded] = useState(false);
 
-    return <Accordion  expanded={expanded} onChange={(e, newValue) => setExpanded(newValue)}>
+    return <Accordion expanded={expanded} onChange={(e, newValue) => setExpanded(newValue)}>
         <LogEventSummary expandIcon={<ExpandMore/>} style={{color: textColor}}>
             <LogEventSummaryText log={log} expanded={expanded} textColor={textColor} errored={errored} warned={warned}/>
         </LogEventSummary>

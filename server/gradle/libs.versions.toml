@@ -18,15 +18,16 @@ ktor = {id = "io.ktor.plugin",version.ref = "ktor"}
 
 [versions]
 
-ktor = "2.3.0"
-kotlin = "1.8.21"
-logback = "1.4.7"
+ktor = "2.3.1"
+kotlin = "1.8.22"
+logback = "1.4.8"
 kotlinx-serialization = "1.5.1"
 jansi = "2.4.0"
 gradle-node="5.0.0"
-objectbox = "3.5.1"
-brotli = "1.11.0"
+objectbox = "3.6.0"
+brotli = "1.12.0"
 strikt = "0.34.1"
+
 [libraries]
 
 ktor-auth = {group = "io.ktor", name = "ktor-server-auth", version.ref = "ktor"}

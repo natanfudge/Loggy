@@ -1,4 +1,4 @@
-import {usePassedState, usePromise} from "../utils/Utils";
+import {usePromise} from "../utils/Utils";
 import {LoggingServer} from "../server/LoggingServer";
 import {Day} from "../core/Day";
 import {AnalyticsGraph} from "./AnalyticsGraph";
@@ -9,9 +9,10 @@ import dayjs from "dayjs";
 import {ThemeSwitch, TimeRangeSelector} from "./Endpoint";
 import styled from "@emotion/styled";
 import {useScreenSize} from "../utils/ScreenSize";
+import {useStateObject} from "fudge-lib/dist/state/State";
 
 export function AnalyticsPage(props: { endpoint: string, theme: ThemeState }) {
-    const timeRangeState = usePassedState<TimeRange>({startDay: dayjs().subtract(5, 'day'), endDay: dayjs()})
+    const timeRangeState = useStateObject<TimeRange>({startDay: dayjs().subtract(5, 'day'), endDay: dayjs()})
     const startDay = Day.ofDate(timeRangeState.value.startDay)
     const endDay = Day.ofDate(timeRangeState.value.endDay)
     const analytics = usePromise(LoggingServer.getAnalytics(props.endpoint, startDay, endDay), [startDay, endDay])

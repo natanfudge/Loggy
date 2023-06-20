@@ -19,7 +19,7 @@ import kotlin.math.ceil
 private const val PageSize = 18
 internal fun Box<LogEventEntity>.getLogs(request: GetLogsRequest): LogResponse {
     val parsedQuery = QueryParser.parseLogQuery(request.query).getOrElse { return LogResponse.SyntaxError(it) }
-    val fullSearchResults = search(parsedQuery, request.endpoint)
+    val fullSearchResults = search(parsedQuery, request.endpoint).sortedByDescending { it.startTime }
     val allPageCount = ceil(fullSearchResults.size.toDouble() / PageSize).toInt()
     // Return only PageSize items, and skip pages before the requested page
     val pageSearchResults = fullSearchResults.drop(request.page * PageSize).take(PageSize)

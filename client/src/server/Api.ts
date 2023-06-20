@@ -3,7 +3,7 @@ import {isDayJs, unixMs} from "../utils/Utils";
 import {DayBreakdown} from "../ui/AnalyticsGraph";
 import {LogEvent} from "../core/Logs";
 import {recordToArray} from "fudge-lib/dist/methods/Javascript";
-import {LogsQuery} from "../ui/Endpoint";
+import {EndpointQuery} from "../ui/Endpoint";
 
 export namespace LoggyApi {
     const origin = window.location.origin.startsWith("http://localhost")
@@ -15,9 +15,13 @@ export namespace LoggyApi {
     }
 
     export async function getLogs(request: GetLogsRequest): Promise<GetLogsResponse> {
-        console.log("Getting logs", request)
+        // console.log("Getting logs", request)
         const logs = await makeRequest("logs", request)
-        return parseLogResponse(logs)
+        const parsed = parseLogResponse(logs)
+        // if (isLogsResponseSuccess(parsed)) {
+            // console.log(`Time of first log is ${parsed.logs[0].startTime}`)
+        // }
+        return parsed
     }
 
     export async function getAnalytics(request: GetAnalyticsRequest): Promise<GetAnalyticsResponse> {
@@ -65,7 +69,7 @@ export interface GetAnalyticsRequest {
     endDate: Dayjs
 }
 
-export type GetLogsRequest = LogsQuery & {
+export type GetLogsRequest = EndpointQuery & {
     page: number
 }
 // export interface GetLogsRequest {
