@@ -1,12 +1,13 @@
-import {CircularProgress, styled, TextField, useTheme} from "@mui/material";
+import {CircularProgress, IconButton, InputAdornment, styled, TextField, useTheme} from "@mui/material";
 import {CSSProperties, Fragment, MouseEventHandler, useEffect, useState} from "react";
 import {AutoCompleteWidthPx, useAutoComplete} from "./Autocomplete";
 import "fudge-lib/dist/extensions/Extensions.js";
 import {AutoCompleteConfig, Completion, completionsEqual} from "./AutocompleteConfig";
 import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
+import {RadioButtonUnchecked} from "@mui/icons-material";
 
 interface MegaSearchBarProps {
-    className? :string,
+    className?: string,
     config: AutoCompleteConfig,
     onSubmit: (query: string) => void
 }
@@ -18,12 +19,25 @@ export function MegaSearchBar(props: MegaSearchBarProps) {
 
 
     return <div className={props.className} style={{position: "relative", alignSelf: "center", width: "100%"}}>
-        <TextField inputRef={autocomplete.inputRef} style={{width: "100%"}} autoComplete={"off"}
-                   value={autocomplete.query}
-                   onChange={(e) => autocomplete.setQuery(e.target.value)}
-                   onFocus={autocomplete.show} onBlur={autocomplete.hide} spellCheck={false}
+        <TextField
+            error = {props.config.error !== undefined}
+            helperText = {props.config.error}
+            InputProps={
+                {
+                    startAdornment: (
+                        <InputAdornment position = "start">
+                            <RadioButtonUnchecked style = {{color: "yellow", visibility: autocomplete.submitted ? "hidden": undefined}}/>
+                        </InputAdornment>
+                    )
+                }
+            }
+            inputRef={autocomplete.inputRef} style={{width: "100%"}} autoComplete={"off"}
+            value={autocomplete.query}
+            onChange={(e) => autocomplete.setQuery(e.target.value)}
+            onFocus={autocomplete.show} onBlur={autocomplete.hide} spellCheck={false}
         >
         </TextField>
+
 
         <span ref={autocomplete.textHackRef} style={{position: "fixed", top: 0, left: 0, visibility: "hidden"}}>
             {autocomplete.query}
@@ -169,10 +183,10 @@ const LeftClick = 0
  */
 function breakDownItemIntoTypedAndNonTyped(item: string, typedWord: string):
     { before: string, typed: string, after: string } {
-    const index = item.indexOf(typedWord)
+    const index = item.toLowerCase().indexOf(typedWord.toLowerCase())
     // TypedWord is not identified in item: just display everything normally
     if (index === -1) return {before: item, typed: "", after: ""}
-    return {before: item.slice(0, index), typed: typedWord, after: item.slice(index + typedWord.length)}
+    return {before: item.slice(0, index), typed: item.slice(index,index + typedWord.length), after: item.slice(index + typedWord.length)}
 }
 
 const AutocompleteOptions = styled("div")(

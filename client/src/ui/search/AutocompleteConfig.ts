@@ -1,8 +1,11 @@
 export interface AutoCompleteConfig {
     completeables: Completeable[]
 
-    defaultValue: string
+    submittedValue: string
+
+    error: string | undefined
 }
+
 export interface Completion {
     /**
      * The text that will be shown in the completion
@@ -14,8 +17,8 @@ export interface Completion {
     newText: string
 }
 
-export function completionsEqual(completionA: Completion, completionB: Completion) : boolean {
-    if(completionA === undefined) throw new Error("completionA is unexpectedly undefined")
+export function completionsEqual(completionA: Completion, completionB: Completion): boolean {
+    if (completionA === undefined) throw new Error("completionA is unexpectedly undefined")
     if (completionB === undefined) throw new Error("completionB is unexpectedly undefined")
     return completionA.label === completionB.label && completionA.newText === completionB.newText
 }
@@ -30,7 +33,6 @@ export interface Completeable {
      */
     cancel: (text: string) => void
 }
-
 
 
 export function syncCompletable(options: (text: string) => Completion[]): Completeable {

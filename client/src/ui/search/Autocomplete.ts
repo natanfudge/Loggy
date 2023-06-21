@@ -32,21 +32,20 @@ export interface AutoComplete {
     show(): void
 
     hide(): void
+
+    /**
+     * False if the user has typed something but hasn't triggered a network request for the query yet
+     */
+    submitted: boolean
 }
 
 export const AutoCompleteWidthPx = 300
 
-//TODO: Finding search results is buggy and bad.
-// 1. pager is not working
-// 3. add indicator that search was not submitted
-// 4. if we type from:lastw instead of from:lastW the completion character-based progress thing just gives up and doesn't mark up any character.
-//   it should also allow a different case when marking up completed characters.
-// 5. make sure the refresh button works and gets new results
 
 export function useAutoComplete(config: AutoCompleteConfig, onSubmit: (query: string) => void): AutoComplete {
     // we hold a separate state, because a new value is submitted only sometimes, and we need to take care of every single character change
     // This value is aware of every character change, the input value and onSubmit is only aware of submission changes (Enter pressed, lost focus, etc)
-    const [query, setQuery] = useState(config.defaultValue)
+    const [query, setQuery] = useState(config.submittedValue)
 
     // Tracks whether ctrl+space was used to show completions
     const [forceCompletions, setForceCompletions] = useState(false)
@@ -87,7 +86,8 @@ export function useAutoComplete(config: AutoCompleteConfig, onSubmit: (query: st
         },
         currentTypedWord: relevantPartOf(query),
         isLoadingCompletions,
-        textHackRef
+        textHackRef,
+        submitted: query.trim() === config.submittedValue.trim()
     }
 
 
@@ -298,75 +298,6 @@ function parseDistanceValue(distanceString: string): number {
 }
 
 
-// function textX(input: HTMLInputElement, position) {
-//     var inputStyle = window.getComputedStyle(input);
-//     var font = inputStyle.getPropertyValue("font");
-//     var fontSize = parseFloat(inputStyle.getPropertyValue("font-size"));
-//
-//     var dummyText = document.createElement("span");
-//     dummyText.textContent = input.value.substr(0, position);
-//     dummyText.style.font = font;
-//     dummyText.style.fontSize = fontSize + "px";
-//     dummyText.style.visibility = "hidden";
-//
-//     document.body.appendChild(dummyText);
-//     var textRect = dummyText.getBoundingClientRect();
-//     document.body.removeChild(dummyText);
-//
-//     return inputRect.left + textRect.width;
-// }
-
-
-/////////// Magic function of hell that gets the position of the caret
-/**
- * returns x, y coordinates for absolute positioning of a span within a given text input
- * at a given selection point
- * @param {object} input - the input element to obtain coordinates for
- * @param {number} selectionPoint - the selection point for the input
- */
-//TODO: this is really laggy, don't use this
-// const getCursorXY = (input: HTMLInputElement, selectionPoint: number) => {
-//     const {
-//         offsetLeft: inputX,
-//         offsetTop: inputY,
-//     } = input
-//     // create a dummy element that will be a clone of our input
-//     const div = document.createElement('div')
-//     // get the computed style of the input and clone it onto the dummy element
-//     const copyStyle = getComputedStyle(input)
-//     for (const prop of copyStyle) {
-//         // @ts-ignore
-//         div.style[prop] = copyStyle[prop]
-//     }
-//     // we need a character that will replace whitespace when filling our dummy element if it's a single line <input/>
-//     const swap = '.'
-//     const inputValue = input.tagName === 'INPUT' ? input.value.replace(/ /g, swap) : input.value
-//     // set the div content to that of the textarea up until selection
-//     const textContent = inputValue.substr(0, selectionPoint)
-//     // set the text content of the dummy element div
-//     div.textContent = textContent
-//     if (input.tagName === 'TEXTAREA') div.style.height = 'auto'
-//     // if a single line input then the div needs to be single line and not break out like a text area
-//     if (input.tagName === 'INPUT') div.style.width = 'auto'
-//     // create a marker element to obtain caret position
-//     const span = document.createElement('span')
-//     // give the span the textContent of remaining content so that the recreated dummy element is as close as possible
-//     span.textContent = inputValue.substr(selectionPoint) /*|| '.'*/
-//     // append the span marker to the div
-//     div.appendChild(span)
-//     // append the dummy element to the body
-//     document.body.appendChild(div)
-//     // get the marker position, this is the caret position top and left relative to the input
-//     const {offsetLeft: spanX, offsetTop: spanY} = span
-//     // lastly, remove that dummy element
-//     // NOTE:: can comment this out for debugging purposes if you want to see where that span is rendered
-//     document.body.removeChild(div)
-//     // return an object with the x and y of the caret. account for input positioning so that you don't need to wrap the input
-//     return {
-//         x: inputX + spanX,
-//         y: inputY + spanY,
-//     }
-// }
 
 export interface CaretPosition {
     stringIndex: number;

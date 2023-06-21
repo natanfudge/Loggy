@@ -7,6 +7,7 @@ import io.objectbox.query.QueryCondition
 import org.jetbrains.annotations.TestOnly
 import java.time.Instant
 import kotlin.math.ceil
+import kotlin.math.min
 
 /**
  * A note about definitions.
@@ -21,8 +22,9 @@ internal fun Box<LogEventEntity>.getLogs(request: GetLogsRequest): LogResponse {
     val parsedQuery = QueryParser.parseLogQuery(request.query).getOrElse { return LogResponse.SyntaxError(it) }
     val fullSearchResults = search(parsedQuery, request.endpoint).sortedByDescending { it.startTime }
     val allPageCount = ceil(fullSearchResults.size.toDouble() / PageSize).toInt()
+    val page = request.page.coerceAtMost((allPageCount - 1).coerceAtLeast(0))
     // Return only PageSize items, and skip pages before the requested page
-    val pageSearchResults = fullSearchResults.drop(request.page * PageSize).take(PageSize)
+    val pageSearchResults = fullSearchResults.drop(page * PageSize).take(PageSize)
 
     return LogResponse.Success(pageCount = allPageCount, logs = pageSearchResults)
 }

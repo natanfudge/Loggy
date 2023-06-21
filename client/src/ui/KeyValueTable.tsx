@@ -6,7 +6,7 @@ import {recordToArray} from "fudge-lib/dist/methods/Javascript";
 export type StringMap = Record<string,string>
 
 export function KeyValueTable({details}: { details: StringMap }) {
-    return <TableContainer component={Paper} style={{height: "fit-content", width: "unset"}}>
+    return <TableContainer component={Paper} style={{height: "fit-content", minWidth: "30%"}}>
         <Table>
             <TableBody>
                 {recordToArray(details, (name, detail) => {

@@ -15,11 +15,10 @@ export namespace LoggyApi {
     }
 
     export async function getLogs(request: GetLogsRequest): Promise<GetLogsResponse> {
-        // console.log("Getting logs", request)
         const logs = await makeRequest("logs", request)
         const parsed = parseLogResponse(logs)
         // if (isLogsResponseSuccess(parsed)) {
-            // console.log(`Time of first log is ${parsed.logs[0].startTime}`)
+        //     console.log(`Time of first log is ${parsed.logs[0].startTime}`)
         // }
         return parsed
     }
@@ -85,8 +84,8 @@ export type GetLogsRequest = EndpointQuery & {
 // Map from day (unix timestamp) to breakdown
 export type GetAnalyticsResponse = Record<string, DayBreakdown>
 
-export function isLogsResponseSuccess(response: GetLogsResponse): response is GetLogsResponseSuccess {
-    return "logs" in response
+export function isLogsResponseSuccess(response: GetLogsResponse | undefined): response is GetLogsResponseSuccess {
+    return response !== undefined && "logs" in response
 }
 
 export type GetLogsResponse = GetLogsResponseSuccess | GetLogsResponseSyntaxError
@@ -104,6 +103,7 @@ export type GetEndpointsResponse = string[]
 
 
 export function parseLogResponse(json: string): GetLogsResponse {
+    if (json === undefined) throw new Error(`Unexpected undefined json ${json}`)
     return JSON.parse(json, (k, v) => {
         if (typeof v === "number" && k.toLowerCase().endsWith("time")) {
             return dayjs(v)

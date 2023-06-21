@@ -14,6 +14,7 @@ import {State} from "fudge-lib/dist/state/State";
 export function LogsTitle(props: {
     endpoints: string[] | undefined,
     endpointQuery: State<EndpointQuery>,
+    queryError: string | undefined,
     onRefresh: () => void,
     theme: ThemeState
 }) {
@@ -42,12 +43,12 @@ export function LogsTitle(props: {
                 </IconButton>
                 {endpoint !== undefined && <PaddedStatsButton endpoint={endpoint}/>}
             </Row>
-            {isPhone && <LoggySearchBar query={queryState}/>}
+            {isPhone && <LoggySearchBar query={queryState} error = {props.queryError}/>}
         </Column>
 
 
         {!isPhone && <Fragment>
-            <LoggySearchBar query={queryState}/>
+            <LoggySearchBar query={queryState} error = {props.queryError}/>
             <ThemeSwitch themeState={props.theme}/>
         </Fragment>}
     </Row>

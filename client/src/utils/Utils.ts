@@ -20,6 +20,7 @@ export function usePromise<T>(promise: Promise<NonNullable<T>> | T, deps: unknow
     useEffect(() => {
         setResult(undefined);
         void Promise.resolve(promise).then((value => {
+            // console.log(`New value:`, value)
             setResult(value)
         }))
     }, deps)

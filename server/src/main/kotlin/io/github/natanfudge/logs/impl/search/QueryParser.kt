@@ -167,11 +167,6 @@ public object QueryParser {
 
     }
 
-//    private fun foldPart()
-
-
-    //TODO: validate the NOT thing and test the validation
-
     private fun List<QueryToken>.takeTimeRangeFilter(): Result<Pair<TimeRange, List<QueryToken>>, String> {
         val (timeRelevant, timeIrrelevant) = splitBy { it is QueryToken.KeyValue && it.key in allDateTokens }
         // These are lists of size at most 1. May be empty if nothing was specified

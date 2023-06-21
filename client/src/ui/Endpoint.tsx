@@ -37,20 +37,20 @@ import {Dayjs} from "dayjs";
 import {LoggingServer} from "../server/LoggingServer";
 import {useScreenSize} from "../utils/ScreenSize";
 import {Day} from "../core/Day";
-import {isLogsResponseSuccess} from "../server/Api";
+import {GetLogsResponse, isLogsResponseSuccess} from "../server/Api";
 import {State} from "fudge-lib/dist/state/State";
 
 export function Endpoint(props: {
     page: State<number>,
-    eQuery: EndpointQuery,
+    logs: GetLogsResponse | undefined,
+    // eQuery: EndpointQuery,
     theme: ThemeState,
     refreshMarker: boolean,
 }) {
     const [page, setPage] = props.page.destruct()
-    // const [page, setPage] = useState(0)
-    const response = usePromise(
-        LoggingServer.getLogs({...props.eQuery, page}), [props.eQuery.endpoint, props.eQuery.query]
-    )
+    const response = props.logs;
+
+
     const isPhone = useScreenSize().isPhone
 
     if (response === undefined) {
@@ -58,6 +58,8 @@ export function Endpoint(props: {
             <CircularProgress/>
         </Typography>
     } else if (isLogsResponseSuccess(response)) {
+        console.log(`Res:`, response.logs)
+
         // console.log(`Time of first log in endpoint is ${response.logs[0].startTime}`)
         return <Fragment>
             <List style={{maxHeight: "100%", overflow: "auto"}}>
@@ -79,20 +81,12 @@ export function Endpoint(props: {
         </Fragment>
     } else {
         return <Fragment>
-            Error in query
+            {/*Error in query*/}
         </Fragment>
     }
 }
 
-// function shouldDisplayLog(log: LogEvent, filter: FilterConfig): boolean {
-//     if (hasErrorLogs(log)) return filter.error
-//     if (hasWarningLogs(log)) return filter.warn
-//     return filter.info
-// }
 
-const NoticableDivider = styled(Divider)(({theme}) => ({
-    backgroundColor: theme.palette.text.primary
-}));
 
 export interface EndpointQuery {
     query: string,
@@ -100,7 +94,6 @@ export interface EndpointQuery {
 }
 
 
-//TODO: test this in AnalyticsPage
 export function TimeRangeSelector(props: {
     state: State<TimeRange>,
     className?: string,

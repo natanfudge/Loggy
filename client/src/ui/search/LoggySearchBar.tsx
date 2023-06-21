@@ -75,11 +75,12 @@ function simpleCompletion(value: string): Completion {
 const loggyCompletables = [levelDateCompletable/*, dateCompletable("from"), dateCompletable("to")*/]
 
 
-export function LoggySearchBar(props: { query: State<string> }) {
+export function LoggySearchBar(props: { query: State<string>, error: string | undefined }) {
     const config: AutoCompleteConfig = {
         // key: props.endpoint,
         completeables: loggyCompletables,
-        defaultValue: props.query.value
+        submittedValue: props.query.value,
+        error: props.error
     }
     return <MegaSearchBar className={styles.loggySearchBar} config={config}
                           onSubmit={(value) => props.query.setValue(value)}/>

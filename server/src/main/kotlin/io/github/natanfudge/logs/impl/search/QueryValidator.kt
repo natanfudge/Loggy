@@ -64,7 +64,6 @@ internal object QueryValidator {
         return null
     }
 
-    //TODO: validate date itself later
     private fun validateTime(query: List<QueryToken>, timeToken: String): String? {
         fun isTimeToken(token: QueryToken) = token is QueryToken.KeyValue && token.key == timeToken
 

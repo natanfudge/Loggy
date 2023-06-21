@@ -11,6 +11,7 @@ import styles from "./css/loggy.module.css"
 import {LogsTitle} from "./LogsTitle";
 import {usePersistentState} from "fudge-lib/dist/state/PersistentState";
 import {useStateObject} from "fudge-lib/dist/state/State";
+import {isLogsResponseSuccess} from "../server/Api";
 
 export const initialFilter = getInitialDayFilterString()
 
@@ -46,6 +47,13 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
     const endpointQuery = query.mapType(q => ({query: q, endpoint}), eq => eq.query)
         .onSet(({endpoint}) => navigate("/logs/" + (endpoint ?? "")))
 
+    // console.log(`Endpoint: ${endpoint}, query: ${JSON.stringify(query)}, page: ${page.value}`)
+
+    const logsResponse = usePromise(
+        LoggingServer.getLogs({endpoint, query: query.value, page: page.value}), [endpoint, query.value, page.value]
+    )
+
+
     if (endpoints !== undefined) {
         if (endpoints.length === 0) {
             return <Typography>
@@ -59,6 +67,7 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
     }
     return <Column className={styles.logsColumn}>
         <LogsTitle endpoints={endpoints}
+                   queryError={isLogsResponseSuccess(logsResponse) ? undefined : logsResponse?.error}
                    endpointQuery={endpointQuery}
                    theme={props.theme}
                    onRefresh={() => {
@@ -68,7 +77,8 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
         />
 
         {endpoint !== undefined ?
-            <Endpoint page={page} eQuery={endpointQuery.value}
+            <Endpoint page={page}
+                      logs={logsResponse}
                       theme={props.theme}
                       refreshMarker={refreshMarker}/>
             : <CircularProgress/>
