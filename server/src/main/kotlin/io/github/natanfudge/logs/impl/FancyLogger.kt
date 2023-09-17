@@ -53,17 +53,14 @@ internal class FancyLogger(
     @OptIn(DelicateCoroutinesApi::class)
     private fun scheduleOldLogDeletion() {
         val timer = Timer()
-        // Runs once every day
-        timer.schedule(delay = DayMs, period = Long.MAX_VALUE) {
+        // Runs once every day and once at startup
+        timer.schedule(delay = 0, period = DayMs) {
             GlobalScope.launch(Dispatchers.IO) {
                 startCall("loggy_cleanup") {
                     logData("Time") { Instant.now() }
                     evictOld()
                 }
             }
-        }.apply {
-            // Run once at startup
-            run()
         }
     }
 
