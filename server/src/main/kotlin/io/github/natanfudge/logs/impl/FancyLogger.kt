@@ -54,7 +54,7 @@ internal class FancyLogger(
     private fun scheduleOldLogDeletion() {
         val timer = Timer()
         // Runs once every day
-        timer.schedule(DayMs) {
+        timer.schedule(delay = DayMs, period = Long.MAX_VALUE) {
             GlobalScope.launch(Dispatchers.IO) {
                 startCall("loggy_cleanup") {
                     logData("Time") { Instant.now() }

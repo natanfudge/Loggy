@@ -22,7 +22,7 @@ public class LogContext(private val name: String, private val startTime: Instant
         logDetails.add(LogLine.Message.Error(message(), Instant.now(), exception.toSerializable()))
     }
 
-    public inline fun logData(key: String, value: () -> Any) {
+    public inline fun logData(key: String, value: () -> Any?) {
         logDetails.add(LogLine.Detail(key, value().toString()))
     }
 

@@ -19,6 +19,8 @@ export const DEBUG_CONTENT_BOMB = "debug3"
 
 export const debugEndpoints = [DEBUG_ENDPOINT, DEBUG_BAD_APPEARANCE_ENDPOINT, DEBUG_CONTENT_BOMB, "very long thing of hell"]
 
+
+
 export namespace LoggingServer {
 
     export async function getEndpoints(): Promise<string[]> {

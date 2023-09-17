@@ -58,7 +58,7 @@ export function Endpoint(props: {
             <CircularProgress/>
         </Typography>
     } else if (isLogsResponseSuccess(response)) {
-        console.log(`Res:`, response.logs)
+        // console.log(`Res:`, response.logs)
 
         // console.log(`Time of first log in endpoint is ${response.logs[0].startTime}`)
         return <Fragment>

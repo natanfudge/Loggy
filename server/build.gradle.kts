@@ -20,7 +20,7 @@ plugins {
     alias(libs.plugins.gradle.node)
     id("maven-publish")
 }
-val loggyVersion  = "0.3.0"
+val loggyVersion  = "0.3.1"
 
 apply(plugin = "io.objectbox") // Apply last.
 group = "natanfudge.io"

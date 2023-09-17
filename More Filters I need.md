@@ -1,0 +1,2 @@
+- Filter by call duration
+- Filter multiple endpoints at once, to identify long calls for example. 
