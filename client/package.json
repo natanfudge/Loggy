@@ -15,6 +15,7 @@
     "@date-io/dayjs": "^2.16.0",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",
+    "@mantine/core": "^7.0.0",
     "@mui/icons-material": "^5.11.0",
     "@mui/material": "^5.11.5",
     "@mui/x-date-pickers": "^5.0.18",
@@ -22,7 +23,7 @@
     "chart.js": "^4.3.0",
     "dayjs": "^1.11.7",
     "dayjs-plugin-utc": "^0.1.2",
-    "fudge-lib": "^1.0.10",
+    "fudge-lib": "latest",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
@@ -40,7 +41,7 @@
     "@vitejs/plugin-react-swc": "^3.3.1",
     "eslint-config-standards-style": "latest",
     "typescript": "^4.9.3",
-    "vite": "^4.3.5",
+    "vite": "^4.4.9",
     "vitest": "^0.27.2"
   }
 }

@@ -1,5 +1,8 @@
 import {RefObject, useEffect} from "react";
 
+/**
+ * Must run initKeyboardShortcuts() first (before ReactDOM.createRoot())
+ */
 export function useKeyboardShortcut(config: KeyboardShortcutConfig, deps?: unknown[]) {
     useEffect(() => {
         const shortcut = registerKeyboardShortcut(config)
@@ -40,11 +43,6 @@ export function initKeyboardShortcuts() {
             }
             firstShortcut = false
         }
-        // const sorted = shortcuts.length === 1? shortcuts: shortcuts.sor
-        // if (event.code === code && (target === undefined || target?.current === document.activeElement) && (ctrl === undefined || event.ctrlKey === ctrl)) {
-        //     if (preventDefault === undefined || preventDefault) event.preventDefault()
-        //     callback()
-        // }
     };
 
 

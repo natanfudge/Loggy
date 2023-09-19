@@ -1,7 +1,7 @@
 import {RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
-import {useKeyboardShortcut} from "../../../utils-proposals/DomUtils";
 import {AutoCompleteConfig, Completion} from "../SearchitBar";
-import {State} from "fudge-lib/dist/state/State";
+import {State, useStateObject} from "fudge-lib/dist/state/State";
+import {useKeyboardShortcut} from "../../../utils-proposals/Keyboard";
 
 
 export interface AutoComplete {
@@ -13,9 +13,9 @@ export interface AutoComplete {
     /**
      * Current content that is being autocompleted
      */
-    query: string
+    query: State<string>
 
-    setQuery(query: string): void
+    // setQuery(query: string): void
 
     /**
      * Current word that is being typed, for example when writing "The great hor", the current typed word would be "hor" at the end.
@@ -68,7 +68,8 @@ export const AutoCompleteWidthPx = 300
 export function useAutoComplete(config: AutoCompleteConfig, queryState: State<string>): AutoComplete {
     // we hold a separate state, because a new value is submitted only sometimes, and we need to take care of every single character change
     // This value is aware of every character change, the input value and onSubmit is only aware of submission changes (Enter pressed, lost focus, etc)
-    const [text, setText] = useState(queryState.value)
+    const textState = useStateObject(queryState.value)
+    const [text, setText] = textState.destruct()
 
     // Tracks whether ctrl+space was used to show completions
     const [forceCompletions, setForceCompletions] = useState(false)
@@ -93,9 +94,9 @@ export function useAutoComplete(config: AutoCompleteConfig, queryState: State<st
 
     return {
         relativeXPosition: anchor(),
-        query: text,
+        query: textState,
         inputRef: textAreaRef,
-        setQuery: setText,
+        // setQuery: setText,
         complete,
         completions: results,
         hide() {

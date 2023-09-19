@@ -1,9 +1,9 @@
 import {CircularProgress, Typography} from "@mui/material";
-import {Fragment, useState} from "react";
+import React, {Fragment, useState} from "react";
 import {Endpoint, ThemeSwitch} from "./Endpoint";
 import {Day} from "../core/Day";
 import {debugEndpoints, LoggingServer} from "../server/LoggingServer";
-import {Column, usePromise} from "../utils/Utils";
+import {usePromise} from "../utils/Utils";
 import {useScreenSize} from "../utils/ScreenSize";
 import {useNavigate} from "react-router-dom";
 import {ThemeState} from "./App";
@@ -12,6 +12,7 @@ import {LogsTitle} from "./LogsTitle";
 import {usePersistentState} from "fudge-lib/dist/state/PersistentState";
 import {useStateObject} from "fudge-lib/dist/state/State";
 import {isLogsResponseSuccess} from "../server/Api";
+import {Column} from "fudge-lib/dist/Flow";
 
 export const initialFilter = getInitialDayFilterString()
 

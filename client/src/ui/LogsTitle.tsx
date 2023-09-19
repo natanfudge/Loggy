@@ -1,4 +1,3 @@
-import {Column, Row} from "../utils/Utils";
 import {ThemeState} from "./App";
 import {useScreenSize} from "../utils/ScreenSize";
 import React, {Fragment, useCallback} from "react";
@@ -10,6 +9,7 @@ import {EndpointQuery, ThemeSwitch} from "./Endpoint";
 import {Dropdown} from "./UiUtils";
 import {useNavigate} from "react-router-dom";
 import {State} from "fudge-lib/dist/state/State";
+import {Column, Row} from "fudge-lib/dist/Flow";
 
 export function LogsTitle(props: {
     endpoints: string[] | undefined,

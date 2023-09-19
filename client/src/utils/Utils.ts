@@ -2,14 +2,6 @@ import {useEffect, useState} from "react";
 import styled from "@emotion/styled";
 import {Dayjs} from "dayjs";
 
-export const Row = styled.div`
-  display: flex;
-  flex-direction: row;
-`
-export const Column = styled.div`
-  display: flex;
-  flex-direction: column;
-`
 
 export function isEmptySpace(char: string): boolean {
     return /\s/.test(char) || char === ""

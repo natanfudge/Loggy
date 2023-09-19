@@ -1,10 +1,10 @@
 import {InputAdornment, TextField} from "@mui/material";
 import {useAutoComplete} from "./impl/Autocomplete";
 import "fudge-lib/dist/extensions/Extensions.js";
-import {RadioButtonUnchecked} from "@mui/icons-material";
 import {OverlayedAutocompleteContent} from "./impl/SearchItBarImpl";
 import {State} from "fudge-lib/dist/state/State";
 import {MdRadioButtonUnchecked} from "react-icons/md";
+import {EmotionTextField} from "./EmotionTextField";
 
 export interface SearchitProps {
     config: AutoCompleteConfig,
@@ -74,35 +74,41 @@ export function syncCompletable(options: (text: string) => Completion[]): Comple
     }
 }
 
-
-
 export function SearchitBar(props: SearchitProps) {
     const autocomplete = useAutoComplete(props.config, props.query);
 
-
-    return <div className={props.className} style={{position: "relative", alignSelf: "center", width: "100%"}}>
-        <TextField
-            error={props.config.error !== undefined}
-            helperText={props.config.error}
-            InputProps={
-                {
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            <MdRadioButtonUnchecked size = "1.4rem" style={{color: "yellow", visibility: autocomplete.submitted ? "hidden" : undefined}}/>
-                        </InputAdornment>
-                    )
-                }
+    return <div className={props.className} style={{position: "relative", alignSelf: "center", width: "100%", height: "100%"}}>
+        <EmotionTextField
+            error={props.config.error}
+            state={autocomplete.query}
+            leadingIcon={
+                <MdRadioButtonUnchecked size="1.4rem"
+                                        style={{color: "yellow", visibility: autocomplete.submitted ? "hidden" : undefined}}/>
             }
-            inputRef={autocomplete.inputRef} style={{width: "100%"}} autoComplete={"off"}
-            value={autocomplete.query}
-            onChange={(e) => autocomplete.setQuery(e.target.value)}
-            onFocus={autocomplete.show} onBlur={autocomplete.hide} spellCheck={false}
-        >
-        </TextField>
+        />
+        {/*<TextField*/}
+        {/*    error={props.config.error !== undefined}*/}
+        {/*    helperText={props.config.error}*/}
+        {/*    InputProps={*/}
+        {/*        {*/}
+        {/*            startAdornment: (*/}
+        {/*                <InputAdornment position="start">*/}
+        {/*                    <MdRadioButtonUnchecked size="1.4rem"*/}
+        {/*                                            style={{color: "yellow", visibility: autocomplete.submitted ? "hidden" : undefined}}/>*/}
+        {/*                </InputAdornment>*/}
+        {/*            )*/}
+        {/*        }*/}
+        {/*    }*/}
+        {/*    inputRef={autocomplete.inputRef} style={{width: "100%"}} autoComplete={"off"}*/}
+        {/*    value={autocomplete.query}*/}
+        {/*    onChange={(e) => autocomplete.setQuery(e.target.value)}*/}
+        {/*    onFocus={autocomplete.show} onBlur={autocomplete.hide} spellCheck={false}*/}
+        {/*>*/}
+        {/*</TextField>*/}
 
-
+        {/*This is just some hack to be able to determine the exact width of text*/}
         <span ref={autocomplete.textHackRef} style={{position: "fixed", top: 0, left: 0, visibility: "hidden"}}>
-            {autocomplete.query}
+            {autocomplete.query.value}
         </span>
 
         {/*Position the autocomplete in the exact caret position*/}

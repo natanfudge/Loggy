@@ -1,5 +1,5 @@
 import React, {useState} from 'react'
-import {createTheme, CssBaseline, styled, Theme, ThemeOptions, ThemeProvider} from "@mui/material";
+import {createTheme, CssBaseline, ThemeProvider} from "@mui/material";
 import "../extensions/ExtensionsImpl"
 import "fudge-lib/dist/extensions/Extensions"
 import "fudge-lib/dist/extensions/ExtensionsImpl"
@@ -10,31 +10,41 @@ import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {BrowserRouter, Route, Routes, useParams} from "react-router-dom";
 import {AnalyticsPage} from "./AnalyticsPage";
 import {Logs} from "./Logs";
-import {SearchitBar} from "./searchit/SearchitBar";
-import { Theme as MUITheme, ThemeOptions as MUIThemeOptions } from '@mui/material/styles';
+import * as mui from "@mui/material"
+import {defaultThemeColors} from "../utils-proposals/Theme";
+// import {ThemeProvider} from "@emotion/react";
 
-// import { PaletteOptions } from "@mui/material/styles/createPalette";
-//
-// declare module "@mui/material/styles/createPalette" {
-//     export interface PaletteOptions {
-//         secondaryBackground: string
-//     }
-// }
+declare module "@emotion/react" {
+    // Allow using ThemeColors in styled
+    export interface Theme extends mui.Theme {
+        custom: CustomTheme
+    }
+}
+
+export type CustomTheme = {
+    secondaryBackground: string,
+    secondaryBackgroundBorder: string,
+    secondaryBackgroundSeparator: string,
+    selectedCompletionBackground: string
+}
+
+declare module '@mui/material/styles' {
+    interface Theme {
+        custom: CustomTheme
+    }
+
+    // allow configuration using `createTheme`
+    interface ThemeOptions {
+        custom: CustomTheme
+    }
+}
+
+
 
 //TODO: I need a rendering limit for very very large logs.
 
 export function AppWrapper() {
-    // return <Test>
-    //     <div>Child 1</div>
-    //     <div>Child 2</div>
-    //     <div>Child 3</div>
-    //     <div>Child 4</div>
-    //     <div>Child 5</div>
-    //     <div>Child 6</div>
-    // </Test>
-    // return <MegaSearchBar/>
     const [isDark, setIsDark] = useState<boolean>(true)
-    //TODO: use system theme preferences
     const darkTheme = createTheme({
         custom: {
             secondaryBackground: "rgb(65,64,64)",
@@ -45,6 +55,7 @@ export function AppWrapper() {
         palette: {
             mode: isDark ? 'dark' : "light"
         },
+        colors: defaultThemeColors(isDark)
     });
 
 
@@ -52,13 +63,13 @@ export function AppWrapper() {
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <CssBaseline/>
             <BrowserRouter>
-                {/*<LoggySearchBarTest/>*/}
-                {/*{analytics !== undefined && <AnalyticsGraph analytics={analytics}/>}*/}
                 <RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>
             </BrowserRouter>
         </LocalizationProvider>
     </ThemeProvider>
 }
+
+
 
 
 export interface ThemeState {
@@ -69,7 +80,7 @@ export interface ThemeState {
 
 function RoutedApp(props: { theme: ThemeState }) {
     return <Routes>
-        <Route path="/logs/" element={<Logs key = {undefined} theme={props.theme} endpoint={undefined}/>}/>
+        <Route path="/logs/" element={<Logs key={undefined} theme={props.theme} endpoint={undefined}/>}/>
         <Route path="/logs/:endpoint" element={<RoutedLogs theme={props.theme}/>}/>
         <Route path="/logs/:endpoint/stats" element={<RoutedAnalytics theme={props.theme}/>}/>
         <Route path="*" element={"Nothing Here"}/>
@@ -87,10 +98,10 @@ function Page({Content}: { Content: React.FC<PageContents> }) {
 }
 
 function RoutedLogs(props: { theme: ThemeState }) {
-    return <Page Content={({endpoint}) => <Logs key = {endpoint} theme={props.theme} endpoint={endpoint}/>}/>
+    return <Page Content={({endpoint}) => <Logs key={endpoint} theme={props.theme} endpoint={endpoint}/>}/>
 }
 
-function RoutedAnalytics(props: {theme: ThemeState}) {
+function RoutedAnalytics(props: { theme: ThemeState }) {
     const {endpoint} = useParams<"endpoint">()
     return <AnalyticsPage theme={props.theme} endpoint={endpoint!}/>
 }
@@ -101,19 +112,3 @@ export interface TimeRange {
     endDay: Dayjs
 }
 
-type CustomTheme = {
-    secondaryBackground: string,
-    secondaryBackgroundBorder: string,
-    secondaryBackgroundSeparator: string,
-    selectedCompletionBackground: string
-}
-
-declare module '@mui/material/styles' {
-    interface Theme {
-        custom: CustomTheme
-    }
-    // allow configuration using `createTheme`
-    interface ThemeOptions {
-        custom?: CustomTheme
-    }
-}

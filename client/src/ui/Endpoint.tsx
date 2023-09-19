@@ -1,4 +1,4 @@
-import {addAlphaToColor, Column, millsecondTimeToString, Row, timeToString, unixMs, usePromise} from "../utils/Utils";
+import {addAlphaToColor, millsecondTimeToString,  timeToString, unixMs, usePromise} from "../utils/Utils";
 import {
     Accordion,
     AccordionDetails,
@@ -39,6 +39,7 @@ import {useScreenSize} from "../utils/ScreenSize";
 import {Day} from "../core/Day";
 import {GetLogsResponse, isLogsResponseSuccess} from "../server/Api";
 import {State} from "fudge-lib/dist/state/State";
+import {Column, Row} from "fudge-lib/dist/Flow";
 
 export function Endpoint(props: {
     page: State<number>,

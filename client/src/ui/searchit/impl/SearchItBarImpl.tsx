@@ -1,9 +1,9 @@
 import {CircularProgress, styled, useTheme} from "@mui/material";
 import {AutoCompleteWidthPx} from "./Autocomplete";
 import {CSSProperties, Fragment, MouseEventHandler, useEffect, useState} from "react";
-import {useKeyboardShortcut} from "../../../utils-proposals/DomUtils";
 import { completionsEqual } from "./CompletionUtils";
 import {Completion} from "../SearchitBar";
+import {useKeyboardShortcut} from "../../../utils-proposals/Keyboard";
 
 export const OverlayedAutocompleteContent = styled(AutocompleteContent)`
   position: absolute;
