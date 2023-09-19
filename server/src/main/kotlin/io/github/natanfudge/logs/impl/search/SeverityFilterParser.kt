@@ -20,7 +20,7 @@ internal object SeverityFilterParser  {
      * Returns null if the key is not a severity filter
      */
     fun parseSeverity(key: String, value: String): LogFilter.Severity? {
-        val exact = when(key) {
+        val exact = when(key.lowercase()) {
             AtLeastSeverityFilter -> false
             SeverityExactFilter -> true
             else -> return null

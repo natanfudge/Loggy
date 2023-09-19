@@ -1,6 +1,7 @@
 package natanfudge.io
 
 import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.getOrThrow
 import io.github.natanfudge.logs.impl.search.QueryParser
 import io.github.natanfudge.logs.impl.search.QueryParser.FoldedToken.*
 import io.github.natanfudge.logs.impl.search.QueryToken
@@ -74,6 +75,6 @@ class QueryFoldTest {
         .and { get { QueryParser.parseLogQuery(this) }
             .describedAs { this.toString() }
             .isA<Ok<*>>() }
-        .get { QueryParser.foldFilters(QueryTokenizer.tokenize(this)).toList() }
+        .get { QueryParser.foldFilters(QueryTokenizer.tokenize(this).getOrThrow { AssertionError("Failed to tokenize query $this: $it") }).toList() }
         .isEqualTo(folding.toList())
 }

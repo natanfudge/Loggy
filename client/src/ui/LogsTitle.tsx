@@ -5,7 +5,7 @@ import React, {Fragment, useCallback} from "react";
 import styles from "./css/loggy.module.css";
 import {CircularProgress, IconButton, styled} from "@mui/material";
 import {Refresh, ShowChart} from "@mui/icons-material";
-import {LoggySearchBar} from "./search/LoggySearchBar";
+import {LoggySearchBar} from "./LoggySearchBar";
 import {EndpointQuery, ThemeSwitch} from "./Endpoint";
 import {Dropdown} from "./UiUtils";
 import {useNavigate} from "react-router-dom";

@@ -1,60 +1,11 @@
-import {CircularProgress, IconButton, InputAdornment, styled, TextField, useTheme} from "@mui/material";
+import {CircularProgress, styled, useTheme} from "@mui/material";
+import {AutoCompleteWidthPx} from "./Autocomplete";
 import {CSSProperties, Fragment, MouseEventHandler, useEffect, useState} from "react";
-import {AutoCompleteWidthPx, useAutoComplete} from "./Autocomplete";
-import "fudge-lib/dist/extensions/Extensions.js";
-import {AutoCompleteConfig, Completion, completionsEqual} from "./AutocompleteConfig";
-import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
-import {RadioButtonUnchecked} from "@mui/icons-material";
+import {useKeyboardShortcut} from "../../../utils-proposals/DomUtils";
+import { completionsEqual } from "./CompletionUtils";
+import {Completion} from "../SearchitBar";
 
-interface MegaSearchBarProps {
-    className?: string,
-    config: AutoCompleteConfig,
-    onSubmit: (query: string) => void
-}
-
-export function MegaSearchBar(props: MegaSearchBarProps) {
-    const autocomplete = useAutoComplete(props.config, (submittedValue) => {
-        props.onSubmit(submittedValue)
-    });
-
-
-    return <div className={props.className} style={{position: "relative", alignSelf: "center", width: "100%"}}>
-        <TextField
-            error = {props.config.error !== undefined}
-            helperText = {props.config.error}
-            InputProps={
-                {
-                    startAdornment: (
-                        <InputAdornment position = "start">
-                            <RadioButtonUnchecked style = {{color: "yellow", visibility: autocomplete.submitted ? "hidden": undefined}}/>
-                        </InputAdornment>
-                    )
-                }
-            }
-            inputRef={autocomplete.inputRef} style={{width: "100%"}} autoComplete={"off"}
-            value={autocomplete.query}
-            onChange={(e) => autocomplete.setQuery(e.target.value)}
-            onFocus={autocomplete.show} onBlur={autocomplete.hide} spellCheck={false}
-        >
-        </TextField>
-
-
-        <span ref={autocomplete.textHackRef} style={{position: "fixed", top: 0, left: 0, visibility: "hidden"}}>
-            {autocomplete.query}
-        </span>
-
-        {/*Position the autocomplete in the exact caret position*/}
-        <OverlayedAutocompleteContent
-            isLoading={autocomplete.isLoadingCompletions}
-            typedWord={autocomplete.currentTypedWord}
-            items={autocomplete.completions}
-            style={{left: autocomplete.relativeXPosition}}
-            onSelectItem={(completion) => autocomplete.complete(completion)}/>
-    </div>
-
-}
-
-const OverlayedAutocompleteContent = styled(AutocompleteContent)`
+export const OverlayedAutocompleteContent = styled(AutocompleteContent)`
   position: absolute;
   margin-top: -15px;
   width: ${AutoCompleteWidthPx}px;

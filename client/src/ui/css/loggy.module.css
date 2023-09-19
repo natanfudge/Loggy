@@ -9,3 +9,10 @@
     align-self: end;
     width: max-content;
 }
+
+@media (orientation: landscape) {
+    .loggySearchBar {
+        padding-right: 30px;
+        padding-left: 10px;
+    }
+}

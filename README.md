@@ -95,3 +95,16 @@ Logical operator may be used to AND/OR/NOT filters. (Although AND is the default
 #### Examples
 `id:200 or level:info`  
 `fileName:dog.jpg and not (levelExact:warn or levelExact:error)`
+
+
+### Literal notation
+Quotes `""` may be used to treat strings literally.   
+Escape quotes with `\ ` to search for quotes literally.  
+Technically searching for `\"` is impossible because you can't escape escapes, but you can just do `\` without quotes to search for backslashes. 
+#### Syntax
+`"<string>"`
+#### Examples:
+`"You can have spaces"`  
+`"(You can start with a parentheses and treat it literally"`  
+`"Here's \" how you can search for a quote"`  
+`"You can even do":"key values"`

@@ -1,9 +1,8 @@
-import {MegaSearchBar} from "./MegaSearchBar";
-import {AutoCompleteConfig, Completion, syncCompletable} from "./AutocompleteConfig";
-import {AllSeverities} from "../../core/Logs";
-import {styled} from "@mui/material";
-import styles from "./search.module.css"
+import {AutoCompleteConfig, Completion, SearchitBar, syncCompletable} from "./searchit/SearchitBar";
+import {AllSeverities} from "../core/Logs";
+import styles from "./css/loggy.module.css"
 import {State} from "fudge-lib/dist/state/State";
+import styled from "@emotion/styled";
 
 const AllDateOptions = [
     "today",
@@ -46,25 +45,6 @@ const levelDateCompletable = syncCompletable(text => {
 
 
 
-// complete from/to:<time>
-// function dateCompletable(prefix: string) {
-//     return syncCompletable(text => {
-//         return dateOptions.filter(option => {
-//             const fullText =
-//             return `${prefix}:${option}`.includes(text);
-//         })
-//             .map(option => simpleCompletion(`${prefix}:${option}`))
-//         // const dateIndex = text.indexOf(`${prefix}:`)
-//         // if (dateIndex === -1 ) {
-//         //     return prefix.includes(text) ? [
-//         //         {label: `${prefix}:`, newText: `${prefix}:today `},
-//         //     ].concat(dateOptions.map(option => simpleCompletion(`${prefix}:${option}`))) : []
-//         // }
-//         // return []
-//         }
-//     )
-// }
-
 function simpleCompletion(value: string): Completion {
     return {
         label: value,
@@ -79,14 +59,14 @@ export function LoggySearchBar(props: { query: State<string>, error: string | un
     const config: AutoCompleteConfig = {
         // key: props.endpoint,
         completeables: loggyCompletables,
-        submittedValue: props.query.value,
+        // submittedValue: props.query.value,
         error: props.error
     }
-    return <MegaSearchBar className={styles.loggySearchBar} config={config}
-                          onSubmit={(value) => props.query.setValue(value)}/>
+    return <SearchitBar className={styles.loggySearchBar} config={config}
+                        query={props.query}/>
 }
 
-const PaddedSearchBar = styled(MegaSearchBar)`
+const PaddedSearchBar = styled(SearchitBar)`
   padding-right: 30px;
   padding-left: 10px;
 `

@@ -1,22 +1,40 @@
 import {RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
-import {AutoCompleteConfig, Completion} from "./AutocompleteConfig";
-import {useKeyboardShortcut} from "../../utils-proposals/DomUtils";
+import {useKeyboardShortcut} from "../../../utils-proposals/DomUtils";
+import {AutoCompleteConfig, Completion} from "../SearchitBar";
+import {State} from "fudge-lib/dist/state/State";
 
-export type Query = string
 
 export interface AutoComplete {
+    /**
+     * X position of the autocomplete popup relative to the search bar
+     */
     relativeXPosition: number
 
+    /**
+     * Current content that is being autocompleted
+     */
     query: string
-
-    currentTypedWord: string
 
     setQuery(query: string): void
 
+    /**
+     * Current word that is being typed, for example when writing "The great hor", the current typed word would be "hor" at the end.
+     */
+    currentTypedWord: string
+
+    /**
+     * Autocomplete results
+     */
     completions: Completion[]
 
+    /**
+     * Calling this will modify the query to complete with the specified completion
+     */
     complete(completion: Completion): void
 
+    /**
+     * True after the user has started typing but no response was received from the server yet
+     */
     isLoadingCompletions: boolean
     // Note: the padding and margin of the input field MUST BE STATIC!
     // Note: don't change the font of the input field because we depend on the default with the textHackRef hack
@@ -29,8 +47,13 @@ export interface AutoComplete {
      */
     textHackRef: RefObject<HTMLSpanElement>
 
+    /**
+     * Will show the autocomplete items
+     */
     show(): void
-
+    /**
+     * Will hide the autocomplete items
+     */
     hide(): void
 
     /**
@@ -42,10 +65,10 @@ export interface AutoComplete {
 export const AutoCompleteWidthPx = 300
 
 
-export function useAutoComplete(config: AutoCompleteConfig, onSubmit: (query: string) => void): AutoComplete {
+export function useAutoComplete(config: AutoCompleteConfig, queryState: State<string>): AutoComplete {
     // we hold a separate state, because a new value is submitted only sometimes, and we need to take care of every single character change
     // This value is aware of every character change, the input value and onSubmit is only aware of submission changes (Enter pressed, lost focus, etc)
-    const [query, setQuery] = useState(config.submittedValue)
+    const [text, setText] = useState(queryState.value)
 
     // Tracks whether ctrl+space was used to show completions
     const [forceCompletions, setForceCompletions] = useState(false)
@@ -70,24 +93,24 @@ export function useAutoComplete(config: AutoCompleteConfig, onSubmit: (query: st
 
     return {
         relativeXPosition: anchor(),
-        query,
+        query: text,
         inputRef: textAreaRef,
-        setQuery,
+        setQuery: setText,
         complete,
         completions: results,
         hide() {
             setShown(false)
-            onSubmit(query)
+            queryState.setValue(text)
             setForceCompletions(false)
         },
         show() {
             setShown(true)
             setForceCompletions(false)
         },
-        currentTypedWord: relevantPartOf(query),
+        currentTypedWord: relevantPartOf(text),
         isLoadingCompletions,
         textHackRef,
-        submitted: query.trim() === config.submittedValue.trim()
+        submitted: text.trim() === queryState.value.trim()
     }
 
 
@@ -103,9 +126,9 @@ export function useAutoComplete(config: AutoCompleteConfig, onSubmit: (query: st
             code: "Space", callback: () => {
                 // If the user inserts a space stop forcing completions
                 setForceCompletions(false)
-                onSubmit(query)
+                queryState.setValue(text)
             }, target: textAreaRef, preventDefault: false
-        }, [query])
+        }, [text])
 
         useKeyboardShortcut({
             // Make sure this doesn't run when we autocomplete (using the same key - enter)
@@ -113,18 +136,18 @@ export function useAutoComplete(config: AutoCompleteConfig, onSubmit: (query: st
             overrideable: true,
             // Enter: submit text. Only relevant when we are not autocompleting something.
             code: "Enter", callback: () => {
-                onSubmit(query)
+                queryState.setValue(text)
             }, target: textAreaRef,
         })
     }
 
     function complete(completion: Completion) {
         const {newText, completionEndPosition} = completeWith(completion)
-        setQuery(newText)
+        setText(newText)
         // Advance caret to the end of the completion
         forceUpdateCaretPosition(completionEndPosition)
         setForceCompletions(false)
-        onSubmit(newText)
+        queryState.setValue(newText)
     }
 
     function forceUpdateCaretPosition(index: number) {
@@ -169,11 +192,11 @@ export function useAutoComplete(config: AutoCompleteConfig, onSubmit: (query: st
      * Returns the new text for the query and sets the caret to the correct position
      */
     function completeWith(completion: Completion): { newText: string, completionEndPosition: number } {
-        const start = query.slice(0, caretPosition.stringIndex).split(" ").dropLast(1).join(" ")
+        const start = text.slice(0, caretPosition.stringIndex).split(" ").dropLast(1).join(" ")
         // Restore the space after the last word preceding the current word if there is one.
         const actualStart = start === "" ? "" : start + " "
         // Get all of the words after the current one
-        const end = query.slice(caretPosition.stringIndex).split(" ").drop(1).join(" ")
+        const end = text.slice(caretPosition.stringIndex).split(" ").drop(1).join(" ")
         return {
             newText: actualStart + completion.newText + end,
             completionEndPosition: actualStart.length + completion.newText.length
@@ -194,14 +217,14 @@ export function useAutoComplete(config: AutoCompleteConfig, onSubmit: (query: st
     function getStartOfWordIndex(): number {
         let i = caretPosition.stringIndex - 1
         for (; i >= 0; i--) {
-            if (query[i] === " ") break
+            if (text[i] === " ") break
         }
         return i + 1
     }
 
     function useResults(): Completion[] {
         const [results, setResults] = useState<Completion[]>([])
-        const relevantText = relevantPartOf(query)
+        const relevantText = relevantPartOf(text)
 
         useEffect(() => {
             let resultsOfText: Completion[] = []

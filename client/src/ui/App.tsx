@@ -10,7 +10,7 @@ import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {BrowserRouter, Route, Routes, useParams} from "react-router-dom";
 import {AnalyticsPage} from "./AnalyticsPage";
 import {Logs} from "./Logs";
-import {MegaSearchBar} from "./search/MegaSearchBar";
+import {SearchitBar} from "./searchit/SearchitBar";
 import { Theme as MUITheme, ThemeOptions as MUIThemeOptions } from '@mui/material/styles';
 
 // import { PaletteOptions } from "@mui/material/styles/createPalette";

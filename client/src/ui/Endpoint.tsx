@@ -304,7 +304,7 @@ function LogLinesUi({logs}: { logs: LogLine[] }) {
 
     return <div style={{display: "flex", flexDirection: screen.isPhone ? "column" : "row"}}>
         <KeyValueTable details={details.toRecord(l => [l.key, l.value])}/>
-        <Column style={{paddingLeft: screen.isPhone ? 0 : 20, paddingTop: 10}}>
+        <Column style={{paddingLeft: screen.isPhone ? 0 : 20, paddingTop: 10, width: "70%"}}>
             {messages.map((m, i) => <MessageLogUi key={i} message={m}/>)}
         </Column>
     </div>
@@ -320,7 +320,7 @@ function MessageLogUi({message}: { message: MessageLog }) {
     const theme = useTheme()
     const color = message.severity === "Error" ? theme.palette.error.main
         : message.severity === "Warn" ? theme.palette.warning.main : theme.palette.text.primary
-    return <Row>
+    return <Row >
         <SubtitleText variant={"subtitle2"}>
             {timeToString(message.time) + " "}
         </SubtitleText>

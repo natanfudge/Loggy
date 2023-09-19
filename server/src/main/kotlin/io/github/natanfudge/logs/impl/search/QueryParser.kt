@@ -21,7 +21,7 @@ public object QueryParser {
 
     public fun parseLogQuery(query: String): LogParseResult {
         try {
-            val tokenized = QueryTokenizer.tokenize(query)
+            val tokenized = QueryTokenizer.tokenize(query).or { return it }
             QueryValidator.validateQuery(tokenized)?.let { return Err(it) }
 
             val (timeRange, otherTokens) = tokenized.takeTimeRangeFilter().or { return it }
@@ -200,7 +200,7 @@ public object QueryParser {
 
 
     private fun parseTime(token: QueryToken.KeyValue): Result<ZonedDateTime, String> {
-        return when (val time = token.value) {
+        return when (val time = token.value.lowercase()) {
             "today" -> Ok(nowGmt())
             "yesterday" -> Ok(yesterdayGmt())
             "lastweek" -> Ok(lastWeekGmt())
