@@ -4,7 +4,7 @@ import {AppWrapper} from './ui/App'
 import {createBrowserRouter} from "react-router-dom";
 import "./App.css"
 import {initKeyboardShortcuts} from "./utils-proposals/Keyboard";
-import "fudge-lib/dist/styles.css"
+import "./fudge-lib/styles.css"
 import "./utils-proposals/styles.css"
 
 // const router = createBrowserRouter([

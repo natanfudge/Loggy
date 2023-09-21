@@ -9,7 +9,7 @@ import dayjs from "dayjs";
 import {ThemeSwitch, TimeRangeSelector} from "./Endpoint";
 import styled from "@emotion/styled";
 import {useScreenSize} from "../utils/ScreenSize";
-import {useStateObject} from "fudge-lib/dist/state/State";
+import {useStateObject} from "../fudge-lib/state/State";
 
 export function AnalyticsPage(props: { endpoint: string, theme: ThemeState }) {
     const timeRangeState = useStateObject<TimeRange>({startDay: dayjs().subtract(5, 'day'), endDay: dayjs()})

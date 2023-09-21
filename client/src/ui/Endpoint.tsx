@@ -38,8 +38,8 @@ import {LoggingServer} from "../server/LoggingServer";
 import {useScreenSize} from "../utils/ScreenSize";
 import {Day} from "../core/Day";
 import {GetLogsResponse, isLogsResponseSuccess} from "../server/Api";
-import {State} from "fudge-lib/dist/state/State";
-import {Column, Row} from "fudge-lib/dist/Flow";
+import {State} from "../fudge-lib/state/State";
+import {Column, Row} from "../fudge-lib/Flow";
 
 export function Endpoint(props: {
     page: State<number>,

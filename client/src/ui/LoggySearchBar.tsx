@@ -1,8 +1,8 @@
 import {AutoCompleteConfig, Completion, SearchitBar, syncCompletable} from "./searchit/SearchitBar";
 import {AllSeverities} from "../core/Logs";
 import styles from "./css/loggy.module.css"
-import {State} from "fudge-lib/dist/state/State";
 import styled from "@emotion/styled";
+import {State} from "../fudge-lib/state/State";
 
 const AllDateOptions = [
     "today",

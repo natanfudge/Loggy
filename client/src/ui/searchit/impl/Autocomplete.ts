@@ -1,7 +1,7 @@
 import {RefObject, useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import {AutoCompleteConfig, Completion} from "../SearchitBar";
-import {State, useStateObject} from "fudge-lib/dist/state/State";
 import {useKeyboardShortcut} from "../../../utils-proposals/Keyboard";
+import {State, useStateObject} from "../../../fudge-lib/state/State";
 
 
 export interface AutoComplete {

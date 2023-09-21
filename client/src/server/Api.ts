@@ -2,8 +2,8 @@ import dayjs, {Dayjs} from "dayjs";
 import {isDayJs, unixMs} from "../utils/Utils";
 import {DayBreakdown} from "../ui/AnalyticsGraph";
 import {LogEvent} from "../core/Logs";
-import {recordToArray} from "fudge-lib/dist/methods/Javascript";
 import {EndpointQuery} from "../ui/Endpoint";
+import { recordToArray } from "../fudge-lib/methods/Javascript";
 
 export namespace LoggyApi {
     const origin = window.location.origin.startsWith("http://localhost")

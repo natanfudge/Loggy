@@ -1,8 +1,8 @@
 import React, {useState} from 'react'
 import {createTheme, CssBaseline, ThemeProvider} from "@mui/material";
 import "../extensions/ExtensionsImpl"
-import "fudge-lib/dist/extensions/Extensions"
-import "fudge-lib/dist/extensions/ExtensionsImpl"
+import "../fudge-lib/extensions/Extensions"
+import "../fudge-lib/extensions/ExtensionsImpl"
 import "../utils-proposals/extensions/ExtensionsImpl"
 import {Dayjs} from "dayjs";
 import {LocalizationProvider} from "@mui/x-date-pickers";

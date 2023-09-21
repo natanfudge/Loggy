@@ -1,6 +1,6 @@
 import {Paper, styled, Table, TableBody, TableCell, tableCellClasses, TableContainer, TableRow} from "@mui/material";
 import React from "react";
-import {recordToArray} from "fudge-lib/dist/methods/Javascript";
+import { recordToArray } from "../fudge-lib/methods/Javascript";
 
 
 export type StringMap = Record<string,string>

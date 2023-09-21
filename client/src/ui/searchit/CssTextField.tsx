@@ -1,9 +1,11 @@
-import {ReactComponent} from "fudge-lib/dist/types/React";
-import {Column} from "fudge-lib/dist/Flow";
-import {State} from "fudge-lib/dist/state/State";
+
 import styles from "./searchit.module.css"
 import {AppTheme} from "../../utils-proposals/AppTheme";
 import React, {Ref} from "react";
+import {ReactComponent} from "../../fudge-lib/types/React";
+import {State} from "../../fudge-lib/state/State";
+import {Column} from "../../fudge-lib/Flow";
+import {withClassName} from "../../fudge-lib/react/Styles";
 // import {withClassName} from "fudge-lib";
 
 //TODO: test errors
@@ -28,7 +30,7 @@ export function CssTextField(props: {
         {PlaceHolderText(errorTextSize)}
         <div style={divStyle} className={styles.wrapper}  >
             {props.leadingIcon}
-            {/*<input {...withClassName(inputProps, styles.input)} ref={props.inputRef} value={props.state.value} onChange={e => props.state.setValue(e.target.value)}/>*/}
+            <input {...withClassName(inputProps, styles.input)} ref={props.inputRef} value={props.state.value} onChange={e => props.state.setValue(e.target.value)}/>
         </div>
 
         {/*Even if there is no error, have hidden text so the component won't enlargen when there's an error*/}

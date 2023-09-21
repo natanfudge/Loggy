@@ -1,6 +1,6 @@
 import {memo, useEffect} from "react";
 import {FormControl, InputLabel, NativeSelect} from "@mui/material";
-import {State} from "fudge-lib/dist/state/State";
+import { State } from "../fudge-lib/state/State";
 
 export const Dropdown = memo(DropdownImpl)
 

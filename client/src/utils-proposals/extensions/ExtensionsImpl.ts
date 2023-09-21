@@ -1,5 +1,5 @@
 import "./Extensions"
-import {HashSet} from "fudge-lib/dist/collections/hashmap/HashSet";
+import {HashSet} from "../../fudge-lib/collections/hashmap/HashSet";
 
 Array.prototype.getOrThrow = function <T>(this: T[], index: number): T {
     if (index < 0) throw new Error(`Index ${index} is negative`)

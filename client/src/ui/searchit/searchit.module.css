@@ -14,7 +14,7 @@
 }
 
 .wrapper {
-    composes: row from "fudge-lib/dist/styles.css";
+    composes: row from "../../fudge-lib/styles.css";
     background-color: var(--surface);
     border: 1px solid var(--border);
     border-radius: 3px;

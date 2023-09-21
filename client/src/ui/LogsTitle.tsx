@@ -8,9 +8,8 @@ import {LoggySearchBar} from "./LoggySearchBar";
 import {EndpointQuery, ThemeSwitch} from "./Endpoint";
 import {Dropdown} from "./UiUtils";
 import {useNavigate} from "react-router-dom";
-import {State} from "fudge-lib/dist/state/State";
-import {Column, Row} from "fudge-lib/dist/Flow";
-
+import {Column, Row} from "../fudge-lib/Flow";
+import {State} from "../fudge-lib/state/State";
 export function LogsTitle(props: {
     endpoints: string[] | undefined,
     endpointQuery: State<EndpointQuery>,

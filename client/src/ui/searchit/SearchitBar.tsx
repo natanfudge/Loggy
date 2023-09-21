@@ -1,10 +1,8 @@
-import {InputAdornment, TextField} from "@mui/material";
 import {useAutoComplete} from "./impl/Autocomplete";
-import "fudge-lib/dist/extensions/Extensions.js";
 import {OverlayedAutocompleteContent} from "./impl/SearchItBarImpl";
-import {State} from "fudge-lib/dist/state/State";
 import {MdRadioButtonUnchecked} from "react-icons/md";
 import {CssTextField} from "./CssTextField";
+import {State} from "../../fudge-lib/state/State";
 
 export interface SearchitProps {
     config: AutoCompleteConfig,
@@ -97,25 +95,6 @@ export function SearchitBar(props: SearchitProps) {
             onBlur={autocomplete.hide}
             spellCheck={false}
         />
-        {/*<TextField*/}
-        {/*    error={props.config.error !== undefined}*/}
-        {/*    helperText={props.config.error}*/}
-        {/*    InputProps={*/}
-        {/*        {*/}
-        {/*            startAdornment: (*/}
-        {/*                <InputAdornment position="start">*/}
-        {/*                    <MdRadioButtonUnchecked size="1.4rem"*/}
-        {/*                                            style={{color: "yellow", visibility: autocomplete.submitted ? "hidden" : undefined}}/>*/}
-        {/*                </InputAdornment>*/}
-        {/*            )*/}
-        {/*        }*/}
-        {/*    }*/}
-        {/*    inputRef={autocomplete.inputRef} style={{width: "100%"}} autoComplete={"off"}*/}
-        {/*    value={autocomplete.query}*/}
-        {/*    onChange={(e) => autocomplete.setQuery(e.target.value)}*/}
-        {/*    onFocus={autocomplete.show} onBlur={autocomplete.hide} spellCheck={false}*/}
-        {/*>*/}
-        {/*</TextField>*/}
 
         {/*This is just some hack to be able to determine the exact width of text*/}
         <span ref={autocomplete.textHackRef} style={{position: "fixed", top: 0, left: 0, visibility: "hidden"}}>

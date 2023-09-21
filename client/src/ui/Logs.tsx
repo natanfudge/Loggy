@@ -9,10 +9,10 @@ import {useNavigate} from "react-router-dom";
 import {ThemeState} from "./App";
 import styles from "./css/loggy.module.css"
 import {LogsTitle} from "./LogsTitle";
-import {usePersistentState} from "fudge-lib/dist/state/PersistentState";
-import {useStateObject} from "fudge-lib/dist/state/State";
 import {isLogsResponseSuccess} from "../server/Api";
-import {Column} from "fudge-lib/dist/Flow";
+import {usePersistentState} from "../fudge-lib/state/PersistentState";
+import {useStateObject} from "../fudge-lib/state/State";
+import {Column} from "../fudge-lib/Flow";
 
 export const initialFilter = getInitialDayFilterString()
 

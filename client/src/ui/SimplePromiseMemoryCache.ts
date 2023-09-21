@@ -1,4 +1,4 @@
-import { TsKey } from "fudge-lib/dist/types/Basic";
+import {TsKey} from "../fudge-lib/types/Basic";
 
 /**
  * Version of the PromiseMemoryCache that stores only one value
