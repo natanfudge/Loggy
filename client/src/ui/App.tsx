@@ -58,9 +58,12 @@ export function AppWrapper() {
     return <ThemeProvider theme={darkTheme}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <CssBaseline/>
-            <BrowserRouter>
-                <RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>
-            </BrowserRouter>
+            <div className={isDark? undefined: "light"}>
+                <BrowserRouter>
+                    <RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>
+                </BrowserRouter>
+            </div>
+
         </LocalizationProvider>
     </ThemeProvider>
 }

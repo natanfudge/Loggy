@@ -1,4 +1,4 @@
-import {AutoCompleteConfig, Completion, SearchitBar, syncCompletable} from "./searchit/SearchitBar";
+import {AutoCompleteConfig, Completion, SearchitBar, syncCompletable} from "../fudge-lib/searchit/SearchitBar";
 import {AllSeverities} from "../core/Logs";
 import styles from "./css/loggy.module.css"
 import styled from "@emotion/styled";
