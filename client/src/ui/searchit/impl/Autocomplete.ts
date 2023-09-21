@@ -266,8 +266,7 @@ export function useAutoComplete(config: AutoCompleteConfig, queryState: State<st
             }
 
         }, [relevantText, forceCompletions])
-
-        if (!shown || (!forceCompletions && relevantText === "")) return []
+        if (!shown || (!(config.alwaysShowCompletions ?? false) && !forceCompletions && relevantText === "")) return []
         //TODO: distinct() call might fail if we have more fields in Completion
         return results.distinct()
     }

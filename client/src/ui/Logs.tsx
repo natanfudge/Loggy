@@ -44,7 +44,8 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
     const page = useStateObject(0)
     const endpoints = useEndpoints(props.endpoint)
     const endpoint = activeEndpoint(props.endpoint, endpoints)
-    const query = usePersistentState(`query-string-${endpoint}`, initialFilter)
+    // Added -2 because of persistent state format change
+    const query = usePersistentState(`query-string-${endpoint}-2`, initialFilter)
     const endpointQuery = query.mapType(q => ({query: q, endpoint}), eq => eq.query)
         .onSet(({endpoint}) => navigate("/logs/" + (endpoint ?? "")))
 

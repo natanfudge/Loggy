@@ -23,7 +23,7 @@
     "chart.js": "^4.3.0",
     "dayjs": "^1.11.7",
     "dayjs-plugin-utc": "^0.1.2",
-    "fudge-lib": "latest",
+    "fudge-lib": "^2.0.8",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-dom": "^18.2.0",
@@ -33,8 +33,8 @@
     "react-window": "^1.8.8"
   },
   "devDependencies": {
-    "@types/react": "^18.0.26",
-    "@types/react-dom": "^18.0.9",
+    "@types/react": "^18.2.22",
+    "@types/react-dom": "^18.2.7",
     "@types/react-virtualized-auto-sizer": "^1.0.1",
     "@types/react-window": "^1.8.5",
     "@vitejs/plugin-react": "^4.0.0",

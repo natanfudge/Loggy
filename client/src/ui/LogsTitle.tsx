@@ -23,7 +23,8 @@ export function LogsTitle(props: {
     const endpoint = query.value.endpoint
 
     const queryState = query.field("query")
-    return <Row style={{padding: 10, paddingLeft: isPhone ? undefined : 30}}>
+
+    return <Row style={{paddingRight: 10, paddingTop: isPhone? 10: undefined, paddingLeft: isPhone ? undefined : 30}}>
 
         <Column
             style={{paddingLeft: isPhone ? 10 : undefined, alignSelf: "center", width: isPhone ? "100%" : undefined}}>

@@ -1,0 +1,31 @@
+.input {
+    width: 100%;
+    margin: 0;
+    font-family: "Roboto","Helvetica","Arial",sans-serif;
+    color: rgba(var(--text), 0.8);
+    font-weight: 400;
+    font-size: 1rem;
+    line-height: 1.5;
+    letter-spacing: 0.00938em;
+    background-color: transparent;
+    outline: none;
+    border-color: transparent;
+    padding:0.4rem;
+}
+
+.wrapper {
+    composes: row from "fudge-lib/dist/styles.css";
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    /*padding: 0.4rem;*/
+    padding-left: 0.8rem;
+    width: 100%;
+    align-items: center;
+}
+
+.wrapper:focus-within {
+    border-color: var(--primary);
+    outline: none;
+}
+

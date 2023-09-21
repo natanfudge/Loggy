@@ -11,7 +11,6 @@ import {BrowserRouter, Route, Routes, useParams} from "react-router-dom";
 import {AnalyticsPage} from "./AnalyticsPage";
 import {Logs} from "./Logs";
 import * as mui from "@mui/material"
-import {defaultThemeColors} from "../utils-proposals/Theme";
 // import {ThemeProvider} from "@emotion/react";
 
 declare module "@emotion/react" {
@@ -54,8 +53,7 @@ export function AppWrapper() {
         },
         palette: {
             mode: isDark ? 'dark' : "light"
-        },
-        colors: defaultThemeColors(isDark)
+        }
     });
 
 

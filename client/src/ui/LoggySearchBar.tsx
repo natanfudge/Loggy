@@ -45,12 +45,7 @@ const levelDateCompletable = syncCompletable(text => {
 
 
 
-function simpleCompletion(value: string): Completion {
-    return {
-        label: value,
-        newText: value
-    }
-}
+
 
 const loggyCompletables = [levelDateCompletable/*, dateCompletable("from"), dateCompletable("to")*/]
 
@@ -66,8 +61,4 @@ export function LoggySearchBar(props: { query: State<string>, error: string | un
                         query={props.query}/>
 }
 
-const PaddedSearchBar = styled(SearchitBar)`
-  padding-right: 30px;
-  padding-left: 10px;
-`
 

@@ -4,7 +4,7 @@ import "fudge-lib/dist/extensions/Extensions.js";
 import {OverlayedAutocompleteContent} from "./impl/SearchItBarImpl";
 import {State} from "fudge-lib/dist/state/State";
 import {MdRadioButtonUnchecked} from "react-icons/md";
-import {EmotionTextField} from "./EmotionTextField";
+import {CssTextField} from "./CssTextField";
 
 export interface SearchitProps {
     config: AutoCompleteConfig,
@@ -34,6 +34,13 @@ export interface AutoCompleteConfig {
      * Specify an error that was received as a result of the query to mark the search bar red.
      */
     error: string | undefined
+
+    /**
+     * If set to false, when you focus the text field and nothing was typed yet in the current word, no completions will be shown.
+     * If set to true, completions will always be shown.
+     * Default - false
+     */
+    alwaysShowCompletions?: boolean
 }
 
 export interface Completeable {
@@ -78,13 +85,17 @@ export function SearchitBar(props: SearchitProps) {
     const autocomplete = useAutoComplete(props.config, props.query);
 
     return <div className={props.className} style={{position: "relative", alignSelf: "center", width: "100%", height: "100%"}}>
-        <EmotionTextField
+        <CssTextField
             error={props.config.error}
             state={autocomplete.query}
             leadingIcon={
-                <MdRadioButtonUnchecked size="1.4rem"
+                <MdRadioButtonUnchecked size="1.6rem"
                                         style={{color: "yellow", visibility: autocomplete.submitted ? "hidden" : undefined}}/>
             }
+            inputRef={autocomplete.inputRef}
+            onFocus={autocomplete.show}
+            onBlur={autocomplete.hide}
+            spellCheck={false}
         />
         {/*<TextField*/}
         {/*    error={props.config.error !== undefined}*/}
