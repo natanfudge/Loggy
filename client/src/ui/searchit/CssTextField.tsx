@@ -1,11 +1,11 @@
 
 import styles from "./searchit.module.css"
-import {AppTheme} from "../../utils-proposals/AppTheme";
 import React, {Ref} from "react";
 import {ReactComponent} from "../../fudge-lib/types/React";
 import {State} from "../../fudge-lib/state/State";
 import {Column} from "../../fudge-lib/Flow";
 import {withClassName} from "../../fudge-lib/react/Styles";
+import {AppTheme} from "../../fudge-lib/AppTheme";
 // import {withClassName} from "fudge-lib";
 
 //TODO: test errors

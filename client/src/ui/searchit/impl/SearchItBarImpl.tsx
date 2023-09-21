@@ -3,7 +3,7 @@ import {AutoCompleteWidthPx} from "./Autocomplete";
 import {CSSProperties, Fragment, MouseEventHandler, useEffect, useState} from "react";
 import { completionsEqual } from "./CompletionUtils";
 import {Completion} from "../SearchitBar";
-import {useKeyboardShortcut} from "../../../utils-proposals/Keyboard";
+import {useKeyboardShortcut} from "../../../fudge-lib/react/Keyboard";
 
 export const OverlayedAutocompleteContent = styled(AutocompleteContent)`
   position: absolute;

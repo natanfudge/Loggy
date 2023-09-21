@@ -10,9 +10,9 @@ import {
     Title,
     Tooltip,
 } from 'chart.js';
-import {InstanceHashMapGetOr, StaticHashMapFromPairArray} from "../utils-proposals/collections/hashmap/HashMap";
 import {Day} from "../core/Day";
 import {Theme, useTheme} from "@mui/material";
+import {HashMap} from "../fudge-lib/collections/hashmap/HashMap";
 
 ChartJS.register(
     CategoryScale,
@@ -58,13 +58,13 @@ function analyticsToDatasets(analytics: Analytics, theme: Theme): ChartData<"lin
     if (analytics.isEmpty()) return {labels: [], datasets: []}
     const daysSorted = [...analytics]
     daysSorted.sort((a, b) => compareDays(a[0], b[0]))
-    const dayToBreakdown = StaticHashMapFromPairArray(daysSorted)
+    const dayToBreakdown = HashMap.fromPairArray(daysSorted)
     const allDays = daysBetween(daysSorted.first()[0], daysSorted.last()[0])
 
     const labels = allDays.map(day => day.dateString())
 
     // This accounts for days with no data as well, giving them the value of 0.
-    const allBreakdowns: DayBreakdown[] = allDays.map(day => InstanceHashMapGetOr(dayToBreakdown, day, () => emptyBreakdown))
+    const allBreakdowns: DayBreakdown[] = allDays.map(day => dayToBreakdown.getOr(day, () => emptyBreakdown))
 
     const infoDataset = allBreakdowns.map(b => b.infoCount)
     const warnDataset = allBreakdowns.map(b => b.warningCount)

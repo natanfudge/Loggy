@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import {AppWrapper} from './ui/App'
 import {createBrowserRouter} from "react-router-dom";
 import "./App.css"
-import {initKeyboardShortcuts} from "./utils-proposals/Keyboard";
+import {initKeyboardShortcuts} from "./fudge-lib/react/Keyboard";
 import "./fudge-lib/styles.css"
 import "./utils-proposals/styles.css"
 
