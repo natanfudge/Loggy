@@ -5,14 +5,8 @@ import {createBrowserRouter} from "react-router-dom";
 import "./App.css"
 import {initKeyboardShortcuts} from "./fudge-lib/react/Keyboard";
 import "./fudge-lib/styles.css"
-import "./utils-proposals/styles.css"
 
-// const router = createBrowserRouter([
-//     {
-//         path: "/",
-//         element: A
-//     }
-// ])
+
 
 initKeyboardShortcuts()
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
