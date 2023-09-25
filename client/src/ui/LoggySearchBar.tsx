@@ -1,8 +1,8 @@
-import {AutoCompleteConfig, Completion, SearchitBar, syncCompletable} from "../fudge-lib/searchit/SearchitBar";
+import {AutoCompleteConfig, Completion, SearchitBar} from "../fudge-lib/searchit/SearchitBar";
 import {AllSeverities} from "../core/Logs";
 import styles from "./css/loggy.module.css"
-import styled from "@emotion/styled";
 import {State} from "../fudge-lib/state/State";
+import {syncCompletable} from "../fudge-lib/searchit/SyncCompletable";
 
 const AllDateOptions = [
     "today",
@@ -10,7 +10,6 @@ const AllDateOptions = [
     "lastWeek",
     "lastMonth"
 ]
-
 
 
 // Data for completing level/levelExact:<severity>
@@ -41,10 +40,6 @@ const levelDateCompletable = syncCompletable(text => {
         return lowercaseLabel.includes(lowercaseText) && lowercaseLabel !== lowercaseText;
     })
 })
-
-
-
-
 
 
 const loggyCompletables = [levelDateCompletable/*, dateCompletable("from"), dateCompletable("to")*/]
