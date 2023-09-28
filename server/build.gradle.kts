@@ -50,6 +50,7 @@ repositories {
 
 dependencies {
     implementation(libs.bundles.main)
+    implementation(libs.searchit)
     implementation("com.michael-bull.kotlin-result:kotlin-result:1.1.18")
     testImplementation(libs.bundles.test)
 }

@@ -9,6 +9,7 @@ main = ["ktor-server-core-jvm", "ktor-server-host-common-jvm", "ktor-server-cont
 test = ["kotlin-test-junit","ktor-server-tests-jvm",  "strikt", ]
 build = ["objectbox","brotli", "brotli-windows"]
 
+
 [plugins]
 
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -27,6 +28,7 @@ gradle-node="5.0.0"
 objectbox = "3.6.0"
 brotli = "1.12.0"
 strikt = "0.34.1"
+searchit = "0.1"
 
 [libraries]
 
@@ -45,3 +47,4 @@ objectbox = {group = "io.objectbox",name = "objectbox-gradle-plugin",version.ref
 brotli-windows = {group = "com.aayushatharva.brotli4j", name = "native-windows-x86_64", version.ref = "brotli"}
 brotli = {group = "com.aayushatharva.brotli4j", name = "brotli4j", version.ref = "brotli"}
 strikt = {group = "io.strikt", name = "strikt-core", version.ref= "strikt"}
+searchit = {group = "com.caesarealabs", name = "searchit", version.ref = "searchit"}
