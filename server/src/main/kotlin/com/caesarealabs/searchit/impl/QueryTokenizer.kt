@@ -1,4 +1,4 @@
-package io.github.natanfudge.logs.impl.search
+package com.caesarealabs.searchit.impl
 
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
@@ -8,30 +8,12 @@ import org.jetbrains.annotations.TestOnly
 private const val Quote = '\"'
 private const val Backslash = '\\'
 
-// public for tests
-public object QueryTokenizer {
-    // After this call everything turns into lowercase
+internal object QueryTokenizer {
     @TestOnly
-    public fun tokenize(query: String): Result<List<QueryToken>, String> {
+    fun tokenize(query: String): Result<List<QueryToken>, String> {
         val trimmed = query.trim()
         if (trimmed == "") return Ok(listOf())
         return tokenizeImpl(trimmed)
-//        val split = trimmed.split(Regex("\\s+"))
-//        val tokens = split.flatMap { detachParentheses(it) }.map {
-//            when (val lowercase = it.lowercase()) {
-//                "(" -> QueryToken.Parentheses.Opening
-//                ")" -> QueryToken.Parentheses.Closing
-//                "and" -> QueryToken.Operator.And
-//                "or" -> QueryToken.Operator.Or
-//                "not" -> QueryToken.Operator.Not
-//                else -> {
-//                    if (lowercase.contains(':')) QueryToken.KeyValue(lowercase.substringBefore(':'), lowercase.substringAfter(':'))
-//                    else QueryToken.Raw(lowercase)
-//                }
-//            }
-//        }
-
-//        return tokens
     }
 
     // Handles parsing of "" and \
@@ -163,46 +145,6 @@ public object QueryTokenizer {
         "or" -> QueryToken.Operator.Or
         "not" -> QueryToken.Operator.Not
         else -> QueryToken.Raw(expression)
-//            if (lowercase.contains(':')) QueryToken.KeyValue(lowercase.substringBefore(':'), lowercase.substringAfter(':'))
-//            else
-//        }
-    }
-
-    // This takes parentheses that are attached to tokens (    e.g. (amar  ,  test)    )
-    // and turns them into separate tokens: ( amar , test )
-    private fun detachParentheses(string: String): List<String> {
-        return when {
-            // If it's just the parentheses keep it as is
-            string.length == 1 -> listOf(string)
-
-
-            // Add opening/closing parentheses as separate items when they are stuck to the front/end of query parts.
-            string.startsWith('(') -> {
-                // Include all leading parentheses separately
-                var parenCount = 0
-                // Get all parentheses BEFORE the string
-                for (char in string) {
-                    if (char == '(') parenCount++
-                    else break
-                }
-                // Add opening parentheses as separate items
-                List(parenCount) { "(" } + string.substring(parenCount)
-            }
-
-            string.endsWith(')') -> {
-                // Include all trailing parentheses separately
-                var parenCount = 0
-                // Get all parentheses AFTER the string
-                for (char in string.reversed()) {
-                    if (char == ')') parenCount++
-                    else break
-                }
-                // Add closing parentheses after as separate items
-                listOf(string.substring(0, string.length - parenCount)) + List(parenCount) { ")" }
-            }
-
-            else -> listOf(string)
-        }
     }
 
 }

@@ -1,4 +1,8 @@
-package io.github.natanfudge.logs.impl.search
+package com.caesarealabs.searchit.impl
+
+import com.caesarealabs.searchit.SpecialFilter
+
+internal typealias SpecialFilters = List<SpecialFilter<*>>
 
 internal object QueryValidator {
     // Returns null if it is valid
@@ -7,17 +11,7 @@ internal object QueryValidator {
         validateOperators(query)?.let { return it }
         validateTime(query, QueryParser.StartDateToken)?.let { return it }
         validateTime(query, QueryParser.EndDateToken)?.let { return it }
-        validateSeverities(query)?.let { return it }
 
-        return null
-    }
-
-    private fun validateSeverities(query: List<QueryToken>): String? {
-        for (token in query) {
-            if (token is QueryToken.KeyValue) {
-                if (SeverityFilterParser.isInvalidSeverity(token.key, token.value)) return "No such severity '${token.value}'"
-            }
-        }
         return null
     }
 

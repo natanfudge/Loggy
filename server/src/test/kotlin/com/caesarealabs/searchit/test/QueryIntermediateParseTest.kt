@@ -1,14 +1,13 @@
-package natanfudge.io
+package com.caesarealabs.searchit.test
 
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.getOrThrow
-import io.github.natanfudge.logs.impl.search.LogParseResult
-import io.github.natanfudge.logs.impl.search.LogQuery
-import io.github.natanfudge.logs.impl.search.QueryParser.parseLogQuery
-import io.github.natanfudge.logs.impl.search.QueryToken
-import io.github.natanfudge.logs.impl.search.QueryToken.*
-import io.github.natanfudge.logs.impl.search.QueryTokenizer
+import com.caesarealabs.searchit.impl.QueryParseResult
+import com.caesarealabs.searchit.impl.QueryToken
+import com.caesarealabs.searchit.impl.QueryToken.*
+import com.caesarealabs.searchit.impl.QueryTokenizer
+import com.caesarealabs.searchit.impl.SearchitQuery
 import org.junit.Test
 import strikt.api.Assertion
 import strikt.api.DescribeableBuilder
@@ -151,49 +150,49 @@ class QueryIntermediateParseTest {
     }
 
     @Test
-    fun testDates() {
+    fun testDates() : Unit = with(TestQueryParser){
         val today = Instant.now().toGmtDateTime()
 
-        parseLogQuery("")
+        parseQuery("")
             .expectStartsSameDay(today)
             .endIsAtSameDay(today)
 
-        parseLogQuery("from:today")
+        parseQuery("from:today")
             .expectStartsSameDay(today)
             .endIsAtSameDay(today)
 
 
-        parseLogQuery("from:yesterday to:today   ")
+        parseQuery("from:yesterday to:today   ")
             .expectStartsSameDay(today.minusDays(1))
             .endIsAtSameDay(today)
 
-        parseLogQuery("from:lastWeek")
+        parseQuery("from:lastWeek")
             .expectStartsSameDay(today.minusWeeks(1))
 
-        parseLogQuery("from:lastMonth")
+        parseQuery("from:lastMonth")
             .expectStartsSameDay(today.minusMonths(1))
 
-        parseLogQuery("from:5")
+        parseQuery("from:5")
             .expectStartsSameDay(today.withDayOfMonth(5))
 
-        parseLogQuery("from:5/6")
+        parseQuery("from:5/6")
             .expectStartsSameDay(today.withDayOfMonth(5).withMonth(6))
 
-        parseLogQuery("from:5/6/1990")
+        parseQuery("from:5/6/1990")
             .expectStartsSameDay(today.withDayOfMonth(5).withMonth(6).withYear(1990))
 
     }
 
-    private fun LogParseResult.expectStartsSameDay(dateTime: ZonedDateTime): Assertion.Builder<LogParseResult> {
+    private fun QueryParseResult.expectStartsSameDay(dateTime: ZonedDateTime): Assertion.Builder<QueryParseResult> {
         val expect = expectThat(this)
-        expect.isA<Ok<LogQuery>>()
+        expect.isA<Ok<SearchitQuery>>()
             .get { value.timeRange.start.toGmtDateTime() }
             .isSameDayAs(dateTime)
         return expect
     }
 
-    private fun Assertion.Builder<LogParseResult>.endIsAtSameDay(dateTime: ZonedDateTime): Assertion.Builder<LogParseResult> {
-        isA<Ok<LogQuery>>()
+    private fun Assertion.Builder<QueryParseResult>.endIsAtSameDay(dateTime: ZonedDateTime): Assertion.Builder<QueryParseResult> {
+        isA<Ok<SearchitQuery>>()
             .get { value.timeRange.end.toGmtDateTime() }
             .isSameDayAs(dateTime)
         return this

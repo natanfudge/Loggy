@@ -1,77 +1,91 @@
-package io.github.natanfudge.logs.impl.search
+package com.caesarealabs.searchit.impl
 
+import com.caesarealabs.searchit.Filter
+import com.caesarealabs.searchit.TimeRange
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.Result
-import io.github.natanfudge.logs.impl.*
-import io.github.natanfudge.logs.impl.search.QueryToken.Operator
-import io.github.natanfudge.logs.impl.search.QueryToken.Parentheses
 import java.time.DateTimeException
 import java.time.Instant
 import java.time.ZonedDateTime
 
-// public for testing
-public typealias LogParseResult = Result<LogQuery, String>
+internal typealias QueryParseResult = Result<SearchitQuery, String>
 
-// public for testing
-public object QueryParser {
-    public const val StartDateToken: String = "from"
-    public const val EndDateToken: String = "to"
+internal class QueryParser(private val specialFilters: SpecialFilters) {
+    companion object {
+        const val StartDateToken: String = "from"
+        const val EndDateToken: String = "to"
+    }
+
     private val allDateTokens = listOf(StartDateToken, EndDateToken)
 
-    public fun parseLogQuery(query: String): LogParseResult {
+    fun parseQuery(query: String): QueryParseResult {
         try {
             val tokenized = QueryTokenizer.tokenize(query).or { return it }
+            // If validateQuery returned non-null it means we have an error
             QueryValidator.validateQuery(tokenized)?.let { return Err(it) }
 
             val (timeRange, otherTokens) = tokenized.takeTimeRangeFilter().or { return it }
 
-            return Ok(LogQuery(timeRange, parseOtherFilters(otherTokens)))
+            return Ok(SearchitQuery(timeRange, parseOtherFilters(otherTokens).or { return it }))
         } catch (e: Exception) {
             throw io.ktor.http.parsing.ParseException("Failed to parse query: $query", e)
         }
 
     }
 
-    private fun parseOtherFilters(tokens: List<QueryToken>): List<LogFilter> {
+    private fun parseOtherFilters(tokens: List<QueryToken>): Result<List<SearchitFilter>, String> {
         val folded = foldFilters(tokens)
-        return folded.map { it.parse() }
+        return Ok(folded.map { token -> token.parse().or { return it } })
     }
 
-    private fun FoldedToken.parse(): LogFilter = when (this) {
+    private fun FoldedToken.parse(): Result<SearchitFilter, String> = when (this) {
         is FoldedToken.Binary -> {
-            val constructor = if (operator == Operator.And) LogFilter::And else LogFilter::Or
-            constructor(left.parse(), right.parse())
+            val constructor = if (operator == QueryToken.Operator.And) SearchitFilter::And else SearchitFilter::Or
+            Ok(constructor(left.parse().or { return it }, right.parse().or { return it }))
         }
 
-        FoldedToken.None -> LogFilter.None
-        is FoldedToken.Not -> LogFilter.Not(folded.parse())
+        FoldedToken.None -> Ok(SearchitFilter.None)
+        is FoldedToken.Not -> Ok(SearchitFilter.Not(folded.parse().or { return it }))
         is FoldedToken.Single -> when (value) {
-            // Is not severity - it's just a normal key/value filter
-            is QueryToken.KeyValue -> SeverityFilterParser.parseSeverity(value.key, value.value) ?: LogFilter.KeyValue(value.key, value.value)
-            is QueryToken.Raw -> LogFilter.Text(value.text)
+            is QueryToken.KeyValue -> {
+                // See if any special filters match this key
+                val matchingSpecialFilter = specialFilters.find { it.keyword == value.key }
+                val value = if (matchingSpecialFilter != null) {
+                    // We trust that the filter is for the correct type here
+                    @Suppress("UNCHECKED_CAST")
+                    val filter = matchingSpecialFilter.filterFactory(value.value)?.let { SearchitFilter.Special(it as Filter<Any?>) }
+                    if (filter != null) Ok(filter) else Err("Value '${value.value}' is not valid for the ${value.key} filter.")
+                } else {
+                    // Not a special filter - it's just a normal key/value filter
+                    Ok(SearchitFilter.KeyValue(value.key, value.value))
+                }
+                value
+            }
+
+            is QueryToken.Raw -> Ok(SearchitFilter.Text(value.text))
         }
     }
 
-    public sealed interface FoldedToken {
-        public object None : FoldedToken
-        public data class Single(val value: QueryToken.WithContent) : FoldedToken {
+    sealed interface FoldedToken {
+        object None : FoldedToken
+        data class Single(val value: QueryToken.WithContent) : FoldedToken {
             override fun toString(): String {
                 return value.toString()
             }
         }
 
-        public data class Binary(val operator: Operator, val left: FoldedToken, val right: FoldedToken) : FoldedToken {
+        data class Binary(val operator: QueryToken.Operator, val left: FoldedToken, val right: FoldedToken) : FoldedToken {
             override fun toString(): String {
                 return when (operator) {
-                    Operator.Or -> "(${left}) or (${right})"
-                    Operator.And -> "(${left}) and (${right})"
+                    QueryToken.Operator.Or -> "(${left}) or (${right})"
+                    QueryToken.Operator.And -> "(${left}) and (${right})"
                     else -> error("Impossible - only and and or are allowed here")
                 }
             }
         }
 
-        public data class Not(val folded: FoldedToken) : FoldedToken {
+        data class Not(val folded: FoldedToken) : FoldedToken {
             override fun toString(): String {
                 return "not (${folded})"
             }
@@ -79,7 +93,7 @@ public object QueryParser {
     }
 
 
-    public fun foldFilters(tokens: List<QueryToken>): List<FoldedToken> {
+     fun foldFilters(tokens: List<QueryToken>): List<FoldedToken> {
         val folded = foldFiltersImpl(tokens).first
 
         val semiCollapsed = mutableListOf<FoldedToken>()
@@ -91,7 +105,7 @@ public object QueryParser {
     private fun collapseTopLevelAnds(folded: FoldedToken, toList: MutableList<FoldedToken>) {
         when (folded) {
             is FoldedToken.Binary -> {
-                if (folded.operator == Operator.And) {
+                if (folded.operator == QueryToken.Operator.And) {
                     // Break open ANDs
                     collapseTopLevelAnds(folded.left, toList)
                     collapseTopLevelAnds(folded.right, toList)
@@ -113,19 +127,19 @@ public object QueryParser {
         if (tokens.size == 1) return FoldedToken.Single(tokens[0] as QueryToken.WithContent) to 1
 
         val (firstOperand, firstOperandTokenCount) = when (val firstToken = tokens[0]) {
-            Operator.Not -> {
+            QueryToken.Operator.Not -> {
                 // Not: fold the not together with whatever it is applied to
                 val (operand, operandLength) = foldFiltersImpl(tokens.subList(1, tokens.size))
                 FoldedToken.Not(operand) to operandLength + 1
             }
 
-            is Operator -> error("Unexpected operator with missing operand in token list $tokens")
-            is Parentheses -> {
+            is QueryToken.Operator -> error("Unexpected operator with missing operand in token list $tokens")
+            is QueryToken.Parentheses -> {
                 var opened = 1
                 var i = 1
                 while (i < tokens.size) {
-                    if (tokens[i] == Parentheses.Closing) opened--
-                    else if (tokens[i] == Parentheses.Opening) opened++
+                    if (tokens[i] == QueryToken.Parentheses.Closing) opened--
+                    else if (tokens[i] == QueryToken.Parentheses.Opening) opened++
                     if (opened == 0) break
                     i++
                 }
@@ -138,7 +152,7 @@ public object QueryParser {
             // Normal operand
             is QueryToken.WithContent -> {
                 val nextToken = tokens[1]
-                if (nextToken is Operator && nextToken != Operator.Not) {
+                if (nextToken is QueryToken.Operator && nextToken != QueryToken.Operator.Not) {
                     // And/Or: fold the current operand together with whatever comes after the operator.
                     val (operand, operandLength) = foldFiltersImpl(tokens.subList(2, tokens.size))
                     FoldedToken.Binary(nextToken, FoldedToken.Single(firstToken), operand) to operandLength + 2
@@ -155,13 +169,14 @@ public object QueryParser {
         } else {
             val tokenAfter = tokens[firstOperandTokenCount]
             // If there's an and / or , we need to skip it.
-            val secondOperatorStart = if (tokenAfter is Operator && tokenAfter != Operator.Not) firstOperandTokenCount + 1 else firstOperandTokenCount
+            val secondOperatorStart =
+                if (tokenAfter is QueryToken.Operator && tokenAfter != QueryToken.Operator.Not) firstOperandTokenCount + 1 else firstOperandTokenCount
             // Tokens left - AND the leftover tokens with the first operand
             val (secondOperand, secondOperandTokenCount) = foldFiltersImpl(tokens.subList(secondOperatorStart, tokens.size))
             // No need to add '+1' because the AND is not a real token here
             val totalTokenCount = secondOperatorStart + secondOperandTokenCount
             // Apply the correct operator that comes after
-            val operator = if (tokenAfter == Operator.Or) Operator.Or else Operator.And
+            val operator = if (tokenAfter == QueryToken.Operator.Or) QueryToken.Operator.Or else QueryToken.Operator.And
             return FoldedToken.Binary(operator, firstOperand, secondOperand) to totalTokenCount
         }
 
@@ -234,4 +249,3 @@ public object QueryParser {
     private fun defaultYear() = Instant.now().toGmtDateTime().year
 
 }
-

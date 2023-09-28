@@ -1,15 +1,15 @@
-package natanfudge.io
+package com.caesarealabs.searchit.test
 
 import com.github.michaelbull.result.Ok
 import com.github.michaelbull.result.getOrThrow
-import io.github.natanfudge.logs.impl.search.QueryParser
-import io.github.natanfudge.logs.impl.search.QueryParser.FoldedToken.*
-import io.github.natanfudge.logs.impl.search.QueryToken
-import io.github.natanfudge.logs.impl.search.QueryToken.KeyValue
-import io.github.natanfudge.logs.impl.search.QueryToken.Operator.And
-import io.github.natanfudge.logs.impl.search.QueryToken.Operator.Or
-import io.github.natanfudge.logs.impl.search.QueryToken.Raw
-import io.github.natanfudge.logs.impl.search.QueryTokenizer
+import com.caesarealabs.searchit.impl.QueryParser
+import com.caesarealabs.searchit.impl.QueryParser.FoldedToken.*
+import com.caesarealabs.searchit.impl.QueryToken
+import com.caesarealabs.searchit.impl.QueryToken.KeyValue
+import com.caesarealabs.searchit.impl.QueryToken.Operator.And
+import com.caesarealabs.searchit.impl.QueryToken.Operator.Or
+import com.caesarealabs.searchit.impl.QueryToken.Raw
+import com.caesarealabs.searchit.impl.QueryTokenizer
 import org.junit.Test
 import strikt.api.expectThat
 import strikt.assertions.isA
@@ -72,9 +72,9 @@ class QueryFoldTest {
 
     //"((foo or (k:v and shit)) bar) baz"
     private fun String.assertFolding(folding: List<QueryParser.FoldedToken>) = expectThat(this)
-        .and { get { QueryParser.parseLogQuery(this) }
+        .and { get { TestQueryParser.parseQuery(this) }
             .describedAs { this.toString() }
             .isA<Ok<*>>() }
-        .get { QueryParser.foldFilters(QueryTokenizer.tokenize(this).getOrThrow { AssertionError("Failed to tokenize query $this: $it") }).toList() }
+        .get { TestQueryParser.foldFilters(QueryTokenizer.tokenize(this).getOrThrow { AssertionError("Failed to tokenize query $this: $it") }).toList() }
         .isEqualTo(folding.toList())
 }

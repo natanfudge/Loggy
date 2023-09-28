@@ -2,7 +2,6 @@
 
 package io.github.natanfudge.logs.impl
 
-
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
@@ -18,8 +17,6 @@ internal fun LogEvent.getSeverity(): LogLine.Severity {
     return LogLine.Severity.Info
 }
 
-//internal val LogEvent.anyError get() = logs.any { it.isError }
-//internal val LogEvent.anyWarning get() = logs.any {  }
 
 internal val LogLine.isError get() = this is LogLine.Message.Error
 internal val LogLine.isWarning get() = this is LogLine.Message && severity == LogLine.Severity.Warn

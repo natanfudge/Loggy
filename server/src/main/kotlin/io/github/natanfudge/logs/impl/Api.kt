@@ -1,10 +1,10 @@
 package io.github.natanfudge.logs.impl
 
+import com.caesarealabs.searchit.SearchitResult
 import io.github.natanfudge.logs.impl.analytics.Analytics
 import io.github.natanfudge.logs.impl.analytics.AnalyticsArchive
 import io.github.natanfudge.logs.impl.analytics.DayBreakdown
 import io.github.natanfudge.logs.impl.analytics.startOfDayGmt
-import io.github.natanfudge.logs.impl.search.getLogs
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.response.*
@@ -37,9 +37,9 @@ internal class Router(private val box: Box<LogEventEntity>, private val analytic
                     return@endpoint
                 }
 
-            val response = box.getLogs(request)
+            val response = box.loggySearch(request)
             println("Returning $response for request $request")
-            call.respondText(json.encodeToString(LogResponse.serializer(), response))
+            call.respondText(json.encodeToString(SearchitResult.serializer(LogEvent.serializer()), response))
         }
         endpoint("analytics") {
             val request = UrlParameters.decodeSafelyFromParameters(call.parameters, GetAnalyticsRequest.serializer())
@@ -81,7 +81,6 @@ private fun Routing.endpoint(name: String, config: suspend PipelineContext<Unit,
     }
 
 
-
 @Serializable
 internal data class GetLogsRequest(
     val endpoint: String,
@@ -106,14 +105,6 @@ private fun PipelineContext<Unit, ApplicationCall>.addCorsHeader() {
 }
 
 
-
 private val json = Json { encodeDefaults = true }
 
 
-@Serializable
-internal sealed interface LogResponse {
-    @Serializable
-    data class Success(val pageCount: Int, val logs: List<LogEvent>): LogResponse
-    @Serializable
-    data class SyntaxError(val error: String): LogResponse
-}
