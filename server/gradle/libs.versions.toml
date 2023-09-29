@@ -9,7 +9,6 @@ main = ["ktor-server-core-jvm", "ktor-server-host-common-jvm", "ktor-server-cont
 test = ["kotlin-test-junit","ktor-server-tests-jvm",  "strikt", ]
 build = ["objectbox","brotli", "brotli-windows"]
 
-
 [plugins]
 
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
@@ -19,16 +18,16 @@ ktor = {id = "io.ktor.plugin",version.ref = "ktor"}
 
 [versions]
 
-ktor = "2.3.1"
-kotlin = "1.8.22"
-logback = "1.4.8"
-kotlinx-serialization = "1.5.1"
+ktor = "2.3.4"
+kotlin = "1.9.10"
+logback = "1.4.11"
+kotlinx-serialization = "1.6.0"
 jansi = "2.4.0"
-gradle-node="5.0.0"
-objectbox = "3.6.0"
+gradle-node="7.0.0"
+objectbox = "3.7.0"
 brotli = "1.12.0"
 strikt = "0.34.1"
-searchit = "0.1"
+searchit = "0.2"
 
 [libraries]
 

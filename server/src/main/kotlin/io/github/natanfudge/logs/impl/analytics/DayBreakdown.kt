@@ -6,7 +6,8 @@ import kotlinx.serialization.Serializable
 public data class DayBreakdown(
     val infoCount: UInt,
     val warningCount: UShort,
-    val errorCount: UShort
+    val errorCount: UShort,
+
 ) {
     public constructor(infoCount: Int, warningCount: Int, errorCount: Int) :
             this(

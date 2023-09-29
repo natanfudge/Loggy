@@ -37,9 +37,9 @@ internal class Router(private val box: Box<LogEventEntity>, private val analytic
                     return@endpoint
                 }
 
-            val response = box.loggySearch(request)
-            println("Returning $response for request $request")
-            call.respondText(json.encodeToString(SearchitResult.serializer(LogEvent.serializer()), response))
+            val result = box.loggySearch(request)
+            println("Returning $result for request $request")
+            call.respondText(json.encodeToString(GetLogsResponse.serializer(), GetLogsResponse.of(result)))
         }
         endpoint("analytics") {
             val request = UrlParameters.decodeSafelyFromParameters(call.parameters, GetAnalyticsRequest.serializer())
@@ -69,10 +69,17 @@ internal class Router(private val box: Box<LogEventEntity>, private val analytic
     }
 
     private fun getRealtimeAnalytics(endpoint: String): Analytics {
-        return box.query(LogEventEntity_.name.equal(endpoint)).build().use { it.find() }.analyze()
+        // All requested - don't filter by endpoint
+        val query = if (isAllEndpoint(endpoint)) box.query() else box.query(LogEventEntity_.name.equal(endpoint))
+        return query.build().use { it.find() }.analyze()
     }
 }
 
+private const val SpecialAllEndpoint = "all"
+
+public fun isAllEndpoint(endpoint: String): Boolean {
+    return endpoint.lowercase() == SpecialAllEndpoint
+}
 
 private fun Routing.endpoint(name: String, config: suspend PipelineContext<Unit, ApplicationCall>.() -> Unit) =
     get("__log_viewer__/$name") {
@@ -87,6 +94,22 @@ internal data class GetLogsRequest(
     val query: String,
     val page: Int
 )
+
+@Serializable
+internal sealed interface GetLogsResponse {
+    companion object {
+        fun of(result: SearchitResult<LogEvent>) = when (result) {
+            is SearchitResult.Success -> Success(result.pageCount, result.items)
+            is SearchitResult.SyntaxError -> SyntaxError(result.error)
+        }
+    }
+
+    @Serializable
+    data class Success(val pageCount: Int, val logs: List<LogEvent>) : GetLogsResponse
+
+    @Serializable
+    data class SyntaxError(val error: String) : GetLogsResponse
+}
 
 @Serializable
 internal data class GetAnalyticsRequest(

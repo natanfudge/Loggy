@@ -2,6 +2,7 @@
 
 package io.github.natanfudge.logs.impl
 
+import io.github.natanfudge.logs.impl.LogLine.Severity.*
 import io.github.natanfudge.logs.impl.analytics.Analytics
 import io.github.natanfudge.logs.impl.analytics.Day
 import io.github.natanfudge.logs.impl.analytics.DayBreakdown
@@ -62,23 +63,24 @@ internal fun LogEvent.toObjectBox(): LogEventEntity = LogEventEntity(
 
 internal fun List<LogEventEntity>.analyze(): Analytics {
     return map { dayOfUnixMs(it.startTime) to it }
-        .groupBy {(day, _) -> day }
+        .groupBy { (day, _) -> day }
         .mapValues { (_, logsOfDay) ->
             var errors = 0
             var warnings = 0
             var infos = 0
-            for((_, log) in logsOfDay) {
+            for ((_, log) in logsOfDay) {
                 val decoded = log.toLogEvent()
-                // A log event counts an error/warning if there was at least one error/warning log line.
-                when {
-                    decoded.logs.any { it.isError } -> errors++
-                    decoded.logs.any { it.isWarning } -> warnings++
-                    else -> infos++
+                when (decoded.getSeverity()) {
+                                             // Verbose and debug count the same as info because it's not like something special happened.
+                    Verbose, Debug, Info -> infos++
+                    Warn -> warnings++
+                    Error -> errors++
                 }
             }
             DayBreakdown(errorCount = errors, warningCount = warnings, infoCount = infos)
         }
 }
+
 private fun dayOfUnixMs(ms: Long): Day {
     val datetime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(ms), GMTZoneId)
     return Day(

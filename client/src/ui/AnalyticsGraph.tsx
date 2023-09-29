@@ -13,6 +13,7 @@ import {
 import {Day} from "../core/Day";
 import {Theme, useTheme} from "@mui/material";
 import {HashMap} from "../fudge-lib/collections/hashmap/HashMap";
+import {useScreenSize} from "../fudge-lib/methods/Gui";
 
 ChartJS.register(
     CategoryScale,
@@ -26,6 +27,7 @@ ChartJS.register(
 
 export const options = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
         title: {
             display: true,
@@ -51,7 +53,8 @@ const emptyBreakdown: DayBreakdown = {
 
 export function AnalyticsGraph(props: { analytics: Analytics }) {
     const theme = useTheme()
-    return <Line style={{maxHeight: "100%", maxWidth: "100%"}} data={analyticsToDatasets(props.analytics, theme)} options={options}/>
+    const isPhone = useScreenSize().isPhone
+    return <Line style={{maxHeight: isPhone? "80%" :"100%", maxWidth: "100%"}}  data={analyticsToDatasets(props.analytics, theme)} options={options}/>
 }
 
 function analyticsToDatasets(analytics: Analytics, theme: Theme): ChartData<"line", number[], string> {
@@ -97,7 +100,7 @@ function analyticsToDatasets(analytics: Analytics, theme: Theme): ChartData<"lin
 
 function compareDays(day1: Day, day2: Day): number {
     if (day1.year !== day2.year) return day1.year - day2.year;
-    if (day1.month !== day2.month) return day1.month - day1.month
+    if (day1.month !== day2.month) return day1.month - day2.month
     return day1.day - day2.day;
 }
 

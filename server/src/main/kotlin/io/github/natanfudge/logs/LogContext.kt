@@ -10,6 +10,14 @@ public class LogContext(private val name: String, private val startTime: Instant
     @PublishedApi
     internal val logDetails: MutableList<LogLine> = mutableListOf()
 
+    public inline fun logVerbose(message: () -> String) {
+        logDetails.add(LogLine.Message.Normal(message(), Instant.now(), LogLine.Severity.Verbose))
+    }
+
+    public inline fun logDebug(message: () -> String) {
+        logDetails.add(LogLine.Message.Normal(message(), Instant.now(), LogLine.Severity.Debug))
+    }
+
     public inline fun logInfo(message: () -> String) {
         logDetails.add(LogLine.Message.Normal(message(), Instant.now(), LogLine.Severity.Info))
     }
@@ -32,5 +40,6 @@ public class LogContext(private val name: String, private val startTime: Instant
     )
 
     @Suppress("FunctionName")
-    @TestOnly public fun __test_buildLog(): LogEvent = buildLog()
+    @TestOnly
+    public fun __test_buildLog(): LogEvent = buildLog()
 }

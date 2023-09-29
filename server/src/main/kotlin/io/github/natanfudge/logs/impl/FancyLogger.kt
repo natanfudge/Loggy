@@ -13,7 +13,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.time.Instant
 import java.time.ZonedDateTime
@@ -120,6 +119,10 @@ internal class FancyLogger(
     // (try removing this with K2)
     @Suppress("OVERRIDE_BY_INLINE")
     override inline fun <T> startCallWithContextAsParam(name: String, call: (LogContext) -> T): T {
+        val lowercaseName = name.lowercase()
+        if (lowercaseName.startsWith("debug") || lowercaseName == "all" || lowercaseName == "") {
+            throw IllegalArgumentException("The endpoint name '$name' is reserved by loggy. Please use a different endpoint name.")
+        }
         val context = LogContext(name.removePrefix("/").replace("/", "_"), Instant.now())
         val value = try {
             call(context)

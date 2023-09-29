@@ -21,15 +21,15 @@ private const val AnalyticsRowBytes = DayBreakdownBytes + DayBytes
 
 private const val CreationYearOfTheUniverse = 1970u
 
-// For test access only
-public class AnalyticsArchive(private val dir: Path) {
-    public fun append(key: String, analytics: Analytics) {
+// this is bad and really, really overengineered, but it works well, so it stays
+internal class AnalyticsArchive(private val dir: Path) {
+     fun append(key: String, analytics: Analytics) {
         val file = dir.withKey(key)
         if (!file.exists()) file.createFile()
         file.appendBytes(encode(analytics).toByteArray())
     }
 
-   public fun getAll(key: String): Analytics {
+    fun getAll(key: String): Analytics {
         val path = dir.withKey(key)
         if (!path.exists()) return mapOf()
         return decode(path.readBytes().toUByteArray())

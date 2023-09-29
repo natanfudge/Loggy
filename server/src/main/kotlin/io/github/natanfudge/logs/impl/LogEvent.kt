@@ -11,10 +11,13 @@ import java.time.Instant
 @Serializable
 public data class LogEvent(val name: String, val startTime: Instant, val endTime: Instant, val logs: List<LogLine>)
 
+/**
+ * While [LogEvent]s may not have severity by themselves, they do contain [LogLine]s that have an attached severity for each.
+ * We consider the severity of an entire [LogEvent] by the maximum severity of its messages.
+ * If it has no messages, the severity is considered [LogLine.Severity.Verbose].
+ */
 internal fun LogEvent.getSeverity(): LogLine.Severity {
-    if (logs.any { it.isError }) return LogLine.Severity.Error
-    if (logs.any { it.isWarning }) return LogLine.Severity.Warn
-    return LogLine.Severity.Info
+    return logs.filterIsInstance<LogLine.Message>().maxOfOrNull { it.severity } ?: LogLine.Severity.Verbose
 }
 
 
@@ -22,7 +25,7 @@ internal val LogLine.isError get() = this is LogLine.Message.Error
 internal val LogLine.isWarning get() = this is LogLine.Message && severity == LogLine.Severity.Warn
 
 @Serializable
-public  sealed interface LogLine {
+public sealed interface LogLine {
     @Serializable
     public sealed interface Message : LogLine {
         public val message: String
@@ -50,7 +53,7 @@ public  sealed interface LogLine {
     }
 
     public enum class Severity(public val level: Int) {
-        Info(2), Warn(3), Error(4)
+       Verbose(0), Debug(1), Info(2), Warn(3), Error(4)
     }
 
     @SerialName("DetailLog")

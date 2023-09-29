@@ -1,13 +1,15 @@
-import dayjs, {Dayjs} from "dayjs";
-import {isDayJs, unixMs} from "../utils/Utils";
+import dayjs, {Dayjs, isDayjs} from "dayjs";
+import {unixMs} from "../utils/Utils";
 import {DayBreakdown} from "../ui/AnalyticsGraph";
 import {LogEvent} from "../core/Logs";
-import {EndpointQuery} from "../ui/Endpoint";
-import { recordToArray } from "../fudge-lib/methods/Javascript";
+import {recordToArray} from "../fudge-lib/methods/Javascript";
+import {NormalEndpoint} from "../model/Endpoint";
 
 export namespace LoggyApi {
     const origin = window.location.origin.startsWith("http://localhost")
     || window.location.origin.startsWith("http://127.0.0.1") ? "http://localhost:80" : window.location.origin;
+
+    // const origin = "https://crashy.net"
 
     export async function getEndpoints(): Promise<GetEndpointsResponse> {
         const endpoints = await makeRequest("endpoints", undefined)
@@ -17,9 +19,6 @@ export namespace LoggyApi {
     export async function getLogs(request: GetLogsRequest): Promise<GetLogsResponse> {
         const logs = await makeRequest("logs", request)
         const parsed = parseLogResponse(logs)
-        // if (isLogsResponseSuccess(parsed)) {
-        //     console.log(`Time of first log is ${parsed.logs[0].startTime}`)
-        // }
         return parsed
     }
 
@@ -57,7 +56,7 @@ const testAnalyticsResponse = `{
 function encodeObjectToUrl(obj: object | undefined): string {
     if (obj === undefined) return ""
     return "?" + recordToArray(obj, (k, v) => {
-        const value = isDayJs(v) ? unixMs(v) : v;
+        const value = isDayjs(v) ? unixMs(v) : v;
         return `${k}=${value}`;
     }).join("&")
 }
@@ -68,9 +67,12 @@ export interface GetAnalyticsRequest {
     endDate: Dayjs
 }
 
-export type GetLogsRequest = EndpointQuery & {
+export interface GetLogsRequest {
+    query: string,
+    endpoint: string
     page: number
 }
+
 // export interface GetLogsRequest {
 //     endpoint: string
 //     startDate: Dayjs
@@ -99,7 +101,7 @@ export interface GetLogsResponseSuccess {
     logs: LogEvent[]
 }
 
-export type GetEndpointsResponse = string[]
+export type GetEndpointsResponse = NormalEndpoint[]
 
 
 export function parseLogResponse(json: string): GetLogsResponse {

@@ -1,12 +1,12 @@
 package test
 
 import io.github.natanfudge.logs.Loggy
+import io.github.natanfudge.logs.impl.LoggingCredentials
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.github.natanfudge.logs.impl.LoggingCredentials
 import java.nio.charset.Charset
 import java.nio.file.Paths
 
@@ -51,6 +51,15 @@ private fun Application.module() {
     logger.startCall("amar") {
         logInfo { "Bar" }
     }
+
+    logger.startCall("verb") {
+        logVerbose { "Halo halo" }
+    }
+
+    logger.startCall("deb") {
+        logDebug { "Halo halo deb" }
+    }
+
     routing {
         logger.route()
         get("test") {
@@ -68,7 +77,7 @@ private fun Application.module() {
             }
             call.respondText("Test2")
         }
-        get("/"){
+        get("/") {
             call.respondRedirect("/logs")
         }
     }

@@ -1,35 +1,5 @@
-import {useEffect, useState} from "react";
-import styled from "@emotion/styled";
-import {Dayjs} from "dayjs";
+import {Dayjs, isDayjs} from "dayjs";
 
-
-export function isEmptySpace(char: string): boolean {
-    return /\s/.test(char) || char === ""
-}
-
-export function usePromise<T>(promise: Promise<NonNullable<T>> | T, deps: unknown[]): T | undefined {
-    const [result, setResult] = useState<T | undefined>(undefined)
-    useEffect(() => {
-        setResult(undefined);
-        void Promise.resolve(promise).then((value => {
-            setResult(value)
-        }))
-    }, deps)
-    return result
-}
-
-
-// export type StringMap = Record<string, string>
-//
-// export  function recordToArray<V,Rec extends Record<keyof Rec, V>,K extends keyof Rec, R>(record: Record<K,V>, mapFn: (key: K, value: V, index: number) => R): R[] {
-//     return typedKeys(record).map((key, index) => mapFn(key, record[key], index));
-// }
-//
-// export function typedKeys<K extends TsKey, V>(object: Record<K, V>): K[] {
-//     return Object.keys(object) as K[];
-// }
-//
-// export type TsKey = string | number | symbol
 
 export function millsecondTimeToString(date: Dayjs): string {
     return `${timeToString(date)}:${threeChars(date.millisecond())}`
@@ -37,7 +7,7 @@ export function millsecondTimeToString(date: Dayjs): string {
 
 
 export function timeToString(date: Dayjs): string {
-    if (!isDayJs(date)) {
+    if (!isDayjs(date)) {
         throw new Error(`Unexpected type of date: ${date} of type ${typeof date}`)
     }
     return `${simpleTimeToString(date)}:${twoChars(date.second())}`
@@ -72,29 +42,6 @@ export function addAlphaToColor(color: string, alpha: number): string {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-// export interface State<T> {
-//     value: T
-//     onChange: (value: T) => void
-// }
-//
-// export function mapState<T,K>(old: State<T>, forward: (value: T) => K, backward: (value: K) => T): State<K> {
-//     return {
-//         value: forward(old.value),
-//         onChange: (value) => {
-//             old.onChange(backward(value))
-//         }
-//     }
-// }
-//
-//
-// export function usePassedState<T>(initial: T): State<T> {
-//     const [value, setValue] = useState(initial)
-//     return {value: value, onChange: setValue}
-// }
-
-export function isDayJs(obj: unknown): obj is Dayjs {
-    return obj !== null && typeof obj === "object" && "millisecond" in obj;
-}
 
 export function unixMs(date: Dayjs): number {
     return date.unix() * 1000 + date.millisecond()

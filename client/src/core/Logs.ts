@@ -1,5 +1,6 @@
 import dayjs, {Dayjs} from "dayjs";
 
+//TODO: turn loggy into a service! Need to think about how we split caesarea and the personal service though. An option for self hosting is important.
 
 
 export interface LogEvent {
@@ -16,10 +17,10 @@ export function isMessageLog(logLine: LogLine): logLine is MessageLog {
 }
 
 export function isErrorLog(logLine: LogLine): logLine is ErrorLog {
-    return isMessageLog(logLine) && logLine.severity == "Error"
+    return isMessageLog(logLine) && logLine.severity === "Error"
 }
 export function isWarningLog(logLine: LogLine): logLine is ErrorLog {
-    return isMessageLog(logLine) && logLine.severity == "Warn"
+    return isMessageLog(logLine) && logLine.severity === "Warn"
 }
 
 export function isDetailLog(logLine: LogLine): logLine is DetailLog {
@@ -51,5 +52,23 @@ interface ExceptionElement {
     stacktrace: string
 }
 
-type Severity = "Info" | "Warn" | "Error"
-export const AllSeverities = ["Info", "Warn", "Error"]
+export type Severity = "Verbose" | "Debug"| "Info" | "Warn" | "Error"
+export const AllSeverities: Severity[] = ["Verbose", "Debug", "Info", "Warn", "Error"]
+
+/**
+ * Represents how Verbose < Debug < Info < Warn < Error
+ */
+export function severityValue(severity: Severity) : number {
+    switch (severity) {
+        case "Verbose":
+            return 0
+        case "Debug":
+            return 1
+        case "Info":
+            return 2
+        case "Warn":
+            return 3
+        case "Error":
+            return 4
+    }
+}

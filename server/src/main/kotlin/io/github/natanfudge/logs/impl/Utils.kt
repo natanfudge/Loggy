@@ -23,8 +23,8 @@ public typealias SerializableThrowable = List<SerializableThrowableElement>
 @Serializable
 public data class SerializableThrowableElement(val className: String, val message: String, val stacktrace: String)
 
-@PublishedApi
-internal fun Throwable.toSerializable(): SerializableThrowable {
+//@PublishedApi
+public fun Throwable.toSerializable(): SerializableThrowable {
     val elements = mutableListOf<SerializableThrowableElement>()
     var current: Throwable? = this
     while (current != null) {
@@ -41,7 +41,7 @@ private fun Throwable.selfToSerializable(): SerializableThrowableElement {
 internal fun getResourceBytes(path: String): ByteArray? =
     FancyLogger::class.java.getResourceAsStream(path)?.readBytes()
 
-internal val GMTZoneId = ZoneId.of("GMT")
+public val GMTZoneId: ZoneId = ZoneId.of("GMT")
 
 
 

@@ -1,12 +1,14 @@
 import {Paper, styled, Table, TableBody, TableCell, tableCellClasses, TableContainer, TableRow} from "@mui/material";
 import React from "react";
 import { recordToArray } from "../fudge-lib/methods/Javascript";
+import {useScreenSize} from "../fudge-lib/methods/Gui";
 
 
 export type StringMap = Record<string,string>
 
-export function KeyValueTable({details}: { details: StringMap }) {
-    return <TableContainer component={Paper} style={{height: "fit-content", width: "30%"}}>
+export function KeyValueTable({details, expand}: { details: StringMap, expand: boolean }) {
+    const isPhone = useScreenSize().isPhone
+    return <TableContainer component={Paper} style={{height: "fit-content", width: isPhone || expand? "100%" : "30%"}}>
         <Table>
             <TableBody>
                 {recordToArray(details, (name, detail) => {
@@ -31,6 +33,7 @@ export const StyledTableCell = styled(TableCell)(({theme}) => ({
 }));
 export const LeftmostStyledTableCell = styled(StyledTableCell)(({theme}) => ({
     borderRight: `1px solid ${theme.palette.primary.main}`,
+    maxWidth: "50%",
     whiteSpace: "nowrap",
 }));
 

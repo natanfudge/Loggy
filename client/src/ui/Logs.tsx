@@ -1,58 +1,36 @@
-import {CircularProgress, Typography} from "@mui/material";
+import {Typography} from "@mui/material";
 import React, {Fragment, useState} from "react";
-import {Endpoint, ThemeSwitch} from "./Endpoint";
-import {Day} from "../core/Day";
-import {debugEndpoints, LoggingServer} from "../server/LoggingServer";
-import {usePromise} from "../utils/Utils";
-import {useScreenSize} from "../utils/ScreenSize";
+import {EndpointGui, EndpointQuery, ThemeSwitch} from "./Endpoint";
+import {LoggingServer} from "../server/LoggingServer";
 import {useNavigate} from "react-router-dom";
 import {ThemeState} from "./App";
 import styles from "./css/loggy.module.css"
 import {LogsTitle} from "./LogsTitle";
 import {isLogsResponseSuccess} from "../server/Api";
 import {usePersistentState} from "../fudge-lib/state/PersistentState";
-import {useStateObject} from "../fudge-lib/state/State";
+import {State, useStateObject} from "../fudge-lib/state/State";
 import {Column} from "../fudge-lib/Flow";
+import {debugEndpoints, Endpoint, endpointToString, isDebugEndpoint, SpecialEndpoint} from "../model/Endpoint";
+import {useScreenSize} from "../fudge-lib/methods/Gui";
+import {usePromise} from "../fudge-lib/state/UsePromise";
 
-export const initialFilter = getInitialDayFilterString()
+export const initialFilter = ""
 
-function getInitialDayFilterStrings(): { start: string, end: string } {
-    const start = Day.beforeDays(1)
-    const end = Day.today()
-    if (start.year === end.year) {
-        if (start.month === end.month) {
-            return {start: start.dayString(), end: end.dayString()}
-        } else {
-            return {start: start.dateString(), end: end.dateString()}
-        }
-    } else {
-        return {start: start.toString(), end: end.toString()}
-    }
-}
-
-function getInitialDayFilterString() {
-    return ""
-    // const {start, end} = getInitialDayFilterStrings()
-    // return `from:${start} to:${end} `
-}
-
-
-export function Logs(props: { theme: ThemeState, endpoint: string | undefined }) {
+export function Logs(props: { theme: ThemeState, endpoint: Endpoint }) {
     const navigate = useNavigate()
     const screen = useScreenSize()
     const [refreshMarker, setRefreshMarker] = useState(false) // Changed when a refresh is requested, to rerun getEndpoints()
     const page = useStateObject(0)
     const endpoints = useEndpoints(props.endpoint)
-    const endpoint = activeEndpoint(props.endpoint, endpoints)
+    const endpoint = props.endpoint
     // Added -2 because of persistent state format change
     const query = usePersistentState(`query-string-${endpoint}-2`, initialFilter)
-    const endpointQuery = query.mapType(q => ({query: q, endpoint}), eq => eq.query)
-        .onSet(({endpoint}) => navigate("/logs/" + (endpoint ?? "")))
+    const endpointQuery: State<EndpointQuery> = query.mapType(q => ({query: q, endpoint}), eq => eq.query)
+        .onSet(({endpoint}) => navigate("/logs/" + endpointToString(endpoint)))
 
-    // console.log(`Endpoint: ${endpoint}, query: ${JSON.stringify(query)}, page: ${page.value}`)
 
     const logsResponse = usePromise(
-        LoggingServer.getLogs({endpoint, query: query.value, page: page.value}), [endpoint, query.value, page.value]
+        () => LoggingServer.getLogs({endpoint: endpointToString(endpoint), query: query.value, page: page.value}), [endpoint, query.value, page.value]
     )
 
 
@@ -61,7 +39,7 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
             return <Typography>
                 No endpoints defined.
             </Typography>
-        } else if (endpoint !== undefined && !endpoints.includes(endpoint)) {
+        } else if (!endpoints.includes(endpoint)) {
             return <Typography>
                 Bad route.
             </Typography>
@@ -73,18 +51,15 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
                    endpointQuery={endpointQuery}
                    theme={props.theme}
                    onRefresh={() => {
-                       LoggingServer.refreshLog({page: page.value, ...endpointQuery.value})
+                       LoggingServer.refreshLog({page: page.value, endpoint: endpointToString(endpoint), query: query.value})
                        setRefreshMarker(old => !old)
                    }}
         />
 
-        {endpoint !== undefined ?
-            <Endpoint page={page}
-                      logs={logsResponse}
-                      theme={props.theme}
-                      refreshMarker={refreshMarker}/>
-            : <CircularProgress/>
-        }
+            <EndpointGui showEndpointInLogs={endpoint === SpecialEndpoint.All} page={page}
+                         logs={logsResponse}
+                         theme={props.theme}
+                         refreshMarker={refreshMarker}/>
 
         {screen.isPhone && <Fragment>
             <div style={{flexGrow: 1, height: 10}}/>
@@ -95,10 +70,12 @@ export function Logs(props: { theme: ThemeState, endpoint: string | undefined })
     </Column>
 }
 
-function useEndpoints(endpoint: string | undefined) {
-    return debugEndpoints.includes(endpoint ?? "") ? debugEndpoints : usePromise(LoggingServer.getEndpoints(), []);
-}
+function useEndpoints(endpoint: Endpoint): Endpoint[] | undefined {
+    const builtinEndpoint: Endpoint[] = [SpecialEndpoint.All]
 
-function activeEndpoint(endpoint: string | undefined, endpoints: string[] | undefined) {
-    return endpoint ?? (endpoints !== undefined ? endpoints[0] : undefined);
+    // We need to always call the usePromise effect, even when doing debug
+    const endpoints = usePromise(() => LoggingServer.getEndpoints(), []);
+    // If a debug endpoint is selected we move to a special debug mode where only the debug endpoints are available
+    if (isDebugEndpoint(endpoint)) return debugEndpoints
+    else return builtinEndpoint.concat(endpoints ?? [])
 }

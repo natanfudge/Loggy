@@ -1,4 +1,5 @@
 import React, {useState} from 'react'
+import * as mui from "@mui/material";
 import {createTheme, CssBaseline, ThemeProvider} from "@mui/material";
 import "../fudge-lib/extensions/Extensions"
 import "../fudge-lib/extensions/ExtensionsImpl"
@@ -8,7 +9,7 @@ import {AdapterDayjs} from "@mui/x-date-pickers/AdapterDayjs";
 import {BrowserRouter, Route, Routes, useParams} from "react-router-dom";
 import {AnalyticsPage} from "./AnalyticsPage";
 import {Logs} from "./Logs";
-import * as mui from "@mui/material"
+import {Endpoint, endpointFromString, SpecialEndpoint} from "../model/Endpoint";
 // import {ThemeProvider} from "@emotion/react";
 
 declare module "@emotion/react" {
@@ -58,7 +59,7 @@ export function AppWrapper() {
     return <ThemeProvider theme={darkTheme}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <CssBaseline/>
-            <div className={isDark? undefined: "light"}>
+            <div className={isDark? undefined: "light"} style = {{height: "100%"}}>
                 <BrowserRouter>
                     <RoutedApp theme={{setThemeDark: setIsDark, isDark}}/>
                 </BrowserRouter>
@@ -79,25 +80,26 @@ export interface ThemeState {
 
 function RoutedApp(props: { theme: ThemeState }) {
     return <Routes>
-        <Route path="/logs/" element={<Logs key={undefined} theme={props.theme} endpoint={undefined}/>}/>
+        <Route path="/logs/" element={<Logs key={undefined} theme={props.theme} endpoint={SpecialEndpoint.All}/>}/>
         <Route path="/logs/:endpoint" element={<RoutedLogs theme={props.theme}/>}/>
         <Route path="/logs/:endpoint/stats" element={<RoutedAnalytics theme={props.theme}/>}/>
         <Route path="*" element={"Nothing Here"}/>
     </Routes>
 }
 
-type PageContents = {
-    // theme: ThemeState
-    endpoint: string | undefined
-}
+// type PageContents = {
+//     endpoint: Endpoint
+// }
 
-function Page({Content}: { Content: React.FC<PageContents> }) {
-    const {endpoint} = useParams<"endpoint">()
-    return <Content endpoint={endpoint}/>
-}
+// function Page({Content}: { Content: React.FC<PageContents> }) {
+//     const {endpoint} = useParams<"endpoint">()
+//     return <Logs key={endpoint} theme={props.theme} endpoint={endpoint}/>}/>
+//     return <Content endpoint={ endpoint === undefined? SpecialEndpoint.All : endpointFromString(endpoint)}/>
+// }
 
 function RoutedLogs(props: { theme: ThemeState }) {
-    return <Page Content={({endpoint}) => <Logs key={endpoint} theme={props.theme} endpoint={endpoint}/>}/>
+    const {endpoint} = useParams<"endpoint">()
+    return <Logs key={endpoint} theme={props.theme} endpoint={endpoint === undefined? SpecialEndpoint.All : endpointFromString(endpoint)}/>
 }
 
 function RoutedAnalytics(props: { theme: ThemeState }) {

@@ -13,7 +13,6 @@ test('Math.sqrt()', () => {
 
 test('JSON', () => {
     const day = new Day({day: 1, month: 2, year: 1970})
-    console.log(JSON.stringify(day))
     const back: Day = JSON.parse(JSON.stringify(day))
 
     const dayInstanceof = day instanceof Day

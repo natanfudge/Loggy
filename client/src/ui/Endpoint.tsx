@@ -1,13 +1,9 @@
-import {addAlphaToColor, millsecondTimeToString,  timeToString, unixMs, usePromise} from "../utils/Utils";
+import {addAlphaToColor, millsecondTimeToString, timeToString, unixMs} from "../utils/Utils";
 import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
-    Checkbox,
     CircularProgress,
-    Divider,
-    FormControlLabel,
-    FormGroup,
     List,
     Pagination,
     styled,
@@ -17,6 +13,7 @@ import {
     useTheme
 } from "@mui/material";
 import {
+    AllSeverities,
     DetailLog,
     ErrorLog,
     isDetailLog,
@@ -25,7 +22,8 @@ import {
     isWarningLog,
     LogEvent,
     LogLine,
-    MessageLog
+    MessageLog,
+    Severity, severityValue
 } from "../core/Logs";
 import {ExpandMore} from "@mui/icons-material";
 import {LongRightArrow} from "./LongRightArrow";
@@ -34,23 +32,25 @@ import {KeyValueTable} from "./KeyValueTable";
 import {ThemeState, TimeRange} from "./App";
 import {DesktopDatePicker} from "@mui/x-date-pickers";
 import {Dayjs} from "dayjs";
-import {LoggingServer} from "../server/LoggingServer";
-import {useScreenSize} from "../utils/ScreenSize";
 import {Day} from "../core/Day";
 import {GetLogsResponse, isLogsResponseSuccess} from "../server/Api";
-import {State} from "../fudge-lib/state/State";
-import {Column, Row} from "../fudge-lib/Flow";
+import {State, useStateObject} from "../fudge-lib/state/State";
+import {Column, Row, SpacedRow} from "../fudge-lib/Flow";
+import {Endpoint} from "../model/Endpoint";
+import {AppTheme} from "../fudge-lib/AppTheme";
+import {useScreenSize} from "../fudge-lib/methods/Gui";
+import {Dropdown} from "./UiUtils";
 
-export function Endpoint(props: {
+
+export function EndpointGui(props: {
     page: State<number>,
     logs: GetLogsResponse | undefined,
-    // eQuery: EndpointQuery,
+    showEndpointInLogs: boolean,
     theme: ThemeState,
     refreshMarker: boolean,
 }) {
     const [page, setPage] = props.page.destruct()
     const response = props.logs;
-
 
     const isPhone = useScreenSize().isPhone
 
@@ -59,15 +59,11 @@ export function Endpoint(props: {
             <CircularProgress/>
         </Typography>
     } else if (isLogsResponseSuccess(response)) {
-        // console.log(`Res:`, response.logs)
-
-        // console.log(`Time of first log in endpoint is ${response.logs[0].startTime}`)
-        return <Fragment>
+        return <>
             <List style={{maxHeight: "100%", overflow: "auto"}}>
-                <div style={{minWidth: isPhone ? "100%" : 450, width: isPhone ? undefined : "fit-content"}}>
+                <div style={{minWidth: isPhone ? "100%" : 450}}>
                     {response.logs
-                        // .filter(log => shouldDisplayLog(log, props.filter))
-                        .map((l, i) => <LogEventAccordion key={i} log={l}/>
+                        .map((l, i) => <LogEventAccordion showEndpoint={props.showEndpointInLogs} key={i} log={l}/>
                         )}
                 </div>
             </List>
@@ -79,19 +75,18 @@ export function Endpoint(props: {
                             style={{alignSelf: "center"}}
                 />
             }
-        </Fragment>
+        </>
     } else {
-        return <Fragment>
+        return <>
             {/*Error in query*/}
-        </Fragment>
+        </>
     }
 }
 
 
-
 export interface EndpointQuery {
     query: string,
-    endpoint: string | undefined
+    endpoint: Endpoint
 }
 
 
@@ -121,33 +116,6 @@ const TimeRangeText = styled("span")`
   align-self: center;
   padding: 5px;
 `
-
-
-function FilterConfigSelection({config, setConfig, row}: {
-    config: FilterConfig,
-    setConfig: (config: FilterConfig) => void,
-    row: boolean
-}) {
-    const screen = useScreenSize();
-    const phone = screen.isPhone
-    return <FormGroup row>
-        <FormControlLabel
-            control={<Checkbox checked={config.info} onChange={(e) => setConfig({...config, info: e.target.checked})}/>}
-            label={phone ? "I" : "Info"}/>
-        <FormControlLabel
-            control={<Checkbox checked={config.warn} onChange={(e) => setConfig({...config, warn: e.target.checked})}/>}
-            label={phone ? "W" : "Warning"}/>
-        <FormControlLabel control={<Checkbox checked={config.error}
-                                             onChange={(e) => setConfig({...config, error: e.target.checked})}/>}
-                          label={phone ? "E" : "Error"}/>
-    </FormGroup>
-}
-
-export interface FilterConfig {
-    info: boolean
-    warn: boolean
-    error: boolean
-}
 
 
 export function DaySelection(props: { day: State<Dayjs> }) {
@@ -186,16 +154,16 @@ const ThemeBorder = styled(Row)(({theme}) => ({
 }));
 
 
-function LogEventAccordion({log}: { log: LogEvent }) {
+function LogEventAccordion({log, showEndpoint}: { log: LogEvent, showEndpoint: boolean }) {
     const theme = useTheme();
     const errored = hasErrorLogs(log)
     const warned = hasWarningLogs(log)
     const textColor = errored ? theme.palette.error.main : warned ? theme.palette.warning.main : theme.palette.text.primary
     const [expanded, setExpanded] = useState(false);
 
-    return <Accordion expanded={expanded} onChange={(e, newValue) => setExpanded(newValue)}>
+    return <Accordion expanded={expanded} onChange={(_, newValue) => setExpanded(newValue)}>
         <LogEventSummary expandIcon={<ExpandMore/>} style={{color: textColor}}>
-            <LogEventSummaryText log={log} expanded={expanded} textColor={textColor} errored={errored} warned={warned}/>
+            <LogEventSummaryText showEndpoint={showEndpoint} log={log} expanded={expanded} textColor={textColor} errored={errored} warned={warned}/>
         </LogEventSummary>
         <AccordionDetails>
             <LogEventContent log={log}/>
@@ -211,30 +179,44 @@ export function hasWarningLogs(log: LogEvent): boolean {
     return log.logs.some(l => isWarningLog(l))
 }
 
-function LogEventSummaryText({log, expanded, textColor, errored, warned}: {
+function LogEventSummaryText({log, expanded, textColor, errored, warned, showEndpoint}: {
     log: LogEvent,
     expanded: boolean,
     textColor: string,
     errored: boolean,
-    warned: boolean
+    warned: boolean,
+    /**
+     * We only show the endpoint on individual events when we have all endpoints selected.
+     * When only one endpoint is selected there's no point in specifying what  endpoint is each event.
+     */
+    showEndpoint: boolean
 }) {
-    const duration = `${unixMs(log.endTime) - unixMs(log.startTime)}ms`
-    const suffix = errored ? " - ERROR" : warned ? " - Warning" : ""
-    const screen = useScreenSize()
+
     const date = `${Day.ofDate(log.startTime).dateString()} - `
-    if (expanded) {
-        return <Fragment>
-            {date}
+    return <>
+        {showEndpoint && <span style={{color: AppTheme.subtitleText, paddingRight: "0.8rem"}}>{log.name}</span>}
+        {date}
+        <LogEventSummaryDetails log={log} expanded={expanded} textColor={textColor} errored={errored} warned={warned}/>
+    </>
+}
+
+function LogEventSummaryDetails(props: { log: LogEvent, expanded: boolean, errored: boolean, warned: boolean, textColor: string }) {
+    const log = props.log
+    const duration = `${unixMs(log.endTime) - unixMs(log.startTime)}ms`
+    const suffix = props.errored ? " - ERROR" : props.warned ? " - Warning" : ""
+    const screen = useScreenSize()
+
+    if (props.expanded) {
+        return <>
             {millsecondTimeToString(log.startTime)}
             {/*Style must be passed explicitly to work properly with the svg*/}
-            <LongRightArrow style={durationArrowStyle} color={textColor}/>
+            <LongRightArrow style={durationArrowStyle} color={props.textColor}/>
             {millsecondTimeToString(log.endTime) + ` (${duration}${screen.isPhone ? "" : " total"})`}
-        </Fragment>
+        </>
     } else {
-        return <Fragment>
-            {date}
+        return <>
             {timeToString(log.startTime) + ` (${duration})` + suffix}
-        </Fragment>
+        </>
     }
 }
 
@@ -300,14 +282,20 @@ const ErrorContent = styled("span")(({theme}) => ({
 function LogLinesUi({logs}: { logs: LogLine[] }) {
     const details = logs.filter(l => isDetailLog(l)) as DetailLog[]
     const messages = logs.filter(l => isMessageLog(l)) as MessageLog[]
+    const severity = useStateObject<Severity>("Verbose")
 
     const screen = useScreenSize()
+    const shownMessages = messages.filter(m => severityValue(m.severity) >= severityValue(severity.value))
 
     return <div style={{display: "flex", flexDirection: screen.isPhone ? "column" : "row"}}>
-        <KeyValueTable details={details.toRecord(l => [l.key, l.value])}/>
-        <Column style={{paddingLeft: screen.isPhone ? 0 : 20, paddingTop: 10, width: "70%"}}>
-            {messages.map((m, i) => <MessageLogUi key={i} message={m}/>)}
-        </Column>
+        {!details.isEmpty() && <KeyValueTable expand={shownMessages.isEmpty()} details={details.toRecord(l => [l.key, l.value])}/>}
+        <Row style={{paddingLeft: screen.isPhone ? 0 : 20, paddingTop: 10, width: screen.isPhone || details.isEmpty()? "100%" : "70%", justifyContent: "space-between"}}>
+            <Column >
+                {shownMessages.map((m, i) => <MessageLogUi key={i} message={m}/>)}
+            </Column>
+            <Dropdown options={AllSeverities} state={severity as State<string>} style = {{width: "6rem"}}/>
+        </Row>
+
     </div>
 }
 
@@ -318,16 +306,28 @@ const SubtitleText = styled(Typography)(({theme}) => ({
 }));
 
 function MessageLogUi({message}: { message: MessageLog }) {
-    const theme = useTheme()
-    const color = message.severity === "Error" ? theme.palette.error.main
-        : message.severity === "Warn" ? theme.palette.warning.main : theme.palette.text.primary
-    return <Row >
+    return <Row>
         <SubtitleText variant={"subtitle2"}>
             {timeToString(message.time) + " "}
         </SubtitleText>
-        <span style={{color: color}}>
+        <span style={{color: getSeverityColor(message.severity)}}>
             {message.message}
         </span>
     </Row>
 }
 
+
+function getSeverityColor(severity: Severity): string {
+    switch (severity) {
+        case "Verbose":
+            return AppTheme.subtitleText
+        case "Debug":
+            return AppTheme.debug
+        case "Info":
+            return AppTheme.text
+        case "Warn":
+            return AppTheme.warn
+        case "Error":
+            return AppTheme.error
+    }
+}

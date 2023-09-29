@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "buildProf": "tsc && vite build --profile",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "analyzer" : "vite-bundle-visualizer"
   },
   "eslintConfig": ".eslintrc.json",
   "dependencies": {
@@ -27,7 +28,8 @@
     "react-icons": "^4.11.0",
     "react-router-dom": "^6.8.1",
     "react-virtualized-auto-sizer": "^1.0.7",
-    "react-window": "^1.8.8"
+    "react-window": "^1.8.8",
+    "vite-bundle-visualizer": "^0.10.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.22",

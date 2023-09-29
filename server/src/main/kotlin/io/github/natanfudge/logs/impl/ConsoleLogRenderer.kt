@@ -52,6 +52,8 @@ private fun LogEvent.renderToString(colored: Boolean): String {
                     LogLine.Severity.Info -> null
                     LogLine.Severity.Warn -> Ansi.Color.YELLOW
                     LogLine.Severity.Error -> Ansi.Color.RED
+                    LogLine.Severity.Debug -> Ansi.Color.GREEN
+                    LogLine.Severity.Verbose -> Ansi.Color.CYAN
                 }
                 append("\t\t")
                 append("[${message.time.systemTimeOfDay()}]".grey())

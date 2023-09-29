@@ -1,24 +1,30 @@
 package io.github.natanfudge.logs.impl
 
 import com.caesarealabs.searchit.*
-import com.caesarealabs.searchit.SearchitResult
 import io.objectbox.Box
 import java.time.Instant
 
-internal fun Box<LogEventEntity>.loggySearch(request: GetLogsRequest): SearchitResult<LogEvent> {
-    return loggySearchContext(this,request.endpoint).search(request.query,request.page)
+internal suspend fun Box<LogEventEntity>.loggySearch(request: GetLogsRequest): SearchitResult<LogEvent> {
+    return loggySearchContext(this, request.endpoint).search(request.query, request.page)
 }
 
 private fun loggySearchContext(box: Box<LogEventEntity>, endpoint: String) = SearchitContext(
-    ObjectBoxDatabase(box,endpoint),
+    ObjectBoxDatabase(box, endpoint),
     LogEventDataLens,
     listOf(ExactSeverityFilter, AtLeastSeverityFilter)
 )
 
+
+
 private class ObjectBoxDatabase(private val box: Box<LogEventEntity>, private val endpoint: String) : Database<LogEvent> {
-    override fun query(timeRange: TimeRange): List<LogEvent> {
-        val objectBoxQuery = LogEventEntity_.name.equal(endpoint)
-            .and(LogEventEntity_.startTime.between(timeRange.start.toEpochMilli(), timeRange.end.toEpochMilli()))
+    override suspend fun query(timeRange: TimeRange): List<LogEvent> {
+        val timeFilter = LogEventEntity_.startTime.between(timeRange.start.toEpochMilli(), timeRange.end.toEpochMilli())
+        val objectBoxQuery = if (isAllEndpoint(endpoint)) {
+            // If 'all' endpoint is specified, don't filter by endpoint, just return everything within the time range
+            timeFilter
+        } else {
+            LogEventEntity_.name.equal(endpoint).and(timeFilter)
+        }
         return box.query(objectBoxQuery).build().use { it.find() }.map { it.toLogEvent() }
     }
 }
@@ -32,7 +38,7 @@ private object LogEventDataLens : DataLens<LogEvent, Instant> {
         return item.startTime
     }
 
-    override fun containsText(item:LogEvent, text: String): Boolean {
+    override fun containsText(item: LogEvent, text: String): Boolean {
         return item.logs.any {
             when (it) {
                 // Search for the text in the key/value for details
@@ -56,6 +62,8 @@ private val AtLeastSeverityFilter = SpecialFilter<LogEvent>("level") { severityS
 
 private fun resolveSeverity(severityString: String): LogLine.Severity? {
     return when (severityString) {
+        "verbose" -> LogLine.Severity.Verbose
+        "debug" -> LogLine.Severity.Debug
         "info" -> LogLine.Severity.Info
         "warn", "warning" -> LogLine.Severity.Warn
         "error" -> LogLine.Severity.Error
