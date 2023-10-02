@@ -4,12 +4,12 @@ import styles from "./css/loggy.module.css"
 import {State} from "../fudge-lib/state/State";
 import {syncCompletable} from "../fudge-lib/searchit/SyncCompletable";
 
-const AllDateOptions = [
-    "today",
-    "yesterday",
-    "lastWeek",
-    "lastMonth"
-]
+// const AllDateOptions = [
+//     "today",
+//     "yesterday",
+//     "lastWeek",
+//     "lastMonth"
+// ]
 
 
 // Data for completing level/levelExact:<severity>
@@ -21,20 +21,20 @@ const allSeverityCompletions: Completion[] = AllSeverities.map(s => {
     return {label: exact, newText: exact + " "}
 }))
 
-const allDateCompletions: Completion[] = AllDateOptions.map(s => {
-    const atLeast = `from:${s}`
-    return {label: atLeast, newText: atLeast + " "}
-}).concat(AllDateOptions.map(s => {
-    const exact = `to:${s}`
-    return {label: exact, newText: exact + " "}
-}))
+// const allDateCompletions: Completion[] = AllDateOptions.map(s => {
+//     const atLeast = `from:${s}`
+//     return {label: atLeast, newText: atLeast + " "}
+// }).concat(AllDateOptions.map(s => {
+//     const exact = `to:${s}`
+//     return {label: exact, newText: exact + " "}
+// }))
 
 
-const allCompletions = allDateCompletions.concat(allSeverityCompletions)
+// const allCompletions = allDateCompletions.concat(allSeverityCompletions)
 
 // Complete level/levelExact:<severity>
 const levelDateCompletable = syncCompletable(text => {
-    return allCompletions.filter(completion => {
+    return allSeverityCompletions.filter(completion => {
         const lowercaseLabel = completion.label.toLowerCase()
         const lowercaseText = text.toLowerCase()
         return lowercaseLabel.includes(lowercaseText) && lowercaseLabel !== lowercaseText;
