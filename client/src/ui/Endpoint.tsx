@@ -195,7 +195,7 @@ function LogEventSummaryText({log, expanded, textColor, errored, warned, showEnd
 
     const date = `${Day.ofDate(log.startTime).dateString()} - `
     return <>
-        {showEndpoint && <span style={{color: AppTheme.subtitleText, paddingRight: "0.8rem"}}>{log.name}</span>}
+        {showEndpoint && <span style={{color: AppTheme.subtitleText, paddingRight: "0.8rem"}}>{log.name.trim() === "" ? "root" : log.name}</span>}
         {date}
         <LogEventSummaryDetails log={log} expanded={expanded} textColor={textColor} errored={errored} warned={warned}/>
     </>
