@@ -166,7 +166,8 @@ function LogEventAccordion({log, showEndpoint}: { log: LogEvent, showEndpoint: b
             <LogEventSummaryText showEndpoint={showEndpoint} log={log} expanded={expanded} textColor={textColor} errored={errored} warned={warned}/>
         </LogEventSummary>
         <AccordionDetails>
-            <LogEventContent log={log}/>
+            {/*Avoid rendering everything in the log when it has not been opened*/}
+            {expanded && <LogEventContent log={log}/>}
         </AccordionDetails>
     </Accordion>
 }

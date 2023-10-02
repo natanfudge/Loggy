@@ -30,7 +30,7 @@ export function Logs(props: { theme: ThemeState, endpoint: Endpoint }) {
 
 
     const logsResponse = usePromise(
-        () => LoggingServer.getLogs({endpoint: endpointToString(endpoint), query: query.value, page: page.value}), [endpoint, query.value, page.value]
+        () => LoggingServer.getLogs({endpoint: endpointToString(endpoint), query: query.value, page: page.value}), [endpoint, query.value, page.value, refreshMarker]
     )
 
 
@@ -51,7 +51,8 @@ export function Logs(props: { theme: ThemeState, endpoint: Endpoint }) {
                    endpointQuery={endpointQuery}
                    theme={props.theme}
                    onRefresh={() => {
-                       LoggingServer.refreshLog({page: page.value, endpoint: endpointToString(endpoint), query: query.value})
+                       console.log("Refreshing")
+                       // LoggingServer.refreshLog({page: page.value, endpoint: endpointToString(endpoint), query: query.value})
                        setRefreshMarker(old => !old)
                    }}
         />

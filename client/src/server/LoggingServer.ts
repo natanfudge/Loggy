@@ -10,6 +10,7 @@ import {PromiseMemoryCache} from "../fudge-lib/collections/PromiseMemoryCache";
 import {recordToArray} from "../fudge-lib/methods/Javascript";
 import {DebugEndpoint, endpointFromString, isDebugEndpoint, NormalEndpoint, SpecialEndpoint} from "../model/Endpoint";
 import {badAppearanceTestLog, testLogResponse} from "../test/TestEvents";
+import {CallDeduplicator} from "../fudge-lib/state/CallDeduplicator";
 
 dayjs.extend(utc)
 dayjs.extend(objectSupport);
@@ -22,13 +23,21 @@ export namespace LoggingServer {
 
     const endpointCache = new SimplePromiseMemoryCache<NormalEndpoint[]>()
 
+    const callDeduplicator = new CallDeduplicator<Promise<GetLogsResponse>>(10)
+
 
     export async function getLogs(query: GetLogsRequest): Promise<GetLogsResponse> {
         const endpoint = endpointFromString(query.endpoint)
         if (isDebugEndpoint(endpoint)) {
             return parseLogResponse(getDebugLog(endpoint))
         } else {
-            return logsCache.get(encodeQueryAsKey(query), () => LoggyApi.getLogs(query))
+            return callDeduplicator.call(() => LoggyApi.getLogs(query))
+            // const retval = await logsCache.get(encodeQueryAsKey(query), () =>{
+            //     console.log("Producing new vaue")
+            //     return LoggyApi.getLogs(query)
+            // } )
+            // console.log("Getting new value", retval)
+            // return retval
         }
     }
 
@@ -45,19 +54,19 @@ export namespace LoggingServer {
                 return badAppearanceTestLog
         }
     }
-
-    function encodeQueryAsKey(query: GetLogsRequest): string {
-        return encodeAsKey(query.query, query.endpoint, query.page)
-    }
+    //
+    // function encodeQueryAsKey(query: GetLogsRequest): string {
+    //     return encodeAsKey(query.query, query.endpoint, query.page)
+    // }
 
 
     // 23, 59, 59, 999_999_999
 
-    export function refreshLog(query: GetLogsRequest) {
-        void logsCache.replace(encodeQueryAsKey(query), LoggyApi.getLogs(query))
-    }
+    // export function refreshLog(query: GetLogsRequest) {
+    //     void logsCache.replace(encodeQueryAsKey(query), LoggyApi.getLogs(query))
+    // }
 
-    const logsCache = new PromiseMemoryCache<GetLogsResponse>()
+    // const logsCache = new PromiseMemoryCache<GetLogsResponse>()
 
     export async function getAnalytics(endpoint: string, startDay: Day, endDay: Day): Promise<Analytics> {
         const startDate = startDay.start()
